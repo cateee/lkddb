@@ -22,6 +22,10 @@ sources += ids_to_list.py
 autokernconf := kdetect.sh autokernconf.sh
 sources += ${autokernconf}
 
+# web generator
+sources += web-lkddb-gen.py
+
+
 tars := dists/lkddb-sources-${DATE}.tar.gz dists/lkddb-${DATE}.tar.gz dists/autokernconf-${DATE}.tar.gz
 
 all: lkddb.list count web-lkddb/index.html

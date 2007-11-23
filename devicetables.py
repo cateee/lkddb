@@ -215,7 +215,7 @@ acpi.set_printer(acpi_printer)
 utils.register_scanner(acpi)
 
 
-# PNP #1, pnp_device_id include/linux/mod_devicetable.h
+# PNP #1, pnp_device_id include/linux/mod_devicetable.h drivers/pnp/driver.c
 
 
 pnp = utils.scanner_array_of_struct("pnp", "pnp_device_id")

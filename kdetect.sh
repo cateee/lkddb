@@ -112,7 +112,15 @@ echo '# IEEE1394 detection with /sys'
 for dev in $(ls -U /sys/bus/ieee1394/devices/) ; do
     if [ -f "/sys/bus/ieee1394/devices/$dev/vendor_id" ] ; then
         vend=$(cat "/sys/bus/ieee1394/devices/$dev/vendor_id" | tail -c +3 -)
-        echo "ieee1394 $vend xxxxxx xxxxxx xxxxxx"
+	if ls -U "/sys/bus/ieee1394/devices/$dev" | grep -sqe "$dev-" - ; then
+	    for sub in $(ls -U "/sys/bus/ieee1394/devices/$dev/$dev-*") ; do
+	        spec=$(cat "/sys/bus/ieee1394/devices/$dev/$sub/specifier_id" | tail -c +3 -)
+	        vers=$(cat "/sys/bus/ieee1394/devices/$dev/$sub/version" | tail -c +3 -)
+		echo "ieee1394 $vend xxxxxx $spec $vers"
+	    done
+	else
+            echo "ieee1394 $vend xxxxxx xxxxxx xxxxxx"
+	fi
     fi
 done
 
@@ -134,7 +142,7 @@ done
 echo '# PNP detection with /sys'
 [ -d  /sys/bus/pnp/devices/ ] && \
 for dev in $(ls -U /sys/bus/pnp/devices/) ; do
-    id=$(cat "/sys/bus/pnp/devices/$dev/id")
+    id=$(cat "/sys/bus/pnp/devices/$dev/id" | tr '\n' ' ' )
     echo "pnp $id"
 done
 
@@ -149,6 +157,16 @@ for dev in $(ls -U /sys/bus/serio/devices/) ; do
     id=$(cat "/sys/bus/serio/devices/$dev/id/id")
     extra=$(cat "/sys/bus/serio/devices/$dev/id/extra")
     echo "serio $typ $proto $id $extra"
+done
+
+
+#-- I2C -- #
+
+echo '# I2C detection with /sys'
+[ -d  /sys/bus/i2c/devices/ ] && \
+for dev in $(ls -U /sys/bus/i2c/devices/) ; do
+    id=$(cat "/sys/bus/i2c/devices/$dev/name")
+    echo "i2c $id"
 done
 
 

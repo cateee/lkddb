@@ -64,29 +64,14 @@ echo "#" >> $CONF_AUTO
 #--- Definition of the Configuration Interface ---#
 
 # 'comment'      writes comments on output file
-# 'comment_warn' writes comments on output file and stdout
-# 'debug'        writes comments in debug mode
 #
 # comment 'some comment'
-# comment_warn 'some IMPORTANT comment and warnings'
-# debug 'some usefull information for debug'
 #
 comment() {
     if [ "$PROVIDE_DEBUG" = "y" ]; then
 	echo "# --- $@ ---" >> $CONF_AUTO
     fi
     echo "$@"
-}
-comment_err() {
-    if [ "$PROVIDE_DEBUG" = "y" ]; then
-	echo "# --- $@ ---" >> $CONF_AUTO
-    fi
-    echo "$@" 1>&2
-}
-debug() {
-    if [ "$PROVIDE_DEBUG" =  "y" ]; then
-	echo "## --- $@ ---" >> $CONF_AUTO
-    fi
 }
 #
 # 'define'    sets configuration (general funcions)
@@ -120,11 +105,9 @@ define () {
 }
 # "${!conf}" is available only on bash2. Too new for us!
 found () {
-    for conf in "$@" ; do
+    for conf in $(echo "$@" | sed -ne 's/^.*[ \t]*:: \(.*\)[ \t]*:: .*$/\1/p' - ) ; do
 	if [ "$(eval echo \$$conf)" != "y" ]; then
 	    define "$conf" y
-	else
-	    debug "$conf=y"
         fi
     done
 }
@@ -132,8 +115,6 @@ found_y () {
     for conf in "$@" ; do
     	if [ "$(eval echo \$$conf)" != "y" ]; then
 	    define "$conf" y
-    	else
-	    debug "$conf=y"
     	fi
     done
 }
@@ -141,8 +122,6 @@ found_m () {
     for conf in "$@" ; do
     	if [ "$(eval echo \$$conf)" != "y"  -a  "$(eval echo \$$conf)" != "m" ]; then
 	    define "$conf" m
-    	else
-	    debug "$conf=m"
     	fi
     done
 }
@@ -150,15 +129,12 @@ found_n () {
     for conf in "$@" ; do
     	if [ -z "$(eval echo \$$conf)" ]; then
 	    define "$conf" n
-    	else
-	    debug "$conf=n"
     	fi
     done
 }
 provide () {
     if [ "$(eval echo \$PROVIDE_$1)" != "y" ]; then
         eval "PROVIDE_$1=y"
-	debug "PROVIDE_$1"
     fi
 }
 #--- (Definition of Configuration Interface) ---#
@@ -170,7 +146,6 @@ is_mid () {
 
 
 #--- Parse "autoconfig.rules" ---#
-debug 'Parse "autoconfig.rules"'
 
 
 if grep -sqi '^pci [0-9]' $AUTO_KAC; then
@@ -179,22 +154,19 @@ if grep -sqi '^pci [0-9]' $AUTO_KAC; then
 fi
 
 pci () {
-    if grep -sqe "^pci $1" $AUTO_KAC ; then
-	shift
+    if grep -sqe "^pci $1 $2 $3 $4 $5" $AUTO_KAC ; then
 	found "$@"
     fi
 }
 
 usb () {
-    line=$(grep -oe "^usb $1" $AUTO_KAC )
+    line=$(grep -oe "^usb $1 $2 $3 $4" $AUTO_KAC )
     if [ -n "$line" ] ; then
 	bcd=$(echo "$line" | grep -o '....$' )
 	if [ "$bcd" = "...." ] ; then
-	    shift 3
 	    found "$@"
 	else
-	    if is_mid "$bcd" "$2" "$3" ; then
-	        shift 3
+	    if is_mid "$bcd" "$5" "$6" ; then
 	        found "$@"
 	    fi
 	fi
@@ -202,68 +174,49 @@ usb () {
 }
 
 ieee1394 () {
-    if grep -sqe "^ie394 $1" $AUTO_KAC ; then
-	shift
+    if grep -sqe "^ieee1394 $1 $2 $3 $4" $AUTO_KAC ; then
         found "$@"
     fi
 }
 
 ccw () {
-    if grep -sqe "^ccw $1" $AUTO_KAC ; then
-	shift
+    if grep -sqe "^ccw $1 $2 $3 $4" $AUTO_KAC ; then
         found "$@"
     fi
 }
 
 ap () {
     if grep -sqe "^ap $1" $AUTO_KAC ; then
-	shift
         found "$@"
     fi
 }
 
 acpi () {
     if grep -sqe  "^acpi $1" $AUTO_KAC ; then
-	shift
         found "$@"
     fi
 }
 
 pnp () {
     if grep -sqe  "^pnp $1" $AUTO_KAC ; then
-	shift
         found "$@"
     fi
 }
 
 serio () {
-    if grep -sqe  "^serio $1" $AUTO_KAC ; then
-	shift
+    if grep -sqe  "^serio $1 $2 $3 $4" $AUTO_KAC ; then
         found "$@"
     fi
 }
 
-of () {
-    if grep -sqe  "^of $1" $AUTO_KAC ; then
-	shift
+platform () {
+    if grep -sqe  "^platform $1" $AUTO_KAC ; then
         found "$@"
     fi
-}
-
-vio () {
-    if grep -sqe  "^vio $1" $AUTO_KAC ; then
-	shift
-        found "$@"
-    fi
-}
-
-pcmcia () {
-    debug "pcmcia not implemented"
 }
 
 fs () {
     if grep -sqe  "^fs $1" $AUTO_KAC ; then
-	shift
         found "$@"
     fi
 }
@@ -271,7 +224,6 @@ fs () {
 
 module () {
     if grep -sqe  "^module $1" $AUTO_KAC ; then
-        shift 2
         found "$@"
     fi
 }
@@ -279,8 +231,7 @@ module () {
 
 #----------#
 
-
-drv () {
+lkddb () {
    [ "$1" = "pci"       ] && ( shift; pci	"$@" ; return )
    [ "$1" = "usb"       ] && ( shift; usb	"$@" ; return )
    [ "$1" = "ieee1394"  ] && ( shift; ieee1394	"$@" ; return )
@@ -289,15 +240,14 @@ drv () {
    [ "$1" = "acpi" 	] && ( shift; acpi 	"$@" ; return )
    [ "$1" = "pnp"  	] && ( shift; pnp 	"$@" ; return )
    [ "$1" = "serio" 	] && ( shift; serio 	"$@" ; return )
-   [ "$1" = "of"   	] && ( shift; of 	"$@" ; return )
-   [ "$1" = "vio"  	] && ( shift; vio 	"$@" ; return )
+   [ "$1" = "platform"  ] && ( shift; platform  "$@" ; return )
    [ "$1" = "fs"   	] && ( shift; fs 	"$@" ; return )
    [ "$1" = "module"    ] && ( shift; module    "$@" ; return )
 }
 
 comment 'Parsing configuration database....'
 comment '.... [please wait] ....'
-. lkddb.data
+. lkddb.list
 comment 'Main detection finished'
 #--- (Parse "autoconfig.rules") ---#
 

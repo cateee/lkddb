@@ -94,8 +94,15 @@ def parse_kbuild_lines(kerneldir, subdir, deps, src):
             pass
         elif (dep[:9] == '$(CONFIG_' and dep[-1] == ')') or (
 	      dep[:9] == '${CONFIG_' and dep[-1] == '}'):
-            d.add(dep[2:-1])
-	    modules[dep[2:-1]] = files
+	    i = dep[:-1].find(')', 2)
+	    if i > 0 and dep[i+1:i+10] == "$(CONFIG_":
+		d.add(dep[2:i])
+		modules[dep[2:i]] = files
+		d.add(dep[i+3:-1])
+		modules[dep[i+3:-1]] = files
+	    else:
+                d.add(dep[2:-1])
+	        modules[dep[2:-1]] = files
 	elif dep == "objs":
 	    parse_kbuild_alias(kerneldir, subdir, deps, rule, dep, files)
 	    continue
