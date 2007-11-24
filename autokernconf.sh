@@ -48,7 +48,7 @@
 #--- Configuration of kernautoconf ---#
 
 CONF_AUTO=config.auto
-AUTO_KAC=detection.list
+AUTO_KAC=kdetect.list
 
 IFSorig="$IFS"
 LANG=C
@@ -104,6 +104,10 @@ define () {
     eval "$1=$2"
 }
 # "${!conf}" is available only on bash2. Too new for us!
+raw_found () {
+    define "CONFIG_$1" y
+}
+
 found () {
     for conf in $(echo "$@" | sed -ne 's/^.*[ \t]*:: \(.*\)[ \t]*:: .*$/\1/p' - ) ; do
 	if [ "$(eval echo \$$conf)" != "y" ]; then
@@ -228,6 +232,16 @@ module () {
     fi
 }
 
+# ----
+parse_kdetect_list () {
+    for conf in $(grep "^config " $AUTO_KAC ) ; do
+	if [ "$conf" != "config" ] ; then
+	    raw_found $conf
+	fi
+    done	    
+}
+
+
 
 #----------#
 
@@ -244,6 +258,7 @@ lkddb () {
    [ "$1" = "fs"   	] && ( shift; fs 	"$@" ; return )
    [ "$1" = "module"    ] && ( shift; module    "$@" ; return )
 }
+parse_kdetect_list
 
 comment 'Parsing configuration database....'
 comment '.... [please wait] ....'
