@@ -28,7 +28,7 @@ sources += web-lkddb-gen.py
 
 tars := dists/lkddb-sources-${DATE}.tar.gz dists/lkddb-${DATE}.tar.gz dists/autokernconf-${DATE}.tar.gz
 
-all: lkddb.list count web-lkddb/index.html
+all: lkddb.list counts web-lkddb/index.html
 
 dist: lkddb.list dists/lkddb.list.gz dists/lkddb.list.bz2 ${tars}
 
@@ -78,9 +78,9 @@ webdist: ${webdistdep}
 	gzip -9 web-dist-${DATE}.tar
 
 clean:
-	rm -f count manifest *.pyc *.list lkddb.list.gz lkddb.list.bz2
+	rm -f count manifest *.pyc *.list lkddb.list.gz lkddb.list.bz2 counts config.auto
 
-mproper:
+mrproper:
 	rm -f *.ids
 
 manifest:
@@ -91,8 +91,8 @@ manifest:
 lkddb.list: ${lkddbgen}
 	./build-lkddb.py ${kdir}
 
-count: lkddb.list
-	@cat lkddb.list | grep -v '^#' | cut -d " " -f 2 | sort | uniq -c | sort -n > counts
+counts: lkddb.list
+	@cat lkddb.list | grep -v '^#' | cut -f 2 | sort | uniq -c | sort -n > counts
 	@echo >> counts
 	@echo "TOTAL: `wc -l < lkddb.list`" >> counts
 

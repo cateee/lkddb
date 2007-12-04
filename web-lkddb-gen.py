@@ -16,7 +16,7 @@ page = string.Template("""
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <link href="http://cateee.net/template/lkddb.css" rel="stylesheet" type="text/css" />
-  <title>CONFIG_$conf: $prompt</title>
+  <title>Linux Kernel Driver Database: CONFIG_$conf: $prompt</title>
 </head>
 
 <body xml:lang="en" lang="en">
@@ -36,7 +36,7 @@ page = string.Template("""
 
 <h2>General informations</h2>
 
-<p>$conf (CONFIG_$conf) is a Linux kernel configuration option of type '$type'.</p>
+<p>$conf (CONFIG_$conf) is a Linux kernel configuration option of type $type.</p>
 
 <h2>Help text</h2>
 
@@ -73,6 +73,37 @@ $lkddb
 
 <p><b>Pages under construction</b>, so use with care!</p>
 <p>These pages are automatic generated. Sources can be found in ...</p>
+
+<h2>Automatic links from google (and ads)</h2>
+<script type="text/javascript"><!--
+google_ad_client = "pub-8942588522142995";
+//lkddb-links
+google_ad_slot = "4558010422";
+google_ad_width = 728;
+google_ad_height = 15;
+//--></script>
+<script type="text/javascript"
+src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
+<p></p>
+
+<script type="text/javascript"><!--
+  google_ad_client = "pub-8942588522142995";
+  google_ad_width = 728;
+  google_ad_height = 90;
+  google_ad_format = "728x90_as";
+  google_ad_type = "text_image";
+  //2007-10-29: LKDDB
+  google_ad_channel = "8963309302";
+  google_color_bg = "FFFFCC";
+  //-->
+</script>
+
+<script type="text/javascript"
+  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+
 
 <div class="foot">
 <div class="hnav">
@@ -341,7 +372,6 @@ kernel_info(kerneldir)
 now = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 
 
-
 # -------------------
 
 def extract_key(dict, items):
@@ -394,14 +424,15 @@ for conf, data in config.iteritems():
 	    for val in data[t]:
 	    	if val[0] != "":
 		    prompt.append(" ".join(val))
-    out["type"]   = ", ".join(type)
+    out["type"]   = "'<i>" + "</i>,<i> ".join(type) + "</i>'"
     out["prompt"] = ", ".join(prompt)
+    out["type"] = out["type"].replace("tristate", "tristate (i.e. modulizable)")
 
     if "tristate" in type:
 	if lkddb_db.has_key(conf):
 	    lm = []
 	    for m in lkddb_db[conf].get("module", []):
-		lm.append(m[0])
+		lm.append(m.split("\t",1)[0])
 	    if lm:
 	        others += ("<li>Module built: <code>" +
 			     "</code>,<code> ".join(lm)  +
@@ -419,8 +450,10 @@ for conf, data in config.iteritems():
     if lkddb_lines.has_key(conf):
         s = ""
 	for line in lkddb_lines[conf]:
-	    line = config_re.sub(r'<a href="\1.html">CONFIG_\1</a>', line)
-	    s += "<li><code>" + line + "</code></li>\n"
+	    fields = line.split("\t:: ")
+	    fields[1] = config_re.sub(r'<a href="\1.html">CONFIG_\1</a>', fields[1])
+	    fields[2] = '<a href="http://lxr.linux.no/source/'+fields[2]+'">'+fields[2]+'</a>' 
+	    s += "<li><code>" + " :: ".join(fields) + "</code></li>\n"
     else:
         s = "<li>(None)</li>"
     out["lkddb"] = s
@@ -435,17 +468,17 @@ for conf, data in config.iteritems():
 		ss += "vendor: <code>" + v0 + "</code>"
 		key = v0
 		if ids.has_key(key):
-		    ss += ' ("' + ids[key] + '")'
+		    ss += ' ("<i>' + ids[key] + '</i>")'
 		if v1 != "....":
 		    ss += ", device: <code>" + v1 + "</code>"
 		    key += " " + v1
 		    if ids.has_key(key):
-			ss += ' ("' + ids[key]  + '")'
+			ss += ' ("<i>' + ids[key]  + '</i>")'
 		    if v2 != "...." and v3 != "....":
                         ss += ", subvendor, subdedvice: <code>" + v2 + "</code>, <code>" + v3 + "</code>"
 			key += " " + v2 + " " + v3
                         if ids.has_key(key):
-                            ss += ' ("' + ids[key] + '")'
+                            ss += ' ("<i>' + ids[key] + '</i>")'
 	    v0, v1, v2 = ( v4[0:2], v4[2:4], v4[4:6])
 	    if v0 != "..":
 		if ss != "":
@@ -453,17 +486,17 @@ for conf, data in config.iteritems():
                 ss += "class: <code>" + v0 + "</code>"
 		key = "C " + v0
                 if ids.has_key(key):
-                    ss += ' ("' + ids[key] + '")'
+                    ss += ' ("<i>' + ids[key] + '</i>")'
                 if v1 != "..":
                     ss += ", subclass: <code>" + v1 + "</code>"
 		    key += " " + v1
                     if ids.has_key(key):
-                        ss += ' ("' + ids[key]  + '")'
+                        ss += ' ("<i>' + ids[key]  + '</i>")'
                     if v2 != "..":
                         ss += ", prog-if: <code>" + v2 + "</code>"
 			key += " " + v2
                         if ids.has_key(key):
-                            ss += ' ("' + ids[key] + '")'
+                            ss += ' ("<i>' + ids[key] + '</i>")'
 
 	    if ss:
 		s += "<li>" + ss + "</li>\n"
@@ -480,12 +513,12 @@ for conf, data in config.iteritems():
                 ss += "vendor: <code>" + v0 + "</code>"
 		key = v0
                 if ids.has_key(key):
-                    ss += ' ("' + ids[key] + '")'
+                    ss += ' ("<i>' + ids[key] + '</i>")'
                 if v1 != "....":
                     ss += ", device: <code>" + v1 + "</code>"
 		    key += " " + v1
                     if ids.has_key(key):
-                        ss += ' ("' + ids[key]  + '")'
+                        ss += ' ("<i>' + ids[key]  + '</i>")'
 	    # interface ???????????
             v0, v1, v2 = ( v3[0:2], v3[2:4], v3[4:6])
             if v0 != "..":
@@ -494,17 +527,17 @@ for conf, data in config.iteritems():
                 ss += "device class: <code>" + v0 + "</code>"
                 key = "C " + v0
                 if ids.has_key(key):
-                    ss += ' ("' + ids[key] + '")'
+                    ss += ' ("<i>' + ids[key] + '</i>")'
                 if v1 != "..":
                     ss += ", device subclass: <code>" + v1 + "</code>"
 		    key += " " + v1
                     if ids.has_key(key):
-                        ss += ' ("' + ids[key]  + '")'
+                        ss += ' ("<i>' + ids[key]  + '</i>")'
                     if v2 != "..":
                         ss += ", device prog-if: <code>" + v2 + "</code>"
 			key += " " + v2
                         if ids.has_key(key):
-                            ss += ' ("' + ids[key] + '")'
+                            ss += ' ("<i>' + ids[key] + '</i>")'
 	    # interface class ???????????????
             if ss:
                 s += "<li>" + ss + "</li>\n"
@@ -518,7 +551,7 @@ for conf, data in config.iteritems():
 	    name = eisa[1:-1]
 	    s += "<li>" + name
 	    if ids.has_key(name):
-		s += " (" + ids[name] + ")"
+		s += " (<i>" + ids[name] + "</i>)"
 	    s += "</li>\n"
 	hardware += s + "</ul>\n\n"
 	sources += "<li>eisa.ids from kernel sources</li>\n"
@@ -533,7 +566,7 @@ for conf, data in config.iteritems():
                 ss += "manufacturer: <code>" + v0 + "</code>"
                 key = v0
                 if ids.has_key(key):
-                    ss += ' ("' + ids[key] + '")'
+                    ss += ' ("<i>' + ids[key] + '</i>")'
                 if v1 != "....":
                     ss += ", product: <code>" + v1 + "</code>"
                     key += " " + v1
@@ -568,7 +601,7 @@ index_page = string.Template("""
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <link href="http://cateee.net/template/lkddb.css" rel="stylesheet" type="text/css" />
-  <title>LKDDB '$key' index</title>
+  <title>Linux Kernel Driver Database: '$key' index</title>
 </head>
 
 <body xml:lang="en" lang="en">
