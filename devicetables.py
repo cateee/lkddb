@@ -600,6 +600,25 @@ def zorro_printer(dict, dep, filename):
 zorro.set_printer(zorro_printer)
 utils.register_scanner(zorro)
 
+# AGP, agp_device_ids drivers/char/agp/agp.h drivers/char/agp/
+
+agp = utils.scanner_array_of_struct("agp", "agp_device_ids")
+agp.set_fields(
+  ("device_id", "chipset", "chipset_name", "chipset_setup")
+)
+
+def agp_printer(dict, dep, filename):
+    v1 = value("id", dict)
+    if v1 == 0:
+        return
+    v1 = str_value(v1, 0xffff, 4)
+    v2 = strings("chipset_name", dict, '""')
+    utils.lkddb_add("agp\txxxx %s\t%s\t:: %s\t:: %s" %
+        (v0, v1, v2, dep, filename) )
+
+agp.set_printer(agp_printer)
+utils.register_scanner(agp)
+
 
 # I2C , i2c_driver include/linux/i2c.h
 

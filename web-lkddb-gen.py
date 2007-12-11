@@ -8,14 +8,15 @@ import sys, os, os.path, re, string, time, optparse
 
 db_dir = "."
 
-page = string.Template("""
+page = string.Template("""\
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <link href="http://cateee.net/template/lkddb.css" rel="stylesheet" type="text/css" />
+  <link rel="icon" type="image/png" href="http://cateee.net/cateee.png">
   <title>Linux Kernel Driver Database: CONFIG_$conf: $prompt</title>
 </head>
 
@@ -25,7 +26,7 @@ page = string.Template("""
 <p>
   Navigation:
   <a href="http://cateee.net/lkddb/">Linux Kernel Driver DataBase</a> -
-  <a href="index.html">LKDDb configuration index</a>
+  <a href="http://cateee.net/lkddb/web-lkddb/">web LKDDb index</a>
 </p>
 </div>
 
@@ -110,7 +111,7 @@ src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
 <p>
   Navigation:
   <a href="http://cateee.net/lkddb/">Linux Kernel Driver DataBase</a> -
-  <a href="index.html">LKDDb configuration index</a>
+  <a href="http://cateee.net/lkddb/web-lkddb/">web LKDDb index</a>
 </p>
 </div>
 
@@ -165,7 +166,7 @@ using kernel $kernel</p>
 # read list
 
 def read_list(dict, filename, level):
-    "read a .list file into a dictionary of dictionary of (nntil level)"
+    "read a .list file into a dictionary of dictionary of (until level)"
     f = open(filename)
     for line in f:
 	if line[0] == "#"  or  line.isspace():
@@ -193,6 +194,7 @@ def read_list(dict, filename, level):
 
 lkddb_lines = {}
 lkddb_db = {}
+lkddb_inverse = {}
 
 def parse_lkddb(filename):
     "read lkddb.list, constructing a CONFIG_ dict"
@@ -209,6 +211,9 @@ def parse_lkddb(filename):
 	    if config == "CONFIG__UNKNOW__":
 	        pass
 	    conf = config[7:]
+	    if not conf:
+		############# check and correct
+		continue
 	    if not lkddb_lines.has_key(conf):
 	        lkddb_lines[conf] = [line]
 	    else:
@@ -220,6 +225,12 @@ def parse_lkddb(filename):
 		    lkddb_db[conf][type] = [rest]
 		else:
 		    lkddb_db[conf][type].append(rest)
+	    if not lkddb_inverse.has_key(type):
+		lkddb_inverse[type] = {}
+	    if not lkddb_inverse[type].has_key(rest):
+		lkddb_inverse[type][rest] = [conf]
+	    else:
+		lkddb_inverse[type][rest].append(conf)
 
 # ---- parse Kconfig files ----
 
@@ -374,6 +385,17 @@ now = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 
 # -------------------
 
+escapemap = (
+	("<", "&lt;"),
+	(">", "&gt;"),
+	("&", "&amp;"))
+
+def escape(src):
+    for c, esc in escapemap:
+	src = src.replace(c, esc)
+    return src
+
+
 def extract_key(dict, items):
     for item in items:
 	if dict.has_key(item):
@@ -468,17 +490,17 @@ for conf, data in config.iteritems():
 		ss += "vendor: <code>" + v0 + "</code>"
 		key = v0
 		if ids.has_key(key):
-		    ss += ' ("<i>' + ids[key] + '</i>")'
+		    ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 		if v1 != "....":
 		    ss += ", device: <code>" + v1 + "</code>"
 		    key += " " + v1
 		    if ids.has_key(key):
-			ss += ' ("<i>' + ids[key]  + '</i>")'
+			ss += ' ("<i>' + escape(ids[key])  + '</i>")'
 		    if v2 != "...." and v3 != "....":
                         ss += ", subvendor, subdedvice: <code>" + v2 + "</code>, <code>" + v3 + "</code>"
 			key += " " + v2 + " " + v3
                         if ids.has_key(key):
-                            ss += ' ("<i>' + ids[key] + '</i>")'
+                            ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 	    v0, v1, v2 = ( v4[0:2], v4[2:4], v4[4:6])
 	    if v0 != "..":
 		if ss != "":
@@ -486,19 +508,26 @@ for conf, data in config.iteritems():
                 ss += "class: <code>" + v0 + "</code>"
 		key = "C " + v0
                 if ids.has_key(key):
-                    ss += ' ("<i>' + ids[key] + '</i>")'
+                    ss += ' ("<i>' + escape(ids[key]) + '</i>")'
                 if v1 != "..":
                     ss += ", subclass: <code>" + v1 + "</code>"
 		    key += " " + v1
                     if ids.has_key(key):
-                        ss += ' ("<i>' + ids[key]  + '</i>")'
+                        ss += ' ("<i>' + escape(ids[key]) + '</i>")'
                     if v2 != "..":
                         ss += ", prog-if: <code>" + v2 + "</code>"
 			key += " " + v2
                         if ids.has_key(key):
-                            ss += ' ("<i>' + ids[key] + '</i>")'
-
+                            ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 	    if ss:
+		c = lkddb_inverse['pci'].get(pci, [])
+		c.remove(conf)
+		cc = []
+		for i in c:
+		    cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
+		c = ", ".join(cc)
+		if c:
+		    ss += " (also defined in " + c + ")"
 		s += "<li>" + ss + "</li>\n"
 	hardware += s + "</ul>\n\n"
 	sources += '<li>The <a href="http://pciids.sourceforge.net/">Linux PCI ID Repository</a> (pci.ids)</li>\n'
@@ -513,12 +542,12 @@ for conf, data in config.iteritems():
                 ss += "vendor: <code>" + v0 + "</code>"
 		key = v0
                 if ids.has_key(key):
-                    ss += ' ("<i>' + ids[key] + '</i>")'
+                    ss += ' ("<i>' + escape(ids[key]) + '</i>")'
                 if v1 != "....":
                     ss += ", device: <code>" + v1 + "</code>"
 		    key += " " + v1
                     if ids.has_key(key):
-                        ss += ' ("<i>' + ids[key]  + '</i>")'
+                        ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 	    # interface ???????????
             v0, v1, v2 = ( v3[0:2], v3[2:4], v3[4:6])
             if v0 != "..":
@@ -527,19 +556,27 @@ for conf, data in config.iteritems():
                 ss += "device class: <code>" + v0 + "</code>"
                 key = "C " + v0
                 if ids.has_key(key):
-                    ss += ' ("<i>' + ids[key] + '</i>")'
+                    ss += ' ("<i>' + escape(ids[key]) + '</i>")'
                 if v1 != "..":
                     ss += ", device subclass: <code>" + v1 + "</code>"
 		    key += " " + v1
                     if ids.has_key(key):
-                        ss += ' ("<i>' + ids[key]  + '</i>")'
+                        ss += ' ("<i>' + escape(ids[key]) + '</i>")'
                     if v2 != "..":
                         ss += ", device prog-if: <code>" + v2 + "</code>"
 			key += " " + v2
                         if ids.has_key(key):
-                            ss += ' ("<i>' + ids[key] + '</i>")'
+                            ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 	    # interface class ???????????????
             if ss:
+                c = lkddb_inverse['usb'].get(usb, [])
+                c.remove(conf)
+                cc = []
+                for i in c:
+                    cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
+                c = ", ".join(cc)
+                if c:
+                    ss += " (also defined in " + c + ")"
                 s += "<li>" + ss + "</li>\n"
         hardware += s + "</ul>\n\n"
         sources += '<li>The <a href="http://www.linux-usb.org/">USB Vendor/Device IDs list</a> (usb.ids)</li>\n'
@@ -549,9 +586,17 @@ for conf, data in config.iteritems():
 	ids = dbs.get("eisa_ids", {})
 	for eisa in lkddb_db[conf]["eisa"]:
 	    name = eisa[1:-1]
-	    s += "<li>" + name
+	    s += "<li>" + escape(name)
 	    if ids.has_key(name):
-		s += " (<i>" + ids[name] + "</i>)"
+		s += " (<i>" + escape(ids[name]) + "</i>)"
+            c = lkddb_inverse['eisa'].get(eisa, [])
+	    c.remove(conf)
+            cc = []
+            for i in c:
+                cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
+            c = ", ".join(cc)
+            if c:
+                s += " (also defined in " + c + ")"
 	    s += "</li>\n"
 	hardware += s + "</ul>\n\n"
 	sources += "<li>eisa.ids from kernel sources</li>\n"
@@ -566,11 +611,22 @@ for conf, data in config.iteritems():
                 ss += "manufacturer: <code>" + v0 + "</code>"
                 key = v0
                 if ids.has_key(key):
-                    ss += ' ("<i>' + ids[key] + '</i>")'
+                    ss += ' ("<i>' + escape(ids[key]) + '</i>")'
                 if v1 != "....":
                     ss += ", product: <code>" + v1 + "</code>"
                     key += " " + v1
-
+            if ss:
+                c = lkddb_inverse['zorro'].get(zorro, [])
+		c.remove(conf)
+                cc = []
+                for i in c:
+                    cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
+                c = ", ".join(cc)
+                if c:
+                    ss += " (also defined in " + c + ")"
+                s += "<li>" + ss + "</li>\n"
+	hardware += s + "</ul>\n\n"
+	sources += "<li>zorro.ids from kernel sources</li>\n"
 
     out["others"] = others
     out["hardware"] = hardware
@@ -593,7 +649,7 @@ for conf in config.keys():
 	hash[c].append(conf)
 
 
-index_page = string.Template("""
+index_page = string.Template("""\
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -610,7 +666,7 @@ index_page = string.Template("""
 <p>
   Navigation:
   <a href="http://cateee.net/lkddb/">Linux Kernel Driver DataBase</a> -
-  <a href="index.html">LKDDb configuration index</a>
+  <a href="http://cateee.net/lkddb/web-lkddb/">web LKDDb index</a>
 </p>
 </div>
 
@@ -627,7 +683,7 @@ $list
 <p>
   Navigation:
   <a href="http://cateee.net/lkddb/">Linux Kernel Driver DataBase</a> -
-  <a href="index.html">LKDDb configuration index</a>
+  <a href="http://cateee.net/lkddb/web-lkddb/">web LKDDb index</a>
 </p>
 </div>
 

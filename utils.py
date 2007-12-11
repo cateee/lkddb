@@ -116,7 +116,7 @@ class scanner:
 class scanner_array_of_struct(scanner):
     "an array of device structures"
     def __init__(self, name, struct_name):
-	regex = r"\b%s\s+\w+\s*\w*\s*\[\d*\]\s*\w*\s*=\s*\{(.*?)\}\w*;" % struct_name
+	regex = r"\b%s\s+\w+\s*\w*\s*\[[^];]*\]\s*\w*\s*=\s*\{(.*?)\}\s*;" % struct_name
 	scanner.__init__(self, name, regex)
 	self.splitter = split_structs
 
