@@ -16,7 +16,7 @@ page = string.Template("""\
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <link href="http://cateee.net/template/lkddb.css" rel="stylesheet" type="text/css" />
-  <link rel="icon" type="image/png" href="http://cateee.net/cateee.png">
+  <link rel="icon" type="image/png" href="http://cateee.net/cateee.png" />
   <title>Linux Kernel Driver Database: CONFIG_$conf: $prompt</title>
 </head>
 
@@ -32,8 +32,21 @@ page = string.Template("""\
 
 <h1>CONFIG_$conf: $prompt</h1>
 
-<p>Web version of
-<a href="http://cateee.net/lkddb/">Linux Kernel Driver DataBase</a></p>
+<script type="text/javascript"><!--
+  google_ad_client = "pub-8942588522142995";
+  google_ad_width = 728;
+  google_ad_height = 90;
+  google_ad_format = "728x90_as";
+  google_ad_type = "text_image";
+  //2007-10-29: LKDDB
+  google_ad_channel = "8963309302";
+  google_color_bg = "FFFFCC";
+  //-->
+</script>
+
+<script type="text/javascript"
+  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
 
 <h2>General informations</h2>
 
@@ -57,7 +70,7 @@ $hardware
 <h3>LKDDb</h3>
 
 <p>Raw data from LKDDb:</p>
-<ul>
+<ul class="dblist">
 $lkddb
 </ul>
 
@@ -88,7 +101,6 @@ src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
 </script>
 
 <p></p>
-
 <script type="text/javascript"><!--
   google_ad_client = "pub-8942588522142995";
   google_ad_width = 728;
@@ -413,6 +425,7 @@ dir = "web-lkddb/"
 
 config_re = re.compile(r"CONFIG_([^_]\w*)")
 help_local_re = re.compile(r"<file:([^>]*)>")
+help_remote_re = re.compile(r"<(http:[^>]*)>")
 
 if not os.path.isdir(dir):
     print "could not find in '.' the subdir", dir
@@ -467,6 +480,7 @@ for conf, data in config.iteritems():
     else:
         s = help[0]
     s = help_local_re.sub(r'<a href="http://lxr.linux.no/source/\1">\1</a>', s)
+    s = help_remote_re.sub(r'<a href="\1">\1</a>', s)
     out["help"] = s.strip().replace("\n\n", "</p>\n\n<p>")
     
     if lkddb_lines.has_key(conf):
@@ -481,7 +495,7 @@ for conf, data in config.iteritems():
     out["lkddb"] = s
 
     if lkddb_db.has_key(conf)  and  lkddb_db[conf].has_key("pci"):
-	s = "<h3>PCI</h3>\n<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>\n<ul>\n"
+	s = '<h3>PCI</h3>\n<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>\n<ul class="dblist">\n'
 	ids = dbs.get("pci_ids", {})
 	for pci in lkddb_db[conf]["pci"]:
 	    ss = ""
@@ -520,20 +534,19 @@ for conf, data in config.iteritems():
                         if ids.has_key(key):
                             ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 	    if ss:
-		c = lkddb_inverse['pci'].get(pci, [])
-		c.remove(conf)
 		cc = []
-		for i in c:
+		for i in lkddb_inverse['pci'].get(pci, []):
+		    if i == conf:
+			continue
 		    cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
-		c = ", ".join(cc)
-		if c:
-		    ss += " (also defined in " + c + ")"
+		if cc:
+		    ss += "; (also in " + ", ".join(cc) + ")"
 		s += "<li>" + ss + "</li>\n"
 	hardware += s + "</ul>\n\n"
 	sources += '<li>The <a href="http://pciids.sourceforge.net/">Linux PCI ID Repository</a> (pci.ids)</li>\n'
 
     if lkddb_db.has_key(conf)  and  lkddb_db[conf].has_key("usb"):
-        s = "<h3>USB</h3>\n<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>\n<ul>\n"
+        s = '<h3>USB</h3>\n<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>\n<ul class="dblist">\n'
 	ids = dbs.get("usb_ids", {})
         for usb in lkddb_db[conf]["usb"]:
             ss = ""
@@ -569,40 +582,38 @@ for conf, data in config.iteritems():
                             ss += ' ("<i>' + escape(ids[key]) + '</i>")'
 	    # interface class ???????????????
             if ss:
-                c = lkddb_inverse['usb'].get(usb, [])
-                c.remove(conf)
                 cc = []
-                for i in c:
+                for i in lkddb_inverse['usb'].get(usb, []):
+                    if i == conf:
+                        continue
                     cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
-                c = ", ".join(cc)
-                if c:
-                    ss += " (also defined in " + c + ")"
+                if cc:
+                    ss += "; (also in " + ", ".join(cc) + ")"
                 s += "<li>" + ss + "</li>\n"
         hardware += s + "</ul>\n\n"
         sources += '<li>The <a href="http://www.linux-usb.org/">USB Vendor/Device IDs list</a> (usb.ids)</li>\n'
 
     if lkddb_db.has_key(conf)  and  lkddb_db[conf].has_key("eisa"):
-	s = "<h3>EISA</h3>\n<p>ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>\n<ul>\n"
+	s = '<h3>EISA</h3>\n<p>ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>\n<ul class="dblist">\n'
 	ids = dbs.get("eisa_ids", {})
 	for eisa in lkddb_db[conf]["eisa"]:
 	    name = eisa[1:-1]
 	    s += "<li>" + escape(name)
 	    if ids.has_key(name):
 		s += " (<i>" + escape(ids[name]) + "</i>)"
-            c = lkddb_inverse['eisa'].get(eisa, [])
-	    c.remove(conf)
             cc = []
-            for i in c:
+            for i in lkddb_inverse['eisa'].get(eisa, []):
+		if i == conf:
+		    continue
                 cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
-            c = ", ".join(cc)
-            if c:
-                s += " (also defined in " + c + ")"
+            if cc:
+                s += "; (also defined in " + ", ".join(cc) + ")"
 	    s += "</li>\n"
 	hardware += s + "</ul>\n\n"
 	sources += "<li>eisa.ids from kernel sources</li>\n"
 
     if lkddb_db.has_key(conf)  and  lkddb_db[conf].has_key("zorro"):
-        s = "<h3>Zorro</h3>\n<p>ID (from LKDDb) and names (from zorro.ids) of recognized devices:</p>\n<ul>\n"
+        s = '<h3>Zorro</h3>\n<p>ID (from LKDDb) and names (from zorro.ids) of recognized devices:</p>\n<ul class="dblist">\n'
         ids = dbs.get("zorro_ids", {})
         for zorro in lkddb_db[conf]["zorro"]:
             ss = ""
@@ -616,14 +627,13 @@ for conf, data in config.iteritems():
                     ss += ", product: <code>" + v1 + "</code>"
                     key += " " + v1
             if ss:
-                c = lkddb_inverse['zorro'].get(zorro, [])
-		c.remove(conf)
                 cc = []
-                for i in c:
+                for i in lkddb_inverse['zorro'].get(zorro, []):
+                    if i == conf:
+                        continue
                     cc.append('<a href="'+i+'.html">CONFIG_'+i+'</a>')
-                c = ", ".join(cc)
-                if c:
-                    ss += " (also defined in " + c + ")"
+                if cc:
+                    ss += "; (also in " + ", ".join(cc) + ")"
                 s += "<li>" + ss + "</li>\n"
 	hardware += s + "</ul>\n\n"
 	sources += "<li>zorro.ids from kernel sources</li>\n"
@@ -657,6 +667,7 @@ index_page = string.Template("""\
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
   <link href="http://cateee.net/template/lkddb.css" rel="stylesheet" type="text/css" />
+  <link rel="icon" type="image/png" href="http://cateee.net/cateee.png" />
   <title>Linux Kernel Driver Database: '$key' index</title>
 </head>
 
