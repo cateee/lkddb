@@ -91,7 +91,8 @@ if len(args) > 1:
     dirs = args[1:]
 else:
     dirs = ("arch", "block", "crypto", "drivers", "fs", "init",
-                "ipc", "kernel", "lib", "mm", "net", "security", "sound")
+                "ipc", "kernel", "lib", "mm", "net", "security",
+		"sound", "virt")
 
 print "doing the directory %s and the sub-dirs: %s" % (
 	kerneldir, ", ".join(dirs) )
