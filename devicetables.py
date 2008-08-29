@@ -151,7 +151,10 @@ CCW_DEVICE_ID_MATCH_DEVICE_TYPE  = 0x04
 CCW_DEVICE_ID_MATCH_DEVICE_MODEL = 0x08
 
 def ccw_printer(dict, dep, filename):
-    match = value("match_flags", dict)
+    try:
+        match = value("match_flags", dict)
+    except:
+        return
     if not match:
         return
     v0 = "...." ; v1 = ".."

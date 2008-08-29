@@ -1,6 +1,7 @@
 # configuration #
 
-kdir ?= ~/kernel/6,v2.6/linux-2.6
+kdir ?= ~/kernel/linux/
+DESTDIR = ~/cateee.net
 
 # end of configuration #
 
@@ -76,6 +77,10 @@ webdist: ${webdistdep}
 	cp -rp web-lkddb/ web-dist/
 	tar cf web-dist-${DATE}.tar web-dist
 	gzip -9 web-dist-${DATE}.tar
+
+webinst: webdist
+	cp -pur web-dist/* $(DESTDIR)/sources/
+	cp -pur web-lkddb/* $(DESTDIR)/lkddb/web-lkddb/
 
 clean:
 	rm -f count manifest *.pyc *.list lkddb.list.gz lkddb.list.bz2 counts config.auto
