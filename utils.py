@@ -1,326 +1,295 @@
 #!/usr/bin/python
-#:  utils.py : generic support for lkddb generator modules
+#:  utils.py : utilities and data exchange infrastructure for lkddb
 #
-#  Copyright (c) 2000,2001,2007  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007,2008  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
 
+import sys, os, time, sqlite3
 
-import sys, re
+#
+# globals variables
+#
+
+# starting cwd
+program_cwd    = None
+# kernel directory and their lenght
+kerneldir      = None
+# actual kernel version in form of: 0x020627 or -1 for HEAD
+version_number = None
+version_string = None
+# connector of sqlite database
+conn	       = None
+# options
+options        = None
+# actual file parsed (for debug message)
+filename       = None
+
+
+start_time = None
+
+def init(options_, logfile_, kerneldir_):
+    global start_time, options, kerneldir
+    options       = options_
+    kerneldir     = kerneldir_
+
+    start_time = time.time()
+
+    log_init(options.verbose, logfile_)
+    db_init(options.dbfile)
+    devices_init()
+
+#
+# logs
+#
 
 _logfile = sys.stdout
-_verbose = False
+_verbose = 0
 
 def log_init(verbose=1, logfile=sys.stdout):
     global _verbose, _logfile
     _verbose = verbose
     _logfile = logfile
 
-def log(str):
+def log(message):
     if _verbose:
-        _logfile.write(str + "\n")
+        _logfile.write("%3.1f: " % (time.time()-start_time) + message + "\n")
 
-def log_extra(str):
+def log_extra(message):
     if _verbose > 1:
-        _logfile.write(str + "\n")
+        _logfile.write(message + "\n")
 
+def die(errcode, message):
+    sys.stderr.write(message + "\n")
+    sys.exit(errcode)
 
+#
+# Temporary database: 'devices' and 'db'
+#
 
-# raw device list. format: -> scanner[class instance], data[scanner dependent], dep[set], filename[string]
-devices = []
+devices = []  # []-> scanner[class instance], data[scanner dependent], dep[set], filename[string]
+db = []       # []-> line[string]
 
-# device list in the final form (but unsorted)
-db = []
+def devices_init():
+    global devices, db
+    devices = []
+    db = []
 
-def add_device(scanner, data, dep, filename):
+def devices_add(scanner, data, dep, filename):
     "add raw device data"
     devices.append((scanner, data, dep, filename))
 
-def lkddb_add(string):
-    "add a complete line to the lkddb"
-    db.append("lkddb\t" + string + "\n") 
 
-def lkddb_print(output_filename, header):
-    "convert the raw data into full data and print it"
-    for scanner, res, dep, filename in devices:
-        dep = " ".join(dep)
-	log_extra("# Checking device: %s, %s, %s # %s" %
-	    (scanner.name, res, dep, filename))
-	scanner.printer(res, dep, filename)
-    db.sort()
-    for i in xrange(len(db)-2, 0, -1):
-        if db[i] == db[i+1]:
-	    del db[i+1]
-    f = open(output_filename, "w")
-    f.write(header+"\n")
-    f.writelines(db)
-    f.close()
-
-def split_funct(block):
-    return split_structs("{" + block + "}")
-
-def split_structs(block):
-    "from {a, b, c}, {d,e,f} ... to [[a,b,c], [d,e,f], ...]"
+def lkddb_build():
+    "convert the raw data into db data"
+    global filename, c
     lines = []
-    level = 0
-    open = 0
-    params = []
-    sparam = 0
-    in_str = False
-    lbm = len(block)-1
-    i = -1
-    while (i < lbm):
-	i += 1
-        c = block[i]
-        if c == '"':
-            in_str = not in_str
+    for scanner, res, dep, filename in devices:
+	depstr = list(dep)
+	depstr.sort()
+	depstr = " ".join(depstr)
+	dep = map(get_config_id, dep)
+	filename_id = get_filename_id(filename)
+	dep_id = get_dep_id(dep)
+	line = scanner.formatter(res)
+	if not line:
+	    continue
+        line_txt = "lkddb\t" + scanner.name + "\t" + scanner.format % line  + (
+            "\t:: %s\t:: %s\n" % (depstr, filename) )
+ 	set_line(scanner, line, dep_id, filename_id, line_txt)
+	lines.append(line_txt)
+    lines.sort()
+    lines2 = []
+    old = ""
+    for line in lines:
+        if line == old:
             continue
-        if in_str:
-	    if c == '\\':
-		i += 1
-            continue
-        if c == "{":
-            level += 1
-            if level == 1:
-                open = i+1
-                sparam = i+1
-                params = []
-        elif level == 1  and  c == ",":
-            params.append(block[sparam:i])
-            sparam = i+1
-        elif c == "}":
-            level -= 1
-            if level == 0:
-                params.append(block[sparam:i])
-                lines.append(params[:])
-    return lines
+        old = line
+        lines2.append(line)
+    if options.lkddb_list:
+        f = open(os.path.join(program_cwd, options.lkddb_list), "w")
+        f.writelines(lines2)
+        f.close()
 
+#
+# lkddb sqlite support
+#
 
-class scanner:
-    "container of scanner data and procedures"
-    def __init__(self, name, regex):
-	self.name = name
-	self.regex = re.compile(regex, re.DOTALL)
-    def check(self):
-	"check consistency"
-	if self.splitter == None:
-	    return False
-        if self.printer == None:
-	    return False
-	return True
-    def set_fields(self, field_list):
-	"set field name of a device 'line'"
-        self.fields = field_list
-    def set_printer(self, printer):
-        self.printer = printer
+def get_config_id(config):
+    row = configs.get(config, None)
+    if row:
+	if version_number > 0 and (version_number < row[1] or version_number > row[2]):
+	    c = conn.cursor()
+	    c.execute("INSERT INTO configs (config_id, min_ver, max_ver) VALUES (?,?,?);"
+		(row[0], min(version_number, min_ver), max(version_number, max_ver)))
+	    conn.commit()
+        return row[0]
+    c = conn.cursor()
+    c.execute("INSERT INTO configs (config, min_ver, max_ver) VALUES (?,?,?);",
+		(config, version_number, version_number))
+    row = (c.execute("SELECT config_id FROM configs WHERE config=?;",
+		(config,)).fetchone()[0] , version_number, version_number)
+    conn.commit()
+    configs[config] = row
+    return row[0]
 
-class scanner_array_of_struct(scanner):
-    "an array of device structures"
-    def __init__(self, name, struct_name):
-	regex = r"\b%s\s+\w+\s*\w*\s*\[[^];]*\]\s*\w*\s*=\s*\{(.*?)\}\s*;" % struct_name
-	scanner.__init__(self, name, regex)
-	self.splitter = split_structs
-
-class scanner_struct(scanner):
-    "a single device structure"
-    def __init__(self, name, struct_name):
-        regex = r"\b%s\s+\w+\s*\w*\s*\w*\s*=\s*(\{.*?\})\w*;" % struct_name
-        scanner.__init__(self, name, regex)
-	self.splitter = split_structs
-
-class scanner_funct(scanner):
-    "a function call"
-    def __init__(self, name, funct_name):
-        regex = r"\b%s\s*\(([^()]*(?:\([^()]*\))?[^()]*(?:\([^()]*\))?[^()]*)\)" % funct_name
-        scanner.__init__(self, name, regex)
-        self.splitter = split_funct
-
-
-
-scanners = []
-def register_scanner(scanner):
-    assert scanner.check() == True, "Not all field in scanner '%s' are set" % scanner.name
-    scanners.append(scanner)
-
-
-# Unwind some arrays (i.e. in pcmcia_device_id):
-unwind_array = ("n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9")
-
-# --------------------
-
-nullstring_re = re.compile(r"\([ \t]*void[ \t]*\*[ \t]*\)[ \t]*0")
-
-tri_re  = re.compile(r"\(\s*\(([^\)]+)\)\s*\?([^:]*):([^\)]*)\)")
-tri_re2 = re.compile(r"\(\s*([^\(\)\?]+)\?([^:]*):([^\)]*)\)")
-tri_re3 = re.compile(r"\s+([-0-9A-Za-z]+)\s*\?([^:]*):\s*\(([^\)]*)\)")
-
-def value_expand_tri(val):
-    val = val.replace("(unsigned)", "")
-    for r in (tri_re, tri_re2, tri_re3):
-        m = r.search(val)
-        while ( m != None):
-	    cond, t, f = m.groups()
-	    try:
-	      if eval(cond):
-		if t:
-	            res = t
-		else:
-		    res = cond
-	      else:
-	        res = f
-	    except:
-		print "val:", val
-		print "match:", cond, "---", t, "----", f
-		raise
-	    val = val[:m.start()] + res + val[m.end():]
-	    m = r.search(val)
-    return eval(val)
-    
-
-def value(field, dictionary):
-    if dictionary.has_key(field):
-	val = dictionary[field]
-	if val[0] == "{"  and  val[-1] == "}":
-	    val = val[1:-1].strip()
-	try:
-	    ret = eval(val)
-	except SyntaxError:
-	    if val[-2:] == "UL" or  val[-2:] == "ul":
-		return eval(val[:-2])
-	    elif val.find("?") >=0:
-		return value_expand_tri(val)
-	    elif val.find("=") >=0:
-		log("input people smoke!, %s in '%s'" % (field, dictionary))
-		return eval(val[val.find("=")+1:])
-	    else:
-		print "value():", field, dictionary
-		print "'%s'" % val
-		raise
-	except NameError:
-	    log("value error: expected number in field %s from %s" % (field, dictionary))
-	    return -1
-	except:
-	    print "eval error", field, val, dictionary
-	    raise
-
-	try:
-	    return int(ret)
-        except ValueError:
-            if len(ret) == 1:
-                # ('X') --eval()--> X --> ord(X)
-                return ord(ret)
-            else:
-                log("str_value(): Numeric value of '%s'" % ret)
-                raise
-    else:
-        return 0
-
-def str_value(val, any, deep):
-    "convert numeric 'val' in a string.  If 'any', then write the mask" 
-    ret = "." * deep
-    if any < 0  and  val < 0:
-	return ret
-    elif val == any:
-	return ret
-    form = "%%%u.%ux" % (deep, deep)
-    try:
-        ret = form % val
-    except TypeError:
-	if val[0] == "'"  and  val[2] == "'"  and  len(val) == 3:
-	    ret = form % ord(val[1])
+def get_filename_id(filename):
+    ret = filenames.get(filename, None)
+    if ret:
+        return ret
+    c = conn.cursor()
+    c.execute("INSERT INTO filenames (filename) VALUES (?);", (filename,))
+    ret = c.execute("SELECT filename_id FROM filenames WHERE filename=?;",
+                (filename,)).fetchone()[0]
+    conn.commit()
+    filenames[filename] = ret
     return ret
 
 
-def mask(v, m, len=6):
-    ret = ""
-    for i in range(len):
-        if m[i] == "0":
-            ret += "."
-        elif m[i] == "f":
-            ret += v[i]
-        else:
-	    print "Unknow mask", v, m, len
-	    raise "KACerror"
+dependencies = {}
+rdependencies = {}
+max_dep = -1
+def get_dep_id(deps):
+    global max_dep
+    c = conn.cursor()
+    if not dependencies:
+	for dep_id, config_id in c.execute(
+		"SELECT dep_id, config_id FROM deps;"):
+	    old = dependencies.setdefault(dep_id, [])
+	    old.append(config_id)
+	    dependencies[dep_id] = old
+	    if dep_id > max_dep:
+		max_dep = dep_id
+	for dep_id, dep_list in dependencies.iteritems():
+	    dep_list.sort()
+	    rdependencies.setdefault(tuple(dep_list), dep_id)
+    deps.sort()
+    deps = tuple(deps)
+    ret = rdependencies.get(deps)
+    if ret:
+	return ret
+    max_dep += 1
+    for d in deps:
+	c.execute("INSERT INTO deps (dep_id, config_id) VALUES (?,?)", (max_dep, d))
+    rdependencies[deps] = max_dep
+    return max_dep
+
+
+def set_line(scanner, line, dep_id, filename_id, line_txt):
+    c = conn.cursor()
+
+    row = c.execute(scanner.select_id, line).fetchone()
+    if row:
+	id = row[0]
+	row = c.execute(
+"SELECT line_id, dep_id, min_ver, max_ver FROM lines " +
+"WHERE scanner_id=? AND id=? AND filename_id=?;",
+		(scanner.scanner_id, id, filename_id)).fetchone()
+	if row:
+	    line_id, dep_id2, min_ver, max_ver = row
+	    changed = 0
+	    if version_number < -1  and  max_ver != -1:
+		max_ver = -1
+		changed = 2
+            if version_number > 0  and  max_ver < version_number:
+                max_ver = version_number
+                changed = 2
+	    if version_number > 0  and  min_ver > version_number:
+		min_ver = version_number
+		changed = 1
+	    if dep_id2 != dep_id:
+		if max_ver >= 0  and  changed == 2:
+		    dep_id2 = dep_id
+		    changed = 1
+	    if changed:
+		c.execute(
+'INSERT OR REPLACE INTO lines (line_id, dep_id, min_ver, max_ver, line) VALUES (?,?,?,?,?)',
+		    (line_id, dep_id2, min_ver, max_ver, line_txt))
+		conn.commit()
+	    return
+    else:
+        c.execute(scanner.insert_id, line)
+        id = c.execute(scanner.select_id, line).fetchone()[0]
+    c.execute("INSERT INTO lines (scanner_id, id, dep_id, filename_id, min_ver, max_ver, line) "+
+	"VALUES (?,?,?,?,?,?,?);",
+	(scanner.scanner_id, id, dep_id, filename_id, version_number, version_number, line_txt))
+    conn.commit()
+
+
+def new_scanner_table(name, format, db_attrs):
+    c = conn.cursor()
+    c.execute("CREATE TABLE IF NOT EXISTS " + name + "s (" +
+        name + "_id  INTEGER PRIMARY KEY, " +
+            " TEXT, ".join(db_attrs) + " TEXT);")
+
+    c.execute("INSERT OR IGNORE INTO scanners (name, db_attrs, format) VALUES (?,?,?);",
+		(name, ",".join(db_attrs), format))
+    ret = c.execute("SELECT scanner_id FROM scanners WHERE name=?;",
+                    (name,)).fetchone()[0]
+    conn.commit()
     return ret
 
-def chars(field, dictionary, lenght=4, default="...."):
-    if dictionary.has_key(field):
-        v = dictionary[field]
-	l = len(v)
-	if l == 2:
-	    return default
-	if v[0] == '"'  and  v[-1] == '"'  and  len(v) == lenght+2:
-            return v[1:-1]
-	else:
-            print "Error on assumptions in translating chars:", field, dictionary, lenght, default, v
-            raise "KACerror"
-    else:
-	return default
 
-char_cast_re = re.compile(r"\(\s*char\s*\*\s*\)\s*", re.DOTALL)
+def db_init(dbfile):
+    global conn, configs, filenames
+    conn = sqlite3.connect(dbfile)
+    c = conn.cursor()
+    c.execute("CREATE TABLE IF NOT EXISTS version (" +
+	"type       INTEGER UNIQUE, " +  # 0 : lkddb, 1 : kernel
+	"min_ver    INTEGER DEFAULT 16777215, " +
+    	"max_ver    INTEGER DEFAULT 0, " +
+    	"head_tag   TEXT DEFAULT '(none)' ); ")
 
-def strings(field, dictionary, default='""'):
-    if dictionary.has_key(field):
-        v = dictionary[field]
-	if v[0] == '(':
-	    if v[-1] == ')':
-	        v = v[1:-1].strip()
-	    else:
-		v = char_cast_re.sub("", v).strip()
-	if v[0] == '{'  and  v[-1] == '}':
-	    v = v[1:-1].strip()
-        if v[0] == '"'  and  v[-1] == '"':
-            return v.replace("\t", " ")
-        else:
-	    m = field_init_re.match(v)
-	    if m:
-		field, value = m.groups()
-		return strings("recursive", {"recursive": value}, default)
-	    m = char_cast_re.search(v)
+    c.execute("CREATE TABLE IF NOT EXISTS scanners (" +
+	"scanner_id INTEGER PRIMARY KEY, " +
+	"name	    TEXT UNIQUE, " +
+	"db_attrs   TEXT, " +
+	"format     TEXT); ")
 
-            print "Error on assumptions in translating strings:", field, dictionary, default, v
-	    return default
-    else:
-	return default
+    c.execute("CREATE TABLE IF NOT EXISTS filenames (" +
+	"filename_id INTEGER PRIMARY KEY, " +
+	"filename    TEXT UNIQUE );")
+    c.execute("CREATE TABLE IF NOT EXISTS configs (" +
+        "config_id  INTEGER PRIMARY KEY, " +
+	"config	    TEXT UNIQUE, " +
+        "min_ver    INTEGER DEFAULT 16777215, " +
+        "max_ver    INTEGER DEFAULT 0 ); ")
+    c.execute("CREATE TABLE IF NOT EXISTS lines (" +
+	"line_id     INTEGER PRIMARY KEY, " +
+        "scanner_id  INTEGER, " +
+	"id          INTEGER, " +
+        "dep_id      INTEGER, " +
+        "filename_id INTEGER, " +
+        "min_ver     INTEGER DEFAULT 16777215, " +
+        "max_ver     INTEGER DEFAULT 0, " +
+	"line	     TXT, " +
+        "UNIQUE(scanner_id, id, filename_id) );")
 
+    c.execute("CREATE TABLE IF NOT EXISTS deps (" +
+        "dep_id     INTEGER, " +
+        "config_id  INTEGER ); ")
 
-# ---------------------------------
+    c.execute("CREATE TABLE IF NOT EXISTS kkeys (" +
+        "kkey_id   INTEGER PRIMARY KEY, " +
+        "key       TEXT, " +
+        "UNIQUE(key) );")
+    c.execute("CREATE TABLE IF NOT EXISTS kitems (" +
+	"kitem_id   INTEGER PRIMARY KEY, " +
+        "config_id  INTEGER, " +
+	"filename_id INTEGER, " +
+	"kkey_type  INTEGER, " +
+	"descr      TEXT, " +
+	"depends    TEXT, " +
+	"help	    TEXT, " +
+	"UNIQUE(config_id, filename_id, kkey_type, descr) );")
 
+    conn.commit()
 
-field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
-subfield_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)(\.[A-Za-z_0-9]*\s*=\s*.*)$", re.DOTALL)
-
-def parse_struct(scanner, fields, line, dep, filename, ret=False):
-    "convert a struct (array of parameters) into a dictionary"
-    #print "line--", filename, line
-    res = {}
-    nparam = 0
-    for param in line:
-        param = param.replace("\n", " ").strip()
-        if not param:
-            continue
-        elif param[0] == ".":
-	    m = field_init_re.match(param)
-	    if m:
-                field, value = m.groups()
-	    else:
-		m = subfield_re.match(param)
-		if m:
-		    field, value = m.groups()
-		    value = "{" + value + "}"
-		else:
-                    print "parse_line(): ", filename, line, param
-                    assert 0, "not expected syntax"
-            res[field] = value
-        else:
-            try:
-                res[fields[nparam]] = param
-            except IndexError:
-                print "Error: index error", table.name, fields, line, filename
-                raise
-        nparam += 1
-    if res:
-        if ret:
-            return res
-        # Maybe now we can call table.writer
-        add_device(scanner, res, dep, filename)
+    configs = {}
+    for config_id, config, min_ver, max_ver in  c.execute(
+            "SELECT config_id, config, min_ver, max_ver FROM configs;"):
+        configs[config] = (config_id, min_ver, max_ver)
+    filenames = {}
+    for filename_id, filename in c.execute(
+            "SELECT filename_id, filename FROM filenames;"):
+        filenames[filename] = filename_id
 

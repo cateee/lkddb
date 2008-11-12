@@ -1,9 +1,13 @@
 # configuration #
 
 kdir ?= ~/kernel/linux/
+
 DESTDIR = ~/cateee.net
+DESTSRC = ${DESTDIR}/sources
+DESTWEB = ${DESTDIR}/lkddb
 
 # end of configuration #
+
 
 DATE = $(shell date --rfc-3339=date)
 
@@ -31,8 +35,17 @@ tars := dists/lkddb-sources-${DATE}.tar.gz dists/lkddb-${DATE}.tar.gz dists/auto
 
 all: lkddb.list counts web-lkddb/index.html
 
-dist: lkddb.list dists/lkddb.list.gz dists/lkddb.list.bz2 ${tars}
+dist: dists/lkddb.list.gz dists/lkddb.list.bz2 ${tars} ${dbs} ${ids} counts
+	cp -p ${dbs} ${ids} counts                     ${DESTSRC}/lkddb/
+	cp -p dists/lkddb.list.gz dists/lkddb.list.bz2 ${DESTSRC}/lkddb/
+	cp -p dists/lkddb-${DATE}.tar.gz               ${DESTSRC}/lkddb
+	cp -p dists/lkddb-sources-${DATE}.tar.gz       ${DESTSRC}/lkddb-sources/
+	cp -p dists/autokernconf-${DATE}.tar.gz        ${DESTSRC}/autokernconf/
+	cp -rp web-lkddb/			       ${DESTWEB}/
+	
 
+ids: $(ids)
+	python ids_to_list.py
 
 dists/lkddb-sources-${DATE}.tar.gz: ${sources}
 	rm -Rf dists/lkddb-sources-${DATE}*
@@ -61,29 +74,9 @@ dists/lkddb.list.gz: lkddb.list
 dists/lkddb.list.bz2: lkddb.list
 	bzip2 -9 -c lkddb.list > dists/lkddb.list.bz2
 
-webdistdep := lkddb.list dists/lkddb.list.gz dists/lkddb.list.bz2
-webdistdep += ${dbs} ${ids} counts
-webdistdep += dists/lkddb-sources-${DATE}.tar.gz dists/lkddb-${DATE}.tar.gz
-webdistdep += dists/autokernconf-${DATE}.tar.gz
-
-webdist: ${webdistdep}
-	mkdir web-dist | /bin/true
-	mkdir web-dist/lkddb-sources web-dist/lkddb web-dist/autokernconf  web-dist/ | /bin/true
-	cp -p ${dbs} ${ids} counts  web-dist/lkddb
-	cp -p dists/lkddb.list.gz dists/lkddb.list.bz2 web-dist/lkddb/
-	cp -p dists/lkddb-sources-${DATE}.tar.gz web-dist/lkddb-sources/
-	cp -p dists/lkddb-${DATE}.tar.gz web-dist/lkddb/
-	cp -p dists/autokernconf-${DATE}.tar.gz web-dist/autokernconf/
-	cp -rp web-lkddb/ web-dist/
-	tar cf web-dist-${DATE}.tar web-dist
-	gzip -9 web-dist-${DATE}.tar
-
-webinst: webdist
-	cp -pur web-dist/* $(DESTDIR)/sources/
-	cp -pur web-lkddb/* $(DESTDIR)/lkddb/web-lkddb/
 
 clean:
-	rm -f count manifest *.pyc *.list lkddb.list.gz lkddb.list.bz2 counts config.auto
+	rm -f manifest lkddb.db *.pyc *.list lkddb.list.gz lkddb.list.bz2 counts config.auto
 
 mrproper:
 	rm -f *.ids
@@ -91,47 +84,42 @@ mrproper:
 manifest:
 	echo ${sources} > manifest
 
+
 # lkddb
 
 lkddb.list: ${lkddbgen}
-	./build-lkddb.py ${kdir}
+	python build-lkddb.py -l lkddb.list ${kdir}
 
-counts: lkddb.list
+counts: Makefile lkddb.list
 	@cat lkddb.list | grep -v '^#' | cut -f 2 | sort | uniq -c | sort -n > counts
 	@echo >> counts
 	@echo "TOTAL: `wc -l < lkddb.list`" >> counts
 
+
+# web
+
+web-lkddb/index.html: web-lkddb-gen.py lkddb.list pci.list usb.list eisa.list zorro.list
+	rm -Rf web-lkddb ;  mkdir web-lkddb
+	python web-lkddb-gen.py . web-lkddb
+
+
 # other lists
 
-pci.list: pci.ids
-	./ids_to_list.py pci.ids pci.list "pci_ids"
-
-usb.list: usb.ids
-	./ids_to_list.py usb.ids usb.list "usb_ids"
-
-eisa.list: eisa.ids
-	cat eisa.ids | head -n 10 | grep '^#' > eisa.list
-	cat eisa.ids | sed -ne 's/^\(.......\) \(.*\)$$/eisa\t\1\t\2/p' - >> eisa.list
-
-zorro.list: zorro.ids
-	./ids_to_list.py zorro.ids zorro.list "zorro_ids"
-
-
+pci.list: pci.ids ids_to_list.py
+	python ids_to_list.py pci
+usb.list: usb.ids ids_to_list.py
+	python ids_to_list.py usb
+eisa.list: eisa.ids ids_to_list.py
+	python ids_to_list.py eisa
+zorro.list: zorro.ids ids_to_list.py
+	python ids_to_list.py zorro
 pci.ids:
-	wget http://pci-ids.ucw.cz/pci.ids.bz2
+	wget http://pciids.sourceforge.net/v2.2/pci.ids.bz2
 	bzip2 -d pci.ids.bz2
-
 usb.ids:
 	wget http://www.linux-usb.org/usb.ids
-
 eisa.ids:
 	cp ${kdir}/drivers/eisa/eisa.ids .
-
 zorro.ids:
 	cp ${kdir}/drivers/zorro/zorro.ids .
 
-
-web-lkddb/index.html: web-lkddb-gen.py lkddb.list pci.list usb.list eisa.list zorro.list
-	[ -d web-lkddb ] || mkdir web-lkddb
-	./web-lkddb-gen.py ${kdir} .
-	

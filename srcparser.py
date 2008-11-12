@@ -15,7 +15,7 @@
 
 
 import sys, re, os.path
-import utils
+import utils, kbuildparser, scanners
 
 
 # global dictionaries
@@ -32,9 +32,15 @@ defines_fnc = {}
 defines_str = {}
 
 # special cases:
-print "with special cases"
-includes_direct["drivers/char/synclink_gt.c"] = set(["include/linux/synclink.h"])
+print "with special includes"
+includes_direct["drivers/char/synclink_gt.c"] = (
+		set(["include/linux/synclink.h"]))
 includes_unwind["drivers/char/synclink_gt.c"] = set([])
+
+includes_direct["drivers/media/video/gspca/m5602/m5602_core.c"] = (
+		 set(["include/linux/usb.h"]))
+includes_unwind["drivers/media/video/gspca/m5602/m5602_core.c"] = set([])
+
 
 
 # Comments and join lines
@@ -52,9 +58,12 @@ include_re = re.compile(r'^\s*#\s*include\s+(.*)$', re.MULTILINE)
 strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]*")\s*;', re.DOTALL)
 
 
-def parse_header(src, kerneldir, dir, filename, is_c):
+def parse_header(src, filename, discard_source):
     "parse a single header file for #define, without recurse into other includes"
+    # print "parsing....", filename
     src = comment_re.sub(" ", src)
+    filename = os.path.normpath(filename)
+    dir, ignore = filename.rsplit("/", 1)
     if not includes_direct.has_key(filename):
 	includes_direct[filename] = set()
 	includes_unwind[filename] = set([filename])
@@ -62,7 +71,7 @@ def parse_header(src, kerneldir, dir, filename, is_c):
 	incl = incl.strip()
 	if incl[0] == '"'  and  incl[-1] == '"':
 	    if not incl.endswith('.h"'):
-		fn = os.path.join(kerneldir, dir, incl[1:-1])
+		fn = os.path.join(dir, incl[1:-1])
 		if not os.path.isfile(fn):
 		    utils.log("preprocessor: parse_header(): unknow c-include in %s: %s" % (
 			filename, incl))
@@ -71,11 +80,11 @@ def parse_header(src, kerneldir, dir, filename, is_c):
 		src2 = f.read()
 		f.close()
 		src2 = src.replace(incl, "$"+incl[1:-1]+"$\n"+src2) 
-		return parse_header(src2, kerneldir, dir, filename, is_c)
+		return parse_header(src2, filename, discard_source)
 	    else:
-		includes_direct[filename].add(os.path.join(dir, incl[1:-1]))
+		includes_direct[filename].add(os.path.normpath(os.path.join(dir, incl[1:-1])))
 	elif incl[0] == '<'  and  incl[-1] == '>':
-	    includes_direct[filename].add(os.path.join("include", incl[1:-1]))
+	    includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
 	elif incl[0] == '$'  and  incl[-1] == '$':
 	    # it is a non .h recursive include (set called, from above
 	    continue
@@ -88,7 +97,7 @@ def parse_header(src, kerneldir, dir, filename, is_c):
     for id, args, defs in define_fn_re.findall(src):
 	defines_fnc.setdefault(id, {})
         defines_fnc[id][filename] = (args, defs.strip())
-    if is_c:
+    if not discard_source:
         for id, defs in strings_re.findall(src):
 	    defines_str.setdefault(id, {})
 	    defines_str[id][filename] = defs.strip()
@@ -247,4 +256,65 @@ def expand_macro(tok, def_fnc, args, filename):
 	defs = re.sub(r"\b"    +da+ r"\b",     args[i],     defs)
     defs = concatenate_re.sub("", defs) + " "
     return expand_block(defs, filename)
+
+
+
+
+# --- --- --- --- #
+# main parse function
+
+post_remove = re.compile(
+    r"(^\s*#\s*define\s+.*?$)|(\{\s+\})", re.MULTILINE)
+ifdef_re = re.compile(
+    r"^ifdef\s*(CONFIG_\w+)\s+.*?#endif", re.MULTILINE | re.DOTALL)
+
+def parse_source(src, filename):
+    "parse .c source file"
+    dep = kbuildparser.list_dep(filename)
+    unwind_include(filename)
+    for scanner in scanners.active_scanners:
+        for block in scanner.regex.findall(src):
+            block = expand_block(block, filename)
+            for conf, sblock in ifdef_re.findall(block):
+                sdep = dep.copy().add(conf)
+                for line in scanner.splitter(sblock):
+                    parse_struct(scanner, scanner.struct_fields, line, sdep, filename)
+            block = ifdef_re.sub(" ", block)
+            for line in scanner.splitter(block):
+                parse_struct(scanner, scanner.struct_fields, line, dep, filename)
+
+def parse_struct(scanner, fields, line, dep, filename, ret=False):
+    "convert a struct (array of parameters) into a dictionary"
+    #print "line--", filename, line
+    res = {}
+    nparam = 0
+    for param in line:
+        param = param.replace("\n", " ").strip()
+        if not param:
+            continue
+        elif param[0] == ".":
+            m = scanners.field_init_re.match(param)
+            if m:
+                field, value = m.groups()
+            else:
+                m = scanners.subfield_re.match(param)
+                if m:
+                    field, value = m.groups()
+                    value = "{" + value + "}"
+                else:
+                    print "parse_line(): ", filename, line, param
+                    assert 0, "not expected syntax"
+            res[field] = value
+        else:
+            try:
+                res[fields[nparam]] = param
+            except IndexError:
+                print "Error: index error", table.name, fields, line, filename
+                raise
+        nparam += 1
+    if res:
+        if ret:
+            return res
+        utils.devices_add(scanner, res, dep, filename)
+
 
