@@ -269,7 +269,7 @@ def kconf_save(config, dict, type, descr, depends, help, filename):
 	depends = ""
     kkey_id = key_id[type]
     c.execute("INSERT OR IGNORE INTO kitems (config_id,filename_id,kkey_type,descr,depends,help) VALUES (?,?,?,?,?,?);",
-		(config_id, filename_id, kkey_id, descr, depends, help))
+		(config_id, filename_id, kkey_id, descr, depends, help.strip()))
     utils.conn.commit()
 
     if type == "tristate"  or  type == "def_tristate":

@@ -4,7 +4,7 @@
 #  Copyright (c) 2000,2001,2007,2008  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
 
-import sys, os, time, sqlite3
+import sys, os, time, sqlite3, traceback
 
 #
 # globals variables
@@ -90,7 +90,14 @@ def lkddb_build():
 	dep = map(get_config_id, dep)
 	filename_id = get_filename_id(filename)
 	dep_id = get_dep_id(dep)
-	line = scanner.formatter(res)
+	try:
+	    line = scanner.formatter(res)
+	except:
+	    print "-" * 50
+	    print "EXCEPTION: utils.py/lkddb_build ", filename, scanner.name, res
+	    traceback.print_exc(file=sys.stdout)
+	    print "-" * 50
+	    continue
 	if not line:
 	    continue
         line_txt = "lkddb\t" + scanner.name + "\t" + scanner.format % line  + (
@@ -117,15 +124,26 @@ def lkddb_build():
 def get_config_id(config):
     row = configs.get(config, None)
     if row:
-	if version_number > 0 and (version_number < row[1] or version_number > row[2]):
+	min_ver, max_ver = row[1], row[2]
+        changed = 0
+        if version_number > 0  and  max_ver < version_number:
+            max_ver = version_number
+            changed = 2
+	if min_ver == -1  and  version_number > 0:
+	    min_ver = version_number
+	    changed = 1
+        elif min_ver > version_number  and  version_number > 0:
+            min_ver = version_number
+            changed = 1
+        if changed:
 	    c = conn.cursor()
-	    c.execute("INSERT INTO configs (config_id, min_ver, max_ver) VALUES (?,?,?);"
-		(row[0], min(version_number, min_ver), max(version_number, max_ver)))
+	    c.execute("INSERT OR REPLACE INTO configs (config_id, config, min_ver, max_ver) VALUES (?,?,?,?);",
+		(row[0], config, min_ver, max_ver))
 	    conn.commit()
         return row[0]
     c = conn.cursor()
     c.execute("INSERT INTO configs (config, min_ver, max_ver) VALUES (?,?,?);",
-		(config, version_number, version_number))
+                (config, version_number, version_number))
     row = (c.execute("SELECT config_id FROM configs WHERE config=?;",
 		(config,)).fetchone()[0] , version_number, version_number)
     conn.commit()
@@ -187,23 +205,24 @@ def set_line(scanner, line, dep_id, filename_id, line_txt):
 	if row:
 	    line_id, dep_id2, min_ver, max_ver = row
 	    changed = 0
-	    if version_number < -1  and  max_ver != -1:
-		max_ver = -1
-		changed = 2
             if version_number > 0  and  max_ver < version_number:
                 max_ver = version_number
                 changed = 2
-	    if version_number > 0  and  min_ver > version_number:
-		min_ver = version_number
-		changed = 1
+            if min_ver == -1  and  version_number > 0:
+                min_ver = version_number
+                changed = 1
+            elif min_ver > version_number  and  version_number > 0:
+                min_ver = version_number
+                changed = 1
 	    if dep_id2 != dep_id:
-		if max_ver >= 0  and  changed == 2:
+		if changed == 2  or  version_number < 0:
+		    # update dependencies only on newer kernels
 		    dep_id2 = dep_id
-		    changed = 1
+		    changed = 3
 	    if changed:
 		c.execute(
-'INSERT OR REPLACE INTO lines (line_id, dep_id, min_ver, max_ver, line) VALUES (?,?,?,?,?)',
-		    (line_id, dep_id2, min_ver, max_ver, line_txt))
+'INSERT OR REPLACE INTO lines (line_id, scanner_id, id, dep_id, filename_id, min_ver, max_ver, line) VALUES (?,?,?,?,?,?,?,?)',
+		    (line_id, scanner.scanner_id, id, dep_id2, filename_id, min_ver, max_ver, line_txt))
 		conn.commit()
 	    return
     else:

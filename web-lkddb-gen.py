@@ -8,9 +8,9 @@ import sys, os, os.path, re, string, time, optparse, sqlite3
 
 
 escapemap = (
+	("&", "&amp;"),  # first item, not to replace e.g. the '&' in '&gt;'
 	("<", "&lt;"),
-	(">", "&gt;"),
-	("&", "&amp;"))
+	(">", "&gt;"))
 
 def escape(src):
     for c, esc in escapemap:
@@ -21,7 +21,14 @@ def escape(src):
 config_re = re.compile(r"CONFIG_([^_]\w*)")
 help_local_re = re.compile(r"<file:([^>]*)>")
 help_remote_re = re.compile(r"<(http:[^>]*)>")
-
+def prepare_help(help):
+    help = help.replace("&", "&amp;")
+    help = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', help)
+    help = help_remote_re.sub(r'&&lt;a href="\1"&&gt;\1&&lt;/a&&gt;', help)
+    help = help.replace("<", "&lt;").replace(">", "&gt;")
+    help = help.replace("&&lt;", "<").replace("&&gt;", ">")
+    return help
+ 
 def url_config(conf):
     return '<a href="' + conf + '.html">CONFIG_' + conf + '</a>'
 def url_filename(filename):
@@ -48,6 +55,33 @@ def prepare_depends(depends):
 	if toks[i][0].isdigit()  or  toks[i][0].isalpha():
 	    toks[i] = '<a href="' +toks[i]+ '.html">CONFIG_' +toks[i]+ '</a>'
     return " ".join(toks).replace("&", "&amp;")
+
+def str_kern_ver(ver):
+    x = (ver >> 16) & 0xff
+    y = (ver >> 8 ) & 0xff
+    z =  ver        & 0xff
+    return "%i.%i.%i" %(x,y,z)
+
+def kernel_interval(min_ver, max_ver):
+    if min_ver == -1:
+	#print min_ver, max_ver
+	#assert max_ver == -1
+	return ("found only in <code>HEAD</code> (i.e. after release %s)" % str_kern_ver(db_max_ver), "HEAD")
+    if db_min_ver == min_ver:
+	ret = "before %s version" % str_kern_ver(db_min_ver)
+	ret2 = ""
+    else:
+	ret = "from %s release" % str_kern_ver(min_ver)
+        ret2 = "from release %s" % str_kern_ver(min_ver)
+    if db_max_ver == max_ver:
+	ret += " still available on %s release" % str_kern_ver(db_max_ver)
+    else:
+	ret += " to %s release, thus this is an <b>obsolete</b> configuration" % str_kern_ver(max_ver)
+	if ret2:
+	    ret2 = "obsolete, available from %s until %s" % (str_kern_ver(min_ver), str_kern_ver(max_ver))
+	else:
+	    ret2 = "obsolete, available until %s" % str_kern_ver(max_ver)
+    return ret, ret2
 
 def do_config_pages(templdir, webdir):
     index = {}
@@ -86,46 +120,43 @@ def do_config_pages(templdir, webdir):
 	    "subindex": indx.lower(),
 	    "min_ver": min_ver,
 	    "max_ver": max_ver,
-            "kernel": head_tag,
-            "time": now
+            "year": year
         }
+	ver_str, ver_str_short = kernel_interval(min_ver, max_ver)
 	if index.has_key(indx):
-	    index[indx].append(conf)
+	    index[indx].append((conf, ver_str_short))
 	else:
-	    index[indx] = [conf]
-		
+	    index[indx] = [(conf,ver_str_short)]
 
 # Kconfig items (type, prompt, help)
 	kitems = c.execute("SELECT filename_id, kkey_type, descr, depends, help FROM kitems WHERE config_id=?;",
 			(config_id,)).fetchall()
 	if kitems:
 	    if len(kitems) > 1:
-		general = "The Linux kernel configuration item <code>" + config + "</code> has multiple definitions:\n"
+		general = "<p>The Linux kernel configuration item <code>" + config + "</code> has multiple definitions:\n"
 		for filename_id, kkey_type, descr, depends, help in kitems:
 		    if not depends:
 			depends = ""
 		    filename = filename_ids[filename_id]
-		    general += ( "<h2>" + filename + "</h2>\n<p>Item " + config + " is:\n<ul>" +
+		    general += ( "<h2>" + filename + "</h2>\n<p>The configuration item " + config + ":</p>\n<ul>" +
 		      "<li>prompt: " +descr+ "</li>\n" +
 		      "<li>type: "   +types[kkey_id]+ "</li>\n" +
 		      "<li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
 		      "<li>defined in " + url_filename(filename) + "</li>\n" +
+		      "<li>found in Linux Kernels: " +ver_str+ "</li>\n" +
 		      "</ul>\n<h3>Help text</h3>\n<p>")
-		    help = help_local_re.sub(r'<a href="http://lxr.linux.no/source/\1">\1</a>', help)
-		    help = help_remote_re.sub(r'<a href="\1">\1</a>', help)
-		    general += help + "</p>\n"
+		    general += prepare_help(help) + "</p>\n"
 	    else:
 		filename_id, kkey_type, descr, depends, help = kitems[0]
 		filename = filename_ids[filename_id]
-		general = ( "The Linux kernel configuration item <code>" + config + "</code> is:\n<ul>" +
+		general = ( "<p>The Linux kernel configuration item <code>" + config + "</code>:</p>\n<ul>" +
                     "<li>prompt: " +descr+ "</li>\n" +
                     "<li>type: "   +types[kkey_id]+ "</li>\n" +
 		    "<li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
                     "<li>defined in " + url_filename(filename) + "</li>\n" +
+		    "<li>found in Linux Kernels: " +ver_str+ "</li>\n" +
                     "</ul>\n<h2>Help text</h2>\n<p>")
-                help = help_local_re.sub(r'<a href="http://lxr.linux.no/source/\1">\1</a>', help)
-                help = help_remote_re.sub(r'<a href="\1">\1</a>', help)
-                general += help + "</p>\n"
+                general += prepare_help(help)  + "</p>\n"
 
             out["general"] = general.strip().replace("\n\n", "</p>\n\n<p>")
 	else:
@@ -185,7 +216,7 @@ def do_config_pages(templdir, webdir):
                                  ss += ' ("<i>' + escape(row[0]) + '</i>")'
 # PCI: class
 		    v0, v1, v2 = ( v4[0:2], v4[2:4], v4[4:6])
-                    if v0 != "..":
+                    if v0[0] != ".":
 			v0 = int(v0, 0x10)
                         if ss != "":
                             ss += ", "
@@ -430,30 +461,31 @@ def do_index_pages(templdir, webdir, index):
     order = index.keys()
     order.sort()
     for idx in order + [""]:
-	page = '<ul>\n'
+	page = ""
 	for idx2 in order:
 	    if idx != idx2:
 		page += ('<li><a href="index_' +idx2+ '.html">'
 			  +idx2+ ' index</a> (with ' +str(len(index[idx2]))+ ' items)</li>\n')
 	    else:
-		page += ('<li><b>' +idx2+ '</b><ul>\n')
-		for conf in index[idx2]:
+		page += ('<li><b>' +idx2+ '</b>(with ' +str(len(index[idx2]))+ ' items)<ul>\n')
+		for conf, ver_str in index[idx2]:
+		    if ver_str:
+			ver_str = ' (' + ver_str + ')'
 		    page += ('<li><a href="' +conf+ '.html"> CONFIG_'
-                          +conf+ '</a></li>\n')
+                          +conf+ '</a>'+ver_str+'</li>\n')
 		page += '</ul></li>\n'
-	page += '</ul>\n'
-	dict = {'key': idx,  'page': page,  'time': now}
+	dict = {'key': idx,  'page': page,  'year': year}
 	if idx != "":
-            fn = os.path.join(webdir, "index_" +idx.lower()+ ".html")
+            fn = os.path.join(webdir, 'index_' +idx.lower()+ '.html')
 	else:
-	    fn = os.path.join(webdir, "index.html")
+	    fn = os.path.join(webdir, 'index.html')
         f = open(fn, "wb")
         f.write(index_template.substitute(dict).encode("utf_8"))
         f.close()
 
 
 def main():
-    global options, templdir, webdir, now, conn, kernel_min_ver, kernel_max_ver, head_tag
+    global options, templdir, webdir, year, conn, db_min_ver, db_max_ver
     usage = "usage: %prog [options] templ-dir web-dir"
     parser = optparse.OptionParser(usage=usage)
     parser.set_defaults(verbose=True, dbfile="lkddb.db")
@@ -479,14 +511,14 @@ def main():
     if not os.path.isdir(webdir):
         print "the second argument is not a directory: ", dir
         sys.exit(1)
-    now = time.strftime("%a, %Y-%m-%d", time.gmtime())
+    year = time.strftime("%Y", time.gmtime())
     conn = sqlite3.connect(options.dbfile)
     c = conn.cursor()
     row = c.execute("SELECT min_ver, max_ver, head_tag FROM version WHERE type = 1;").fetchone()
     if row:
-	kernel_min_ver, kernel_max_ver, head_tag = row
+	db_min_ver, db_max_ver, head_tag = row
     else:
-	kernel_min_ver, kernel_max_ver, head_tag = (-1, -1, "(unknow)")
+	db_min_ver, db_max_ver, head_tag = (-1, -1, "(unknow)")
 
     do_config_pages(templdir, webdir)
 

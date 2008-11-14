@@ -115,7 +115,7 @@ def get_kernel_version(kerneldir):
     c = utils.conn.cursor()
     row = c.execute('SELECT min_ver, max_ver, head_tag FROM version WHERE type = 1;').fetchone()
     if not row:
-	row = (0xffffff, 0x000000, "(none)")
+	row = (-1, -1, "(none)")
     min_ver, max_ver, head_tag = row
     localver = subprocess.Popen("/bin/sh scripts/setlocalversion", shell=True, cwd=kerneldir,
 		stdout=subprocess.PIPE).communicate()[0].strip().replace("-dirty", "")
@@ -125,21 +125,39 @@ def get_kernel_version(kerneldir):
 	    utils.die(1, "error: old non-stable version found (in db: %x, actual: %x, tag:'%s')" %
 		(max_ver, version, extra+localver))
 	if ver_str+localver != head_tag:
-	    c.execute('INSERT OR REPLACE INTO version (type, max_ver, head_tag) VALUES (1,-1,?);',
-			(ver_str+localver,))
+	    c.execute('INSERT OR REPLACE INTO version (type, min_ver, max_ver, head_tag) VALUES (1,?,?,?);',
+			(min_ver, max_ver, ver_str+localver))
 	    utils.conn.commit()
 	utils.version_str = ver_str+localver
+	utils.log("Using non-released kernel version %s" % utils.version_str)
 	return -1
     else:
+	change = 0
 	if version > max_ver:
-            c.execute('INSERT OR REPLACE INTO version (type, min_ver, max_ver, head_tag) VALUES (1,?,?,?);',
-                (min(version, min_ver), max(version,max_ver), ver_str) )
-	    utils.conn.commit()
+	    new_max = version
+	    new_head = ver_str
+	    change = 1
+	else:
+	    new_max = max_ver
+	    new_head = head_tag
+	if version == -1:
+	    new_min = min_ver
+	elif min_ver == -1:
+	    new_min = version
+	    change = 1
 	elif version < min_ver:
-	    c.execute('INSERT OR REPLACE INTO version (type, min_ver) VALUES (1,?);',
-		(min(version,min_ver),) )
+	    new_min = version
+	    change = 1
+	else:
+	    new_min = min_ver
+	    
+	if change:
+            c.execute('INSERT OR REPLACE INTO version (type, min_ver, max_ver, head_tag) VALUES (1,?,?,?);',
+		(new_min, new_max, new_head) )
 	    utils.conn.commit()
 	utils.version_str = ver_str
+	utils.log("Using released kernel version %s" % utils.version_str)
+#	print version, "%x" % version, "%x" % min_ver, "%x" % max_ver, "%x" % new_min, "%x" % new_max
 	return version
 
 
@@ -189,6 +207,7 @@ def main():
     os.chdir(kerneldir)
 
     try:
+	utils.filename = "(init)"
         scanners.scanner_init()
         kbuildparser.kconfig_init()
         utils.version_number = get_kernel_version(kerneldir)

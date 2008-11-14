@@ -35,7 +35,9 @@ tars := dists/lkddb-sources-${DATE}.tar.gz dists/lkddb-${DATE}.tar.gz dists/auto
 
 all: lkddb.list counts web-lkddb/index.html
 
-dist: dists/lkddb.list.gz dists/lkddb.list.bz2 ${tars} ${dbs} ${ids} counts
+#dist_all: dists/lkddb.list.gz dists/lkddb.list.bz2 ${tars} ${dbs} ${ids} counts
+
+dist:
 	cp -p ${dbs} ${ids} counts                     ${DESTSRC}/lkddb/
 	cp -p dists/lkddb.list.gz dists/lkddb.list.bz2 ${DESTSRC}/lkddb/
 	cp -p dists/lkddb-${DATE}.tar.gz               ${DESTSRC}/lkddb

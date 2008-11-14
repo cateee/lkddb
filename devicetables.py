@@ -810,7 +810,7 @@ class module(scanners.scanner):
     def __init__(self):
         scanners.scanner.__init__(self,
 name          = "module",
-format        = "%s\t%s",
+format        = '%s\t"%s"',
 db_attrs      = ("name", "descr"),
 regex	      = r'^config\s*(\w+)\s+tristate\s+"(.*?[^\\])"',
 struct_fields = ("name", "descr")
