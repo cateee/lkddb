@@ -70,7 +70,7 @@ def parse_header(src, filename, discard_source):
     for incl in include_re.findall(src):
 	incl = incl.strip()
 	if incl[0] == '"'  and  incl[-1] == '"':
-	    if not incl.endswith('.h"'):
+	    if not incl.endswith('.h"')  and not incl.endswith(".agh"):
 		fn = os.path.join(dir, incl[1:-1])
 		if not os.path.isfile(fn):
 		    utils.log("preprocessor: parse_header(): unknow c-include in %s: %s" % (

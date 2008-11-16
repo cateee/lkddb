@@ -32,7 +32,7 @@ def parse_kbuild(subdir, deps=None):
     try:
         files = os.listdir(subdir)
     except OSError:
-	utils.log("I don't know the directory %s" % subdir)
+	utils.log("parse_kbuild: I don't know the directory %s" % subdir)
 	return
     if "Makefile" in files:
         source = "Makefile"
@@ -90,7 +90,7 @@ def parse_kbuild_lines(subdir, deps, src):
 	if not files:
 	    pass
 	# rule-$(dep): file.o
-        if dep in ("y", "m"):
+        if dep in ("y", "m") or  rule == "clean":
             pass
         elif (dep[:9] == '$(CONFIG_' and dep[-1] == ')') or (
 	      dep[:9] == '${CONFIG_' and dep[-1] == '}'):

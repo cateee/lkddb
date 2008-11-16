@@ -62,17 +62,19 @@ def die(errcode, message):
     sys.stderr.write(message + "\n")
     sys.exit(errcode)
 
+
+
+
+
 #
-# Temporary database: 'devices' and 'db'
+# Temporary database: 'devices'
 #
 
 devices = []  # []-> scanner[class instance], data[scanner dependent], dep[set], filename[string]
-db = []       # []-> line[string]
 
 def devices_init():
-    global devices, db
+    global devices
     devices = []
-    db = []
 
 def devices_add(scanner, data, dep, filename):
     "add raw device data"
