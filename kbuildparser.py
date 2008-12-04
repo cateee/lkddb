@@ -218,8 +218,14 @@ def parse_kconfig(filename):
 		    descr = args
 		    print "kconfig: bad line in %s %s: '%s'" % (filename, config, line)
 		else:
-	            s = args.split(div)
-	            descr = s[1]
+	            if div == '"':
+        	        args = args.replace('\\"', "'").replace("\\'", "'")
+                	s =  args.split(div)
+	                descr = s[1]
+        	    else:
+                	args = args.replace('\\"', '"').replace("\\'", '"')
+	                s = args.split(div)
+        	        descr = s[1].replace('"', "'")
                     d = s[2].split()
                     if len(d) > 1  and  d[0] == "if":
                         depends.append(" ".join(d[1:]))
@@ -234,8 +240,14 @@ def parse_kconfig(filename):
         if tok == "prompt":
 	    div = args[0]
 	    assert div == '"'  or  div == "'"
-	    s =  args.split(div)
-	    descr = s[1]
+	    if div == '"':
+		args = args.replace('\\"', "'").replace("\\'", "'")
+		s =  args.split(div)
+		descr = s[1]
+	    else:
+		args = args.replace('\\"', '"').replace("\\'", '"')
+		s = args.split(div)
+		descr = s[1].replace('"', "'")
             d = s[2].split()
             if len(d) > 1  and  d[0] == "if":
                 depends.append(" ".join(d[1:]))
