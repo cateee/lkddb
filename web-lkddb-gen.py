@@ -470,7 +470,7 @@ def do_index_pages(templdir, webdir, index):
 		page += ('<li><a href="index_' +idx2.lower()+ '.html">'
 			  +idx2+ ' index</a> (with ' +str(len(index[idx2]))+ ' items)</li>\n')
 	    else:
-		page += ('<li><b>' +idx2+ '</b>(with ' +str(len(index[idx2]))+ ' items)<ul>\n')
+		page += ('<li><b>' +idx2+ '</b> (with ' +str(len(index[idx2]))+ ' items)<ul>\n')
 		lines = []
 		for conf, ver_str in index[idx2]:
 		    if ver_str:
