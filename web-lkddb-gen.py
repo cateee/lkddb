@@ -129,8 +129,11 @@ def do_config_pages(templdir, webdir):
 	    index[indx] = [(conf,ver_str_short)]
 
 # Kconfig items (type, prompt, help)
-	kitems = c.execute("SELECT filename_id, kkey_type, descr, depends, help FROM kitems WHERE config_id=?;",
+	try:
+	    kitems = c.execute("SELECT filename_id, kkey_type, descr, depends, help FROM kitems WHERE config_id=?;",
 			(config_id,)).fetchall()
+	except sqlite3.OperationalError:
+	    kitems = None
 	if kitems:
 	    if len(kitems) > 1:
 		general = "<p>The Linux kernel configuration item <code>" + config + "</code> has multiple definitions:\n"
@@ -464,16 +467,18 @@ def do_index_pages(templdir, webdir, index):
 	page = ""
 	for idx2 in order:
 	    if idx != idx2:
-		page += ('<li><a href="index_' +idx2+ '.html">'
+		page += ('<li><a href="index_' +idx2.lower()+ '.html">'
 			  +idx2+ ' index</a> (with ' +str(len(index[idx2]))+ ' items)</li>\n')
 	    else:
 		page += ('<li><b>' +idx2+ '</b>(with ' +str(len(index[idx2]))+ ' items)<ul>\n')
+		lines = []
 		for conf, ver_str in index[idx2]:
 		    if ver_str:
 			ver_str = ' (' + ver_str + ')'
-		    page += ('<li><a href="' +conf+ '.html"> CONFIG_'
+		    lines.append('<li><a href="' +conf+ '.html"> CONFIG_'
                           +conf+ '</a>'+ver_str+'</li>\n')
-		page += '</ul></li>\n'
+		lines.sort()
+		page += "".join(lines) + '</ul></li>\n'
 	dict = {'key': idx,  'page': page,  'year': year}
 	if idx != "":
             fn = os.path.join(webdir, 'index_' +idx.lower()+ '.html')
