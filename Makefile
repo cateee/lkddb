@@ -17,7 +17,7 @@ ids = pci.ids usb.ids eisa.ids zorro.ids
 sources = Makefile
 
 # lkddb-generator
-lkddbgen := build-lkddb.py devicetables.py kbuildparser.py srcparser.py utils.py
+lkddbgen := build-lkddb.py devicetables.py kbuildparser.py srcparser.py utils.py scanners.py
 sources += ${lkddbgen}
 
 # lkddb
