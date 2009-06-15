@@ -34,15 +34,18 @@ def parse_kbuild(subdir, deps=None):
     except OSError:
 	utils.log("parse_kbuild: I don't know the directory %s" % subdir)
 	return
-    if "Makefile" in files:
-        source = "Makefile"
-    elif "Kbuild" in files:
+    if "Kbuild" in files:
         source = "Kbuild"
+    elif "Makefile" in files:
+        source = "Makefile"
     elif deps == None:
 	utils.log("No Makefile in %s, recursing..." % subdir)
-        for dir in files:
-            if os.path.isdir(os.path.join(subdir, dir)):
-                parse_kbuild(os.path.join(subdir, dir), deps)
+        try:
+            for dir in files:
+                if os.path.isdir(os.path.join(subdir, dir)):
+                    parse_kbuild(os.path.join(subdir, dir), deps)
+        except RuntimeError:
+            utils.log("possible recursion loop in " % subdir)
         return
     else:
         utils.log("No Makefile in %s" % subdir)
