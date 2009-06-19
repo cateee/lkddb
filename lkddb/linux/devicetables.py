@@ -1,0 +1,696 @@
+#!/usr/bin/python
+#:  devicetables.py : device tables template for source scanning and reporting
+#
+#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 for details
+
+import lkddb
+from lkddb.linux.scanners import *
+from .sources import struct_parent_scanner
+
+
+# device_driver include/linux/device.h
+device_driver_fields = (
+    "name", "bus", "kobj", "klist_devices", "knode_bus", "owner", "mod_name",
+    "mkobj", "probe", "remove", "shutdown", "suspend", "resume")
+
+# PCI
+#    include/linux/mod_devicetable.h pci_device_id
+#    drivers/pci/pci-driver.c pci_match_id
+
+class pci(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+      	  name = 'pci',
+          table_name = 'pci',
+	  parent_scanner = parent_scanner,
+          struct_name = "pci_device_id",
+          struct_fields = ("vendor", "device", "subvendor", "subdevice",
+                   "class", "class_mask", "driver_data"),
+          )
+
+    def store(self, dict):
+        v0 = extract_value("vendor", dict)
+        v1 = extract_value("device", dict)
+	v4b = extract_value("class_mask",dict)
+        if v0 == 0 and v1 == 0 and v4b == 0:
+            return None
+        v2 = extract_value("subvendor", dict)
+        v3 = extract_value("subdevice", dict)
+        v4a = extract_value("class", dict)
+        return (v0, v1, v2, v3, v4a, v4b)
+
+#
+# USB bus
+#
+
+class usb(list_of_structs_scanner):
+    USB_DEVICE_ID_MATCH_VENDOR       = 0x0001
+    USB_DEVICE_ID_MATCH_PRODUCT      = 0x0002
+    USB_DEVICE_ID_MATCH_DEV_LO       = 0x0004
+    USB_DEVICE_ID_MATCH_DEV_HI       = 0x0008
+    USB_DEVICE_ID_MATCH_DEV_CLASS    = 0x0010
+    USB_DEVICE_ID_MATCH_DEV_SUBCLASS = 0x0020
+    USB_DEVICE_ID_MATCH_DEV_PROTOCOL = 0x0040
+    USB_DEVICE_ID_MATCH_INT_CLASS    = 0x0080
+    USB_DEVICE_ID_MATCH_INT_SUBCLASS = 0x0100
+    USB_DEVICE_ID_MATCH_INT_PROTOCOL = 0x0200
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'usb',
+	  table_name = 'usb',
+          parent_scanner = parent_scanner,
+          struct_name = "usb_device_id",
+          struct_fields = (
+	    "match_flags", "idVendor", "idProduct", "bcdDevice_lo", "bcdDevice_hi",
+	    "bDeviceClass", "bDeviceSubClass", "bDeviceProtocol",
+	    "bInterfaceClass", "bInterfaceSubClass", "bInterfaceProtocol",
+	    "driver_info" )
+          )
+
+    def store(self, dict):
+	match = extract_value("match_flags", dict)
+        if not match:
+            return None
+	v0=-1; v1=-1; v2=-1; v3=-1; v4=-1; v5=-1; v6=-1; v7=-1
+	v8 = 0; v9 = 0xffff
+	if match & self.USB_DEVICE_ID_MATCH_VENDOR:
+            v0 = extract_value("idVendor", dict)
+        if match & self.USB_DEVICE_ID_MATCH_PRODUCT:
+            v1 = extract_value("idProduct", dict)
+        if match & self.USB_DEVICE_ID_MATCH_DEV_LO:
+            v8 = extract_value("bcdDevice_lo", dict)
+        if match & self.USB_DEVICE_ID_MATCH_DEV_HI:
+            v9 = extract_value("bcdDevice_hi", dict)
+        if match & self.USB_DEVICE_ID_MATCH_DEV_CLASS:
+            v2 = extract_value("bDeviceClass", dict)
+        if match & self.USB_DEVICE_ID_MATCH_DEV_SUBCLASS:
+            v3 = extract_value("bDeviceSubClass", dict)
+        if match & self.USB_DEVICE_ID_MATCH_DEV_PROTOCOL:
+            v4 = extract_value("bDeviceProtocol", dict)
+        if match & self.USB_DEVICE_ID_MATCH_INT_CLASS:
+            v5 = extract_value("bInterfaceClass", dict)
+        if match & self.USB_DEVICE_ID_MATCH_INT_SUBCLASS:
+            v6 = extract_value("bInterfaceSubClass", dict)
+        if match & self.USB_DEVICE_ID_MATCH_INT_PROTOCOL:
+            v7 = extract_value("bInterfaceProtocol", dict)
+        return (v0, v1, v2, v3, v4, v5, v6, v7, v8, v9)
+
+#
+# IEEE1394 bus
+#
+
+class ieee1394(list_of_structs_scanner):
+    IEEE1394_MATCH_VENDOR_ID    = 0x0001
+    IEEE1394_MATCH_MODEL_ID     = 0x0002
+    IEEE1394_MATCH_SPECIFIER_ID = 0x0004
+    IEEE1394_MATCH_VERSION      = 0x0008
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'ieee1394',
+	  table_name = 'ieee1394',
+          parent_scanner = parent_scanner,
+          struct_name = "ieee1394_device_id",
+          struct_fields = ("match_flags", "vendor_id", "model_id", "specifier_id",
+		"version", "driver_data")
+          )
+
+    def store(self, dict):
+        match = extract_value("match_flags", dict)
+        if not match:
+            return None
+	v0=-1; v1=-1; v2=-1; v3=-1
+        if match & self.IEEE1394_MATCH_VENDOR_ID:
+            v0 = extract_value("vendor_id", dict)
+        if match & self.IEEE1394_MATCH_MODEL_ID:
+            v1  = extract_value("model_id", dict)
+        if match & self.IEEE1394_MATCH_SPECIFIER_ID:
+            v2  = extract_value("specifier_id", dict)
+        if match & self.IEEE1394_MATCH_VERSION:
+            v3  = extract_value("version", dict)
+        return (v0, v1, v2, v3)
+
+
+class hid(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'hid',
+          table_name = 'hid',
+          parent_scanner = parent_scanner,
+          struct_name = "hid_device_id",
+          struct_fields = ("bus", "vendor", "product", "driver_data")
+          )
+
+    def store(self, dict):
+        v0 = extract_value("bus", dict)
+        v1 = extract_value("vendor", dict)
+        v2 =  extract_value("product",dict)
+	if v0 == 0 and v1 == 0 and v2  == 0:
+	    return None
+	return (v0, v1, v2)
+
+
+
+class ccw(list_of_structs_scanner):
+    CCW_DEVICE_ID_MATCH_CU_TYPE      = 0x01
+    CCW_DEVICE_ID_MATCH_CU_MODEL     = 0x02
+    CCW_DEVICE_ID_MATCH_DEVICE_TYPE  = 0x04
+    CCW_DEVICE_ID_MATCH_DEVICE_MODEL = 0x08
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'ccw',
+          table_name = 'ccw',
+          parent_scanner = parent_scanner,
+          struct_name = "ccw_device_id",
+          struct_fields = ("match_flags", "cu_type", "dev_type",
+				"cu_model", "dev_model", "driver_info")
+          )
+
+    def store(self, dict):
+        match = extract_value("match_flags", dict)
+        if not match:
+            return None
+	v0=-1; v1=-1; v2=-1; v3=-1
+        if match & self.CCW_DEVICE_ID_MATCH_CU_TYPE:
+            v0 = extract_value("cu_type", dict)
+        if match & self.CCW_DEVICE_ID_MATCH_CU_MODEL:
+            v1  = extract_value("dev_type", dict)
+        if match & self.CCW_DEVICE_ID_MATCH_DEVICE_TYPE:
+            v2  = extract_value("cu_model", dict)
+        if match & self.CCW_DEVICE_ID_MATCH_DEVICE_MODEL:
+            v3  = extract_value("dev_model", dict)
+        return (v0, v1, v2, v3)
+
+
+# s390 AP bus devices ap_device_id include/linux/mod_devicetable.h
+
+class ap(list_of_structs_scanner):
+    AP_DEVICE_ID_MATCH_DEVICE_TYPE = 0x01
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'ap',
+          table_name = 'ap',
+          parent_scanner = parent_scanner,
+          struct_name = "ap_device_id",
+          struct_fields = ("match_flags", "dev_type", "pad1", "pad2", "driver_info")
+          )
+
+    def store(self, dict):
+        match = extract_value("match_flags", dict)
+        if not match:
+            return None
+        if match & self.AP_DEVICE_ID_MATCH_DEVICE_TYPE:
+            v0 = extract_value("dev_type", dict)
+        else:
+            v0 = -1
+        return (v0,)
+
+
+# ACPI , acpi_device_id include/linux/mod_devicetable.h drivers/acpi/scan.c
+
+class acpi(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'acpi',
+          table_name = 'acpi',
+          parent_scanner = parent_scanner,
+          struct_name = "acpi_device_id",
+          struct_fields = ("id", "driver_data")
+          )
+
+    def store(self, dict):
+        v0 = extract_string("id", dict)
+        return (v0,)
+
+
+# PNP #1, pnp_device_id include/linux/mod_devicetable.h drivers/pnp/driver.c
+
+class pnp(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'pnp',
+          table_name = 'pnp',
+          parent_scanner = parent_scanner,
+          struct_name = "pnp_device_id",
+          struct_fields = ("id", "driver_data")
+          )
+
+    def store(self, dict):
+        v0 = extract_string("id", dict)
+	if not v0:
+	    return None
+        return (v0,  "","","","",  "","","","")
+
+
+# PNP #2, pnp_card_device_id include/linux/mod_devicetable.h drivers/pnp/card.c
+
+class pnp_card(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = '',
+          table_name = 'pnp',
+          parent_scanner = parent_scanner,
+          struct_name = "pnp_card_device_id",
+          struct_fields = ("id", "driver_data", "devs")
+          )
+
+    def store(self, dict):
+        v0 = extract_string("id", dict)
+        if not v0:
+            return None
+        prods = nullstring_re.sub('""', extract_string("devs", dict))
+        line = split_structs(prods)[0]
+        dict_prod = parse_struct(None, scanners.unwind_array,
+                line, None, None, ret=True)
+	vv = apply(lambda i: extract_string("n%u"%i, dict_prod), range(8))
+        return v0 + vv
+
+
+# SERIO , serio_device_id include/linux/mod_devicetable.h drivers/input/serio/serio.c
+
+class serio(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'serio',
+          table_name = 'serio',
+          parent_scanner = parent_scanner,
+          struct_name = "serio_device_id",
+          struct_fields = ("type", "extra", "id", "proto")
+          )
+
+    def store(self, dict):
+        v0 = extract_value("type", dict)
+        v1 = extract_value("extra", dict)
+	if v0 == 0 and v1 == 0:
+            return None
+        v2 = extract_value("id",dict)
+        v3 = extract_value("proto",dict)
+        return (v0, v1, v2, v3)
+
+
+# OF , of_device_id include/linux/mod_devicetable.h
+
+class of(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'of',
+          table_name = 'of',
+          parent_scanner = parent_scanner,
+          struct_name = "of_device_id",
+          struct_fields = ("name", "type", "compatible", "data")
+          )
+
+    def store(self, dict):
+        d = {}
+        v0 = extract_string("name", dict)
+        v1 = extract_string("type", dict)
+        v2 = extract_string("compatible", dict)
+        if v0 == 0 and v1 == 0 and v2:
+            return None
+        return (v0, v1, v2)
+
+
+# VIO , vio_device_id include/linux/mod_devicetable.h
+
+class vio(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'vio',
+          table_name = 'vio',
+          parent_scanner = parent_scanner,
+          struct_name = "vio_device_id",
+          struct_fields = ("type", "compat")
+          )
+
+    def store(self, dict):
+        v0 = extract_string("type", dict)
+        v1 = extract_string("compat", dict)
+        if v0 == 0 and v1:
+            return None
+        return (v0, v1)
+
+
+# PCMCIA , pcmcia_device_id include/linux/mod_devicetable.h drivers/pcmcia/ds.c
+
+class pcmcia(list_of_structs_scanner):
+    PCMCIA_DEV_ID_MATCH_MANF_ID   = 0x0001
+    PCMCIA_DEV_ID_MATCH_CARD_ID   = 0x0002
+    PCMCIA_DEV_ID_MATCH_FUNC_ID   = 0x0004
+    PCMCIA_DEV_ID_MATCH_FUNCTION  = 0x0008
+    PCMCIA_DEV_ID_MATCH_PROD_ID1  = 0x0010
+    PCMCIA_DEV_ID_MATCH_PROD_ID2  = 0x0020
+    PCMCIA_DEV_ID_MATCH_PROD_ID3  = 0x0040
+    PCMCIA_DEV_ID_MATCH_PROD_ID4  = 0x0080
+    PCMCIA_DEV_ID_MATCH_DEVICE_NO = 0x0100
+    PCMCIA_DEV_ID_MATCH_FAKE_CIS  = 0x0200
+    PCMCIA_DEV_ID_MATCH_ANONYMOUS = 0x0400
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'pcmcia',
+          table_name = 'pcmcia',
+          parent_scanner = parent_scanner,
+          struct_name = "pcmcia_device_id",
+          struct_fields = ("match_flags", "manf_id", "card_id", "func_id", "function",
+		    "device_no", "prod_id_hash", "prod_id", "driver_info", "cisfile")
+          )
+
+    def store(self, dict):
+        match = extract_value("match_flags", dict)
+        if not match:
+            return None
+        d = {}
+        if match & self.PCMCIA_DEV_ID_MATCH_MANF_ID:
+            d['manf_id'] = extract_value("manf_id", dict)
+        else:
+            d['manf_id'] = -1
+        if match & self.PCMCIA_DEV_ID_MATCH_CARD_ID:
+            d['card_id'] = extract_value("card_id", dict)
+        else:
+            d['card_id'] = -1
+        if match & self.PCMCIA_DEV_ID_MATCH_FUNC_ID:
+            d['func_id'] = extract_value("func_id", dict)
+        else:
+            d['func_id'] = -1
+        if match & self.PCMCIA_DEV_ID_MATCH_FUNCTION:
+            d['function'] = extract_value("function", dict)
+        else:
+            d['function'] = -1
+        if match & self.PCMCIA_DEV_ID_MATCH_DEVICE_NO:
+            d['device_no'] = extract_value("device_no", dict)
+        else:
+            d['device_no'] = -1
+	for n in range(4):
+	    d['n%u'%n] = ""
+	if match & ( self.PCMCIA_DEV_ID_MATCH_PROD_ID1 | self.PCMCIA_DEV_ID_MATCH_PROD_ID2 |
+                     self.PCMCIA_DEV_ID_MATCH_PROD_ID3 | self.PCMCIA_DEV_ID_MATCH_PROD_ID4 ):
+            prods = nullstring_re.sub('""', extract_string["prod_id"])
+            line = scanners.split_structs(prods)[0]
+            dict_prod = srcparser.parse_struct(None, unwind_array,
+                                                line, None, None, ret=True)
+
+            if match & self.self.PCMCIA_DEV_ID_MATCH_PROD_ID1:
+                d['n0'] = extract_string("n0", dict_prod)
+            if match & self.self.PCMCIA_DEV_ID_MATCH_PROD_ID2:
+                d['n1'] = extract_string("n1", dict_prod)
+            if match & self.self.PCMCIA_DEV_ID_MATCH_PROD_ID3:
+                d['n2'] = extract_string("n2", dict_prod)
+            if match & self.self.PCMCIA_DEV_ID_MATCH_PROD_ID4:
+                d['n3'] = extract_string("n3", dict_prod)
+        return d
+
+
+# input, input_device_id include/linux/mod_devicetable.h drivers/input/input.c
+
+class input(list_of_structs_scanner):
+    INPUT_DEVICE_ID_MATCH_BUS     = 1
+    INPUT_DEVICE_ID_MATCH_VENDOR  = 2
+    INPUT_DEVICE_ID_MATCH_PRODUCT = 4
+    INPUT_DEVICE_ID_MATCH_VERSION = 8
+    INPUT_DEVICE_ID_MATCH_EVBIT   = 0x0010
+    INPUT_DEVICE_ID_MATCH_KEYBIT  = 0x0020
+    INPUT_DEVICE_ID_MATCH_RELBIT  = 0x0040
+    INPUT_DEVICE_ID_MATCH_ABSBIT  = 0x0080
+    INPUT_DEVICE_ID_MATCH_MSCIT   = 0x0100
+    INPUT_DEVICE_ID_MATCH_LEDBIT  = 0x0200
+    INPUT_DEVICE_ID_MATCH_SNDBIT  = 0x0400
+    INPUT_DEVICE_ID_MATCH_FFBIT   = 0x0800
+    INPUT_DEVICE_ID_MATCH_SWBIT   = 0x1000
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'input',
+          table_name = 'input',
+          parent_scanner = parent_scanner,
+          struct_name = "input_device_id",
+          struct_fields = ("flags", "bustype", "vendor", "product", "version",
+		   "evbit", "keybit", "relbit", "absbit", "mscbit", "ledbit",
+		   "sndbit", "ffbit", "swbit", "driver_info")
+          )
+
+    def store(self, dict):
+        match = extract_value("match_flags", dict)
+        if not match:
+            return {}
+        d = {}
+        if match & self.INPUT_DEVICE_ID_MATCH_BUS:
+            d['bustype'] = extract_value("bustype", dict)
+        else:
+            d['bustype'] = -1
+        if match & self.INPUT_DEVICE_ID_MATCH_VENDOR:
+            d['vendor'] = extract_value("vendor", dict)
+        else:
+            d['vendor'] = -1
+        if match & self.INPUT_DEVICE_ID_MATCH_PRODUCT:
+            d['product'] = extract_value("product", dict)
+        else:
+            d['product'] = -1
+        if match & self.INPUT_DEVICE_ID_MATCH_VERSION:
+            d['version'] = extract_value("version", dict)
+        else:
+            d['version'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_EVBIT:
+            d['evbit'] = extract_value("evbit", dict)
+        else:
+            d['evbit'] = 0xffff
+        if match & self.INPUT_DEVICE_ID_MATCH_KEYBIT:
+            d['keybit'] = extract_value("keybit", dict)
+        else:
+            d['keybit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_RELBIT:
+            d['relbit'] = extract_value("relbit", dict)
+        else:
+            d['relbit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_ABSBIT:
+            d['absbit'] = extract_value("absbit", dict)
+        else:
+            d['absbit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_MSCIT:
+            d['mscbit'] = extract_value("mscbit", dict)
+        else:
+            d['mscbit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_LEDBIT:
+            d['ledbit'] = extract_value("ledbit", dict)
+        else:
+            d['ledbit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_SNDBIT:
+            d['sndbit'] = extract_value("sndbit", dict)
+        else:
+            d['sndbit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_FFBIT:
+            d['ffbit'] = extract_value("ffbit", dict)
+        else:
+            d['ffbit'] = 0xff
+        if match & self.INPUT_DEVICE_ID_MATCH_SWBIT:
+            d['swbit'] = extract_value("swbit", dict)
+        else:
+            d['swbit'] = 0xff
+
+
+# EISA, input_device_id include/linux/mod_devicetable.h
+
+class eisa(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'eisa',
+          table_name = 'eisa',
+          parent_scanner = parent_scanner,
+          struct_name = "eisa_device_id",
+          struct_fields = ("sig", "driver_data")
+          )
+
+    def store(self, dict):
+        d = {}
+        d['sig'] = extract_string("sig", dict)
+        if not d['sig']:
+            return {}
+        return d
+
+
+# parisc, parisc_device_id include/linux/mod_devicetable.h arch/parisc/kernel/drivers.c
+
+class parisc(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'parisc',
+          table_name = 'parisc',
+          parent_scanner = parent_scanner,
+          struct_name = "parisc_device_id",
+          struct_fields = ("hw_type", "hversion_rev", "hversion", "sversion")
+          )
+
+    def store(self, dict):
+        d = {}
+        d['sversion'] = extract_value("sversion", dict)
+	if d['sversion'] == 0:
+	    return {}
+        d['hw_type'] = extract_value("hw_type", dict)
+        d['hversion_rev'] = extract_value("hversion_rev",dict)
+        d['hversion'] = extract_value("hversion",dict)
+        return d
+
+
+# SDIO, sdio_device_id include/linux/mod_devicetable.h drivers/mmc/core/sdio_bus.c
+
+class sdio(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'sdio',
+          table_name = 'sdio',
+          parent_scanner = parent_scanner,
+          struct_name = "sdio_device_id",
+          struct_fields = ("class", "vendor", "device", "driver_data")
+          )
+
+    def store(self, dict):
+        d = {}
+	d['class'] = extract_value("class", dict)
+        d['vendor'] = extract_value("vendor", dict)
+        d['device'] = extract_value("device", dict)
+        if d['vendor'] == 0  and  d['device'] == 0  and  d['class'] == 0:
+            return {}
+        return d
+
+
+# SBB, sdio_device_id include/linux/mod_devicetable.h drivers/ssb/main.c
+
+class sbb(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'sbb',
+          table_name = 'sbb',
+          parent_scanner = parent_scanner,
+          struct_name = "sbb_device_id",
+          struct_fields = ("vendor", "coreid", "revision")
+          )
+
+    def store(self, dict):
+        d = {}
+        d['vendor'] = extract_value("vendor", dict)
+        d['coreid'] = extract_value("coreid", dict)
+        d['revision'] = extract_value("revision", dict)
+        if d['vendor'] == 0  and  d['coreid'] == 0  and  d['revision'] == 0:
+            return {}
+        return d
+
+
+# virtio, sdio_device_id include/linux/mod_devicetable.h drivers/virtio/virtio.c
+
+class virtio(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'virtio',
+          table_name = 'virtio',
+          parent_scanner = parent_scanner,
+          struct_name = "virtio_device_id",
+          struct_fields = ("device", "vendor")
+          )
+
+    def store(self, dict):
+        d = {}
+        d['device'] = extract_value("device", dict)
+        d['vendor'] = extract_value("vendor", dict)
+        if d['device'] == 0  and  d['vendor'] == 0:
+            return {}
+        return d
+
+
+# I2C i2c_device_id include/linux/mod_devicetable.h i2c_driver include/linux/i2c.h
+
+class i2c(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'i2c',
+          table_name = 'i2c',
+          parent_scanner = parent_scanner,
+          struct_name = "i2c_device_id",
+          struct_fields = ("name", "driver_data")
+          )
+
+    def store(self, dict):
+        if not dict.has_key("driver"):
+            return {}
+        block = dict["driver"]
+        line = split_structs(block)[0]
+        driver_dict = parse_struct(None, device_driver_fields,
+                line, None, None, ret=True)
+        d['name'] = extract_value("name", dict)
+        return d
+
+
+# TC, tc_device_id include/linux/tc.h drivers/tc/tc-driver.c
+
+class tc(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'tc',
+          table_name = 'tc',
+          parent_scanner = parent_scanner,
+          struct_name = "tc_device_id",
+          struct_fields = ("vendor", "name")
+          )
+
+    def store(self, dict):
+        d = {}
+        d['vendor'] = extract_string("vendor", dict)
+        d['name'] = extract_string("name", dict)
+        if not d['vendor'] == 0  and  not d['name'] == 0:
+            return {}
+        return d
+
+
+# zorro, zorro_device_id include/linux/zorro.h drivers/zorro/zorro-driver.c
+
+class zorro(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'zorro',
+          table_name = 'zorro',
+          parent_scanner = parent_scanner,
+          struct_name = "zorro_device_id",
+          struct_fields = ("id", "driver_data")
+          )
+
+    def store(self, dict):
+        id = extract_value("id", dict)
+        if id == 0:
+            return {}
+	if id == 0xffffffff:
+	    return {'id1': -1,  'id2': -1}
+	else:
+	    return {'id1': (id >> 16) | 0xffff,  'id2': (id | 0xffff) }
+
+
+# AGP, agp_device_ids drivers/char/agp/agp.h drivers/char/agp/
+
+class agp(list_of_structs_scanner):
+    def __init__(self, parent_scanner):
+      list_of_structs_scanner.__init__(self,
+          name = 'agp',
+          table_name = 'agp',
+          parent_scanner = parent_scanner,
+          struct_name = "agp_device_id",
+          struct_fields = ("device_id", "chipset", "chipset_name", "chipset_setup")
+          )
+
+    def store(self, dict):
+        d = {}
+        d['device_id'] = extract_value("device_id", dict)
+	if d['device_id'] == 0:
+	    return {}
+        d['chipset'] = extract_value("chipset", dict)
+        d['chipset_name'] = extract_string("chipset_name", dict)
+        return d
+
+
