@@ -8,9 +8,10 @@ from lkddb import register_browser, register_scanner, get_table
 
 # sources
 from .kbuild import kver, makefiles, kconfigs
-from . import sources, devicetables
-# tables
-#from . import tables_build
+from . import browse_sources
+from parse_devicetables import *
+from parse_others import *
+
 
 def register_browsers(kerneldir, dirs):
 
@@ -25,39 +26,38 @@ def register_browsers(kerneldir, dirs):
 			 get_table('module'), kerneldir, dirs, makefiles_)
     register_browser(kconfigs_)
 
-    sources_ = sources.linux_sources(kerneldir, dirs)
+    sources_ = browse_sources.linux_sources(kerneldir, dirs)
     register_browser(sources_)
 
-    # devices if not done at sources level (directly or indirectly)
-    parent_scanner = sources.struct_parent_scanner(sources_, makefiles_)
-    register_scanner(devicetables.pci(parent_scanner))
-    register_scanner(devicetables.usb(parent_scanner))
-    register_scanner(devicetables.ieee1394(parent_scanner))
-#    register_scanner(devicetables.hid(parent_scanner))
-#    register_scanner(devicetables.ccw(parent_scanner))
-#    register_scanner(devicetables.ap(parent_scanner))
-#    register_scanner(devicetables.acpi(parent_scanner))
-#    register_scanner(devicetables.pnp(parent_scanner))
-#    register_scanner(devicetables.pnp_card(parent_scanner))
-#    register_scanner(devicetables.serio(parent_scanner))
-#    register_scanner(devicetables.of(parent_scanner))
-#    lkddb.register_scanner(devicetables.vio(parent_scanner))
-#    lkddb.register_scanner(devicetables.pcmcia(parent_scanner))
-#    lkddb.register_scanner(devicetables.input(parent_scanner))
-#    lkddb.register_scanner(devicetables.eisa(parent_scanner))
-#    lkddb.register_scanner(devicetables.parisc(parent_scanner))
-#    lkddb.register_scanner(devicetables.sdio(parent_scanner))
-#    lkddb.register_scanner(devicetables.sbb(parent_scanner))
-#    lkddb.register_scanner(devicetables.virtio(parent_scanner))
-#    lkddb.register_scanner(devicetables.i2c(parent_scanner))
-#    lkddb.register_scanner(devicetables.tc(parent_scanner))
+    parent_scanner = browse_sources.struct_parent_scanner(sources_, makefiles_)
 
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
-#    lkddb.register_scanner(devicetables.(parent_scanner))
+    # parse_devicetables
+    register_scanner(pci(parent_scanner))
+    register_scanner(usb(parent_scanner))
+    register_scanner(ieee1394(parent_scanner))
+    register_scanner(hid(parent_scanner))
+    register_scanner(ccw(parent_scanner))
+    register_scanner(ap(parent_scanner))
+    register_scanner(acpi(parent_scanner))
+    register_scanner(pnp(parent_scanner))
+    register_scanner(pnp_card(parent_scanner))
+    register_scanner(serio(parent_scanner))
+    register_scanner(of(parent_scanner))
+    register_scanner(vio(parent_scanner))
+    register_scanner(pcmcia(parent_scanner))
+    register_scanner(input(parent_scanner))
+    register_scanner(eisa(parent_scanner))
+    register_scanner(parisc(parent_scanner))
+    register_scanner(sdio(parent_scanner))
+    register_scanner(sbb(parent_scanner))
+    register_scanner(virtio(parent_scanner))
+    register_scanner(i2c(parent_scanner))
+    register_scanner(tc(parent_scanner))
+    register_scanner(zorro(parent_scanner))
+    register_scanner(agp(parent_scanner))
+
+    # parse_others
+    lkddb.register_scanner(i2c_snd(parent_scanner))
+    lkddb.register_scanner(platform(parent_scanner))
+    lkddb.register_scanner(fs(parent_scanner))
 

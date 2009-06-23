@@ -143,6 +143,9 @@ class struct_parent_scanner(lkddb.scanner):
                 for line in scanner.splitter(block):
                     parse_struct(scanner, scanner.struct_fields, line, dep, filename)
 
+subfield_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)(\.[A-Za-z_0-9]*\s*=\s*.*)$", re.DOTALL)
+
+
 def parse_struct(scanner, fields, line, dep, filename, ret=False):
     "convert a struct (array of parameters) into a dictionary"
     res = {}
@@ -156,7 +159,7 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
             if m:
                 field, value = m.groups()
             else:
-                m = scanners.subfield_re.match(param)
+                m = subfield_re.match(param)
                 if m:
                     field, value = m.groups()
                     value = "{" + value + "}"

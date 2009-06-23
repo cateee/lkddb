@@ -59,10 +59,10 @@ class struct_scanner(struct_subscanner):
         self.splitter = split_structs
 
 class function_scanner(struct_subscanner):
-    def __init__(self, name, parent_scanner, table, struct_name, struct_fields):
+    def __init__(self, name, parent_scanner, table_name, funct_name, funct_fields):
 	struct_subscanner.__init__(self, name=name, parent_scanner=parent_scanner, table_name=table_name)
-        self.struct_name = struct_name
-        self.struct_fields = struct_fields
+        self.struct_name = funct_name
+        self.struct_fields = funct_fields
         regex = ( r"\b%s\s*\(([^()]*(?:\([^()]*\))?[^()]*(?:\([^()]*\))?[^()]*)\)"
 			% funct_name )
         self.regex = re.compile(regex, re.DOTALL)
