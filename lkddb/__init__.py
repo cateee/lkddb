@@ -132,12 +132,12 @@ def format_tables():
 #   - sql:   in SQL database
 #
 
-def write(data=None, lines=None, sql=None):
+def write(data=None, list=None, sql=None):
     if data:
 	write_data(data)
-    if lines:
+    if list:
 	format_tables()
-        write_lines(lines)
+        write_list(list)
 
 #
 
@@ -166,15 +166,21 @@ def read_data(filename, rw=False):
 	    s.rows = rows
 	s.restore()
 
-def write_lines(filename):
-    phase("writing 'lines'")
+def write_list(filename):
+    phase("writing 'list'")
     lines = []
     for s in _tables.itervalues():
 	new = s.get_lines()
 	lines.extend(new)
     lines.sort()
+    lines2 = []
+    old = None
+    for l in lines:
+	if l != old:
+	    lines2.append(l)
+	    old = l
     f = open(filename, "w")
-    f.writelines(lines)
+    f.writelines(lines2)
     f.close()
 	
 #

@@ -5,7 +5,7 @@
 #  This is free software, see GNU General Public License v2 for details
 
 import lkddb
-from lkddb.fmt import *
+from lkddb import fmt
 
 
 class i2c_snd_table(lkddb.table):
@@ -13,9 +13,9 @@ class i2c_snd_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "i2c_snd_table")
 
-    row_fmt = (fmt_qstr,
-                fmt_deps, fmt_filename)
-    line_templ = ("i2c_snd %s\t%s # %s\n")
+    row_fmt = (fmt.qstr,
+                fmt.deps, fmt.filename)
+    line_templ = ("i2c_snd %s\t%s\t%s\n")
     names = ('name', 'deps', 'filename')
     fmt_line = ('i2c_snd\t%(name)s' +
                 '\t%(deps)s\t%(filename)s\n' )
@@ -26,9 +26,9 @@ class platform_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "platform_table")
 
-    row_fmt = (fmt_qstr,
-                fmt_deps, fmt_filename)
-    line_templ = ("platform %s\t%s # %s\n")
+    row_fmt = (fmt.qstr,
+                fmt.deps, fmt.filename)
+    line_templ = ("platform %s\t%s\t%s\n")
     names = ('name', 'deps', 'filename')
     fmt_line = ('platform\t%(name)s' +
                 '\t%(deps)s\t%(filename)s\n' )
@@ -39,9 +39,9 @@ class fs_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "fs_table")
 
-    row_fmt = (fmt_qstr, 
-                fmt_deps, fmt_filename)
-    line_templ = ("fs %s\t%s # %s\n")
+    row_fmt = (fmt.qstr, 
+                fmt.deps, fmt.filename)
+    line_templ = ("fs %s\t%s\t%s\n")
     names = ('name', 'deps', 'filename')
     fmt_line = ('fs\t%(name)s' +
                 '\t%(deps)s\t%(filename)s\n' )

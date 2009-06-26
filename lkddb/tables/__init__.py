@@ -12,6 +12,7 @@ def register_linux_tables():
     register_table('kver', linux_kbuild.kver_table())
     register_table('kconf', linux_kbuild.kconf_table())
     register_table('module', linux_kbuild.module_table())
+    register_table('firmware', linux_kbuild.firmware_table())
     
     linux_devicetables.register()
     linux_others.register()

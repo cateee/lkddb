@@ -31,7 +31,7 @@ def make(options, logfile, kerneldir, dirs):
         raise
     lkddb.phase("write")
     lkddb.write(data = options.dbfile + ".data",
-		lines = options.dbfile + ".lines")
+		list = options.dbfile + ".list")
 
 #
 # main
@@ -72,9 +72,9 @@ if __name__ == "__main__":
     if len(args) > 1:
         dirs = args[1:]
     else:
-        dirs = ("arch", "block", "crypto", "drivers", "fs", "init",
+        dirs = ("arch", "block", "crypto", "drivers", "firmware", "fs", "init",
                 "ipc", "kernel", "lib", "mm", "net", "security",
-                "sound", "virt")
+                "sound", "usr", "virt")
 
     make(options, logfile, kerneldir, dirs)
 

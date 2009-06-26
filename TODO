@@ -1,0 +1,13 @@
+handle OR
+  core-$(CONFIG_IA64_DIG)         += arch/ia64/dig/
+  core-$(CONFIG_IA64_DIG_VTD)     += arch/ia64/dig/
+  core-$(CONFIG_IA64_GENERIC)     += arch/ia64/dig/
+  core-$(CONFIG_IA64_HP_ZX1)      += arch/ia64/dig/
+tracking the tree?
+Note: so every makefile is opened only once
+The result: two lines?
+
+handle if/else construct in makefiles
+
+
+

@@ -6,7 +6,7 @@
 
 import lkddb
 from lkddb.linux.scanners import *
-from .browse_sources import struct_parent_scanner
+from .browse_sources import struct_parent_scanner, parse_struct
 
 
 # device_driver include/linux/device.h
@@ -30,7 +30,7 @@ class i2c_snd(function_scanner):
 
     def store(self, dict):
         v0 = extract_string("name", dict)
-        if not v0:
+        if v0 == "":
             return None
         return (v0,)
 
@@ -52,9 +52,9 @@ class platform(struct_scanner):
 	block = dict.get("driver", None)
         if not block:
             return None
-        line = scanners.split_structs(block)[0]
-        driver_dict = srcparser.parse_struct(None, device_driver_fields, line, None, None, ret=True)
-        v0 = extrace_string("name", driver_dict)
+        line = split_structs(block)[0]
+        driver_dict = parse_struct(None, device_driver_fields, line, None, None, ret=True)
+        v0 = extract_string("name", driver_dict)
         return (v0,)
 
 
@@ -67,7 +67,7 @@ class fs(struct_scanner):
           name = 'fs',
           table_name = 'fs',
           parent_scanner = parent_scanner,
-          struct_name = "ap_device_id",
+          struct_name = "file_system_type",
           struct_fields = ("name", "fs_flags", "get_sb", "kill_sb", "owner",
 		"next", "fs_supers", "s_lock_key", "s_umount_key", "i_lock_key", "i_mutex_key",
 		"i_mutex_dir_key", "i_alloc_sem_key")

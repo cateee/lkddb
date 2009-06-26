@@ -14,7 +14,7 @@ from lkddb.parser import unwind_include
 
 __all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
 	   "split_funct", "split_structs",
-	   "extract_value", "extract_string", "nullstring_re")
+	   "extract_value", "extract_string")
 
 class struct_subscanner(object):
 
@@ -36,7 +36,7 @@ class struct_subscanner(object):
                     self.name, filename, data) )
                 continue
 	    if row:
-                self.table.add_row(row + (filename, " ".join(sorted(deps))))
+                self.table.add_row(row + (" ".join(sorted(deps)), filename))
 
 # ---------------
 
@@ -108,14 +108,7 @@ def split_structs(block):
                 lines.append(params[:])
     return lines
 
-
-
-# Unwind some arrays (i.e. in pcmcia_device_id):
-unwind_array = ("n0", "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9")
-
 # --------------------
-
-nullstring_re = re.compile(r"\([ \t]*void[ \t]*\*[ \t]*\)[ \t]*0")
 
 tri_re  = re.compile(r"\(\s*\(([^\)]+)\)\s*\?([^:]*):([^\)]*)\)")
 tri_re2 = re.compile(r"\(\s*([^\(\)\?]+)\?([^:]*):([^\)]*)\)")
@@ -183,73 +176,80 @@ def extract_value(field, dictionary):
     else:
         return 0
 
-def mask_value(val, any, deep):
-    "convert numeric 'val' in a string.  If 'any', then write the mask" 
-    ret = "." * deep
-    if any < 0  and  val < 0:
-        return ret
-    elif val == any:
-        return ret
-    form = "%%%u.%ux" % (deep, deep)
-    try:
-        ret = form % val
-    except TypeError:
-        if val[0] == "'"  and  val[2] == "'"  and  len(val) == 3:
-            ret = form % ord(val[1])
-    return ret
+#def mask_value(val, any, deep):
+#    "convert numeric 'val' in a string.  If 'any', then write the mask" 
+#    ret = "." * deep
+#    if any < 0  and  val < 0:
+#        return ret
+#    elif val == any:
+#        return ret
+#    form = "%%%u.%ux" % (deep, deep)
+#    try:
+#        ret = form % val
+#    except TypeError:
+#        if val[0] == "'"  and  val[2] == "'"  and  len(val) == 3:
+#            ret = form % ord(val[1])
+#    return ret
 
 
-def mask_mask(v, m, len=6):
-    ret = ""
-    for i in range(len):
-        if m[i] == "0":
-            ret += "."
-        elif m[i] == "f":
-            ret += v[i]
-        else:
-            print "Unknow mask", v, m, len
-            raise "KACerror"
-    return ret
+#def mask_mask(v, m, len=6):
+#    ret = ""
+#    for i in range(len):
+#        if m[i] == "0":
+#            ret += "."
+#        elif m[i] == "f":
+#            ret += v[i]
+#        else:
+#            print "Unknow mask", v, m, len
+#            raise "KACerror"
+#    return ret
 
-def chars(field, dictionary, lenght=4, default="...."):
-    if dictionary.has_key(field):
-        v = dictionary[field]
-        l = len(v)
-        if l == 2:
-            return default
-        if v[0] == '"'  and  v[-1] == '"'  and  len(v) == lenght+2:
-            return v[1:-1]
-        else:
-            print "Error on assumptions in translating chars:", field, dictionary, lenght, default, v
-            raise "KACerror"
-    else:
-        return default
+#def chars(field, dictionary, lenght=4, default="...."):
+#    if dictionary.has_key(field):
+#        v = dictionary[field]
+#        l = len(v)
+#        if l == 2:
+#            return default
+#        if v[0] == '"'  and  v[-1] == '"'  and  len(v) == lenght+2:
+#            return v[1:-1]
+#        else:
+#            print "Error on assumptions in translating chars:", field, dictionary, lenght, default, v
+#            raise "KACerror"
+#    else:
+#        return default
 
 char_cast_re = re.compile(r"\(\s*char\s*\*\s*\)\s*", re.DOTALL)
+null_pointer_re = re.compile(r"\(\s*void\s*\*\)\s*0", re.DOTALL)
 field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
 subfield_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)(\.[A-Za-z_0-9]*\s*=\s*.*)$", re.DOTALL)
+
+def extract_string_rec(v, default=""):
+    if v[0] == '(':
+        if v[-1] == ')':
+	    return extract_string_rec(v[1:-1].strip(), default)
+        else:
+	    if null_pointer_re.match(v):
+	        return default
+            v = char_cast_re.sub("", v).strip()
+	    return extract_string_rec(v, default)
+    if v[0] == '{'  and  v[-1] == '}':
+        return extract_string_rec(v[1:-1].strip(), default)
+    if v[0] == '"'  and  v[-1] == '"':
+        return v[1:-1].replace("\t", " ")
+    else:
+        m = field_init_re.match(v)
+        if m:
+            field, value = m.groups()
+            return extract_string_rec(value, default)
+        lkddb.log("Error on assumptions in translating strings: value '%s'" % v)
+	assert(True)
+        return default
+
 
 def extract_string(field, dictionary, default=""):
     if dictionary.has_key(field):
         v = dictionary[field]
-        if v[0] == '(':
-            if v[-1] == ')':
-                v = v[1:-1].strip()
-            else:
-                v = char_cast_re.sub("", v).strip()
-        if v[0] == '{'  and  v[-1] == '}':
-            v = v[1:-1].strip()
-        if v[0] == '"'  and  v[-1] == '"':
-            return v.replace("\t", " ")
-        else:
-            m = field_init_re.match(v)
-            if m:
-                field, value = m.groups()
-                return strings("recursive", {"recursive": value}, default)
-            m = char_cast_re.search(v)
-
-            print "Error on assumptions in translating strings:", field, dictionary, default, v
-            return default
+	return extract_string_rec(v, default)
     else:
         return default
 

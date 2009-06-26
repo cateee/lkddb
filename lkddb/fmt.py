@@ -5,28 +5,39 @@
 #  This is free software, see GNU General Public License v2 for details
 
 
+target = ('text', 'web', 'database') 
+
+def get_row_fmt(fmt):
+    ret = filter(None, map(lambda v: v[1], fmt))
+
 
 # masks
 
-def fmt_m8x(value):
+def m8x(value):
     assert(value > -2  and  value < 2**(8))
     if value == -1:
 	return ".."
     return "%02x" % value
 
-def fmt_m16x(value):
+def m16x(value):
     assert(value > -2  and  value < 2**(16))
     if value == -1:
         return "...."
     return "%04x" % value
 
-def fmt_m32x(value):
+def m24x(value):
+    assert(value > -2  and  value < 2**(48))
+    if value == -1:
+        return "......"
+    return "%06x" % value
+
+def m32x(value):
     assert(value > -2  and  value < 2**(32))
     if value == -1:
         return "........"
     return "%08x" % value
 
-def fmt_m64x(value):
+def m64x(value):
     assert(value > -2  and  value < 2**(64))
     if value == -1:
         return "................"
@@ -35,12 +46,13 @@ def fmt_m64x(value):
 
 # mask of mask
 
-def fmt_mask_32m(v, m):
+def mask_24m(v, m):
     ret = ""
-    for i in range(32/4):
-        if m[i] == "0" or m[i] == ".":
+    for i in range(24/4):
+        if m[i] == "0":
             ret += "."
-        elif m[i] == "f":
+	# '~0' means 0xfffff for mask
+        elif m[i] == "f" or m[i] == ".":
             ret += v[i]
         else:
             print "Unknow mask", v, m, len
@@ -49,25 +61,25 @@ def fmt_mask_32m(v, m):
 
 # simple
 
-def fmt_pass(value):
+def special(value):
     return value
 
-def fmt_str(value):
+def str(value):
     return value
 
-def fmt_qstr(value):
+def qstr(value):
     return '"' + value + '"'
 
 
-def fmt_int(value):
+def int(value):
     return "%d" % value
 
 
 # complex structures
 
-def fmt_filename(value):
+def filename(value):
     return value
 
-def fmt_deps(value):
+def deps(value):
     return value
 

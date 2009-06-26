@@ -133,6 +133,9 @@ class struct_parent_scanner(lkddb.scanner):
         unwind_include(filename)
         for scanner in self.scanners:
             for block in scanner.regex.findall(src):
+#		print "---" #################
+#		print block #################
+#		print "===" #################
                 block = lkddb.parser.expand_block(block, filename)
                 for conf, sblock in ifdef_re.findall(block): ### here
                     sdep = dep.copy().add(conf)

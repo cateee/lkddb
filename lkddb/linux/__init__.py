@@ -19,11 +19,11 @@ def register_browsers(kerneldir, dirs):
     kver_ = kver(get_table('kver'), kerneldir)
     register_browser(kver_)
 
-    makefiles_ = makefiles(kerneldir, dirs)
+    makefiles_ = makefiles(get_table('firmware'), kerneldir, dirs)
     register_browser(makefiles_)
 
-    kconfigs_ = kconfigs(get_table('kconf'),
-			 get_table('module'), kerneldir, dirs, makefiles_)
+    kconfigs_ = kconfigs(get_table('kconf'), get_table('module'),
+				 kerneldir, dirs, makefiles_)
     register_browser(kconfigs_)
 
     sources_ = browse_sources.linux_sources(kerneldir, dirs)
@@ -49,7 +49,7 @@ def register_browsers(kerneldir, dirs):
     register_scanner(eisa(parent_scanner))
     register_scanner(parisc(parent_scanner))
     register_scanner(sdio(parent_scanner))
-    register_scanner(sbb(parent_scanner))
+    register_scanner(ssb(parent_scanner))
     register_scanner(virtio(parent_scanner))
     register_scanner(i2c(parent_scanner))
     register_scanner(tc(parent_scanner))

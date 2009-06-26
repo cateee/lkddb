@@ -4,7 +4,7 @@
 #  This is free software, see GNU General Public License v2 for details
 
 import lkddb
-from lkddb.fmt import *
+from lkddb import fmt
 
 class kver_table(lkddb.table):
 
@@ -12,7 +12,7 @@ class kver_table(lkddb.table):
         lkddb.table.__init__(self, "kver_table")
 
     names = ('version', 'ver_str', 'is_a_release', 'name')
-    row_fmt = (fmt_m32x, fmt_str, fmt_int, fmt_qstr)
+    row_fmt = (fmt.m32x, fmt.str, fmt.int, fmt.qstr)
     line_templ = ("kver %s %s %s %s\n")
 
 
@@ -37,8 +37,16 @@ class module_table(lkddb.table):
         lkddb.table.__init__(self, "module_table")
 
     names = ('name', 'descr', 'config', 'filename')
-
-    row_fmt = (fmt_str, fmt_qstr, fmt_str, fmt_filename)
+    row_fmt = (fmt.str, fmt.qstr, fmt.str, fmt.filename)
     line_templ = ("module %s %s\t%s\t%s\n")
+
+class firmware_table(lkddb.table):
+
+    def __init__(self):
+        lkddb.table.__init__(self, "firmware_table")
+
+    names = ('config', 'filename')
+    row_fmt = (fmt.str, fmt.filename)
+    line_templ = ("firmware %s\t%s\n")
 
 
