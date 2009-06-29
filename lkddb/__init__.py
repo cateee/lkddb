@@ -67,10 +67,29 @@ class table(object):
         self.name = name
 	self.rows = []
 	self.rows_fmt = []
+	line_fmt = []
+	sql_cols = []
+	sql_create_col = []
+	for name, line, sql in self.cols:
+	    if line:
+		line_fmt.append(line)
+	    if sql:
+		sql_cols.append(name)
+		sql_create_col.append( "name " + sql)
+        if sql_cols:
+            self.sql_create = ( "CREATE TABLE IF NOT EXISTS " + name + " (" +
+		", ".join(sql_create_col) + " );" )
+	    self.sql_insert = ("INSERT INTO " + name + " (" +
+            	", ".join(sql_cols) + ") VALUES ("+
+                ", ".join(("?",)*len(sql_cols)) + ");")
+	if line_fmt:
+	    self.line_fmt = tuple(line_fmt)
+	    self.line_templ = name + " %s"*len(line_fmt) + '\n'
+
     def add_row_fmt(self, row):
 	try:
 	    r = []
-	    for f, v in zip(self.row_fmt, row):
+	    for f, v in zip(self.line_fmt, row):
 		r.append(f(v))
 	    self.rows_fmt.append(tuple(r))
 	except AssertionError:

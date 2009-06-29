@@ -22,7 +22,7 @@ class i2c_snd(function_scanner):
     def __init__(self, parent_scanner):
       function_scanner.__init__(self,
           name = 'i2c_snd',
-          table_name = 'i2c_snd',
+          table_name = 'i2c-snd',
           parent_scanner = parent_scanner,
           funct_name = "snd_i2c_device_create",
           funct_fields = ("bus", "name", "addr", "rdevice")

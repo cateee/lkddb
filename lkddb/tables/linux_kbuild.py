@@ -9,19 +9,25 @@ from lkddb import fmt
 class kver_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "kver_table")
+        lkddb.table.__init__(self, "kver")
 
-    names = ('version', 'ver_str', 'is_a_release', 'name')
-    row_fmt = (fmt.m32x, fmt.str, fmt.int, fmt.qstr)
-    line_templ = ("kver %s %s %s %s\n")
+    cols = (('version', fmt.m32x, "INTEGER"),
+           ('ver_str', fmt.str, "TEXT"),
+           ('is_a_release', fmt.int, "INTEGER"),
+           ('name', fmt.qstr, "TEXT"))
 
 
 class kconf_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "kconf_table")
+        lkddb.table.__init__(self, "kconf")
 
-    names = ('config', 'filename', 'type', 'descr', 'depends', 'help')
+    cols = (('config', None, "TEXT"),
+           ('filename', None, "TEXT"),
+           ('type', None, "TEXT"),
+           ('descr', None, "TEXT"),
+           ('depends', None, "TEXT"),
+           ('help', None, "TEXT"))
 
     def add_row_fmt(self, row):
 	pass
@@ -34,19 +40,19 @@ class kconf_table(lkddb.table):
 class module_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "module_table")
+        lkddb.table.__init__(self, "module")
 
-    names = ('name', 'descr', 'config', 'filename')
-    row_fmt = (fmt.str, fmt.qstr, fmt.str, fmt.filename)
-    line_templ = ("module %s %s\t%s\t%s\n")
+    cols = (('name', fmt.str, "TEXT"),
+           ('descr', fmt.qstr, "TEXT"),
+           ('config',  fmt.str, "..."),
+           ('filename', fmt.filename, "...."))
+
 
 class firmware_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "firmware_table")
+        lkddb.table.__init__(self, "firmware")
 
-    names = ('config', 'filename')
-    row_fmt = (fmt.str, fmt.filename)
-    line_templ = ("firmware %s\t%s\n")
-
+    cols = (('config',  fmt.str, "..."),
+           ('filename', fmt.filename, "...."))
 

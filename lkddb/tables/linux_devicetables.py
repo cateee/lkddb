@@ -10,7 +10,7 @@ from lkddb import fmt
 class pci_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "pci_table")
+        lkddb.table.__init__(self, "pci")
 
     cols = (('vendor', fmt.m16x, "INTEGER"),
 	   ('device', fmt.m16x, "INTEGER"),
@@ -25,15 +25,11 @@ class pci_table(lkddb.table):
 	m = fmt.mask_24m(fmt.m24x(row[4]), fmt.m24x(row[5]))
         lkddb.table.add_row_fmt(self, row[:4] + (m,) + row[6:])
 
-    row_fmt = (fmt.m16x, fmt.m16x, fmt.m16x, fmt.m16x,
-	       fmt.special, fmt.deps, fmt.filename)
-    line_templ = ("pci\t%s %s %s %s %s\t%s\t%s\n")
-
 
 class usb_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "usb_table")
+        lkddb.table.__init__(self, "usb")
 
     cols = (('idVendor', fmt.m16x, "INTEGER"),
 	   ('idProduct', fmt.m16x, "INTEGER"),
@@ -48,16 +44,11 @@ class usb_table(lkddb.table):
 	   ('deps',  fmt.deps, "..."),
 	   ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m16x, fmt.m16x,
-		fmt.m8x, fmt.m8x, fmt.m8x,  fmt.m8x, fmt.m8x, fmt.m8x,
-		fmt.m16x, fmt.m16x, fmt.deps, fmt.filename)
-    line_templ = ("usb %s %s %s%s%s %s%s%s %s %s\t%s\t%s\n")
-
 
 class ieee1394_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "ieee1394_table")
+        lkddb.table.__init__(self, "ieee1394")
 
     cols = (('vendor_id', fmt.m24x, "INTEGER"),
 	   ('model_id', fmt.m24x, "INTEGER"),
@@ -66,16 +57,11 @@ class ieee1394_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m24x, fmt.m24x, fmt.m24x, fmt.m24x,
-		fmt.deps, fmt.filename)
-    line_templ = ("ieee1394 %s %s %s %s\t%s\t%s\n")
-#    fmt_line = ("ieee1394\t%(vendor_id)06x %(model_id)06x " +
-#                "%(specifier_id)06x %(version)06x\t%(deps)s\t%(filename)s\n" )
 
 class hid_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "hid_table")
+        lkddb.table.__init__(self, "hid")
 
     cols = (('bus', fmt.m16x, "INTEGER"),
 	   ('vendor', fmt.m32x, "INTEGER"),
@@ -83,17 +69,11 @@ class hid_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m16x, fmt.m32x, fmt.m32x,
-                fmt.deps, fmt.filename)
-    line_templ = ("hid %s %s %s\t%s\t%s\n")
-#    fmt_line = ('hid\t%(bus)04x %(vendor)08x %(product)08x' +
-#                '\t%(deps)s\t%(filename)s\n' )
-
 
 class ccw_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "ccw_table")
+        lkddb.table.__init__(self, "ccw")
 
     cols = (('cu_type', fmt.m16x, "INTEGER"),
 	   ('cu_model', fmt.m8x, "INTEGER"),
@@ -102,51 +82,32 @@ class ccw_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m16x, fmt.m8x, fmt.m16x, fmt.m8x,
-                fmt.deps, fmt.filename)
-    line_templ = ("ccw %s %s %s %s\t%s\t%s\n")
-    fmt_line = ('ccw\t%(cu_type)04x %(cu_model)02x %(dev_type)04x %(dev_model)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 # s390 AP bus
 class ap_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "ap_table")
+        lkddb.table.__init__(self, "ap")
 
     cols = (('dev_type', fmt.m8x, "INTEGER"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m8x,
-                fmt.deps, fmt.filename)
-    line_templ = ("ap %s\t%s\t%s\n")
-    fmt_line = ('ap\t%(dev_type)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class acpi_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "acpi_table")
+        lkddb.table.__init__(self, "acpi")
 
     cols = (('id', fmt.qstr, "TEXT"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.qstr,
-                fmt.deps, fmt.filename)
-    line_templ = ("acpi %s\t%s\t%s\n")
-    names = ("id",
-         'deps', 'filename')
-    fmt_line = ('acpi\t%(id)s' +
-                '\t%(deps)s\t%(filename)s\n' )
 
 class pnp_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "pnp_table")
+        lkddb.table.__init__(self, "pnp")
 
     cols = (('id', fmt.qstr, "TEXT"),
 	   ('n0', fmt.qstr, "TEXT"),
@@ -160,18 +121,11 @@ class pnp_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.qstr, fmt.qstr, fmt.qstr, fmt.qstr, fmt.qstr,
-		fmt.qstr, fmt.qstr, fmt.qstr, fmt.qstr,
-                fmt.deps, fmt.filename)
-    line_templ = ("pnp %s %s %s %s %s %s %s %s %s\t%s\t%s\n")
-    fmt_line = ('pnp\t%(id)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class serio_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "serio_table")
+        lkddb.table.__init__(self, "serio")
 
     cols = (('type', fmt.m8x, "INTEGER"),
            ('proto', fmt.m8x, "INTEGER"),
@@ -180,19 +134,11 @@ class serio_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m8x, fmt.m8x, fmt.m8x, fmt.m8x,
-                fmt.deps, fmt.filename)
-    line_templ = ("serio %s %s %s %s\t%s\t%s\n")
-    names = ("type", "proto", "id", "extra", 
-         'deps', 'filename')
-    fmt_line = ('serio\t%(type)02x %(extra)02x %(id)02x %(proto)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class of_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "of_table")
+        lkddb.table.__init__(self, "of")
 
     cols = (('name', fmt.qstr, "TEXT"),
 	   ('type', fmt.qstr, "TEXT"),
@@ -200,38 +146,22 @@ class of_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.qstr, fmt.qstr, fmt.qstr,
-                fmt.deps, fmt.filename)
-    line_templ = ("of %s %s %s\t%s\t%s\n")
-    names = ("name", "type", "compatible", 
-         'deps', 'filename')
-    fmt_line = ('of\t%(type)02x %(extra)02x %(id)02x %(proto)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class vio_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "vio_table")
+        lkddb.table.__init__(self, "vio")
 
-   cols = (('type', fmt.qstr, "TEXT"),
+    cols = (('type', fmt.qstr, "TEXT"),
            ('compat', fmt.qstr, "TEXT"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
-
-    row_fmt = (fmt.qstr, fmt.qstr,
-               fmt.deps, fmt.filename)
-    line_templ = ("vio %s %s\t%s\t%s\n")
-    names = ("type", "compat", 
-         'deps', 'filename')
-    fmt_line = ('vio\t%(type)s %(compat)s' +
-                '\t%(deps)s\t%(filename)s\n' )
 
 
 class pcmcia_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "pcmcia_table")
+        lkddb.table.__init__(self, "pcmcia")
 
     cols = (('manf_id', fmt.m16x, "INTEGER"),
            ('card_id', fmt.m16x, "INTEGER"),
@@ -245,22 +175,11 @@ class pcmcia_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m16x, fmt.m16x, fmt.m8x, fmt.m8x, fmt.m8x,
-	       fmt.qstr, fmt.qstr, fmt.qstr, fmt.qstr,
-               fmt.deps, fmt.filename)
-    line_templ = ("pcmcia %s %s %s %s %s %s %s %s %s\t%s\t%s\n")
-    names = ("manf_id", "card_id", "func_id", "function", "device_no",
-	  "n1", "n2", "n3", "n4",
-         'deps', 'filename')
-    fmt_line = ('pcmcia\t%(manf_id)04x %(card_id)04x %(func_id)02x %(function)02x %(device_no)02x ' +
-                '"%(n1)s" "%(n2)s" "%(n3)s" "%(n4)s"' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class input_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "input_table")
+        lkddb.table.__init__(self, "input")
 
     cols = (('bustype', fmt.m16x, "INTEGER"),
            ('vendor', fmt.m16x, "INTEGER"),
@@ -278,37 +197,21 @@ class input_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m16x, fmt.m16x, fmt.m16x, fmt.m16x,
-	       fmt.m8x, fmt.m16x, fmt.m8x, fmt.m8x, fmt.m8x, fmt.m8x, fmt.m8x,
-	       fmt.m8x, fmt.m8x,
-               fmt.deps, fmt.filename)
-    line_templ = ("input %s %s %s %s %s %s %s %s %s %s %s %s %s\t%s\t%s\n")
-    fmt_line = ('input\t%(bustype)04x %(vendor)04x %(product)04x %(version)04x ' +
-                '%(evbit)02x %(keybit)02x %(relbit)02x %(absbit)02x %(mscbit)02x ' +
-                '%(sndbit)02x %(ffbit)02x %(swbit)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class eisa_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "eisa_table")
+        lkddb.table.__init__(self, "eisa")
 
-   cols = (('sig', fmt.qstr, "TEXT"),
+    cols = (('sig', fmt.qstr, "TEXT"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
-
-    row_fmt = (fmt.qstr,
-                fmt.deps, fmt.filename)
-    line_templ = ("eisa %s\t%s\t%s\n")
-    fmt_line = ('eisa\t%(sig)s' +
-                '\t%(deps)s\t%(filename)s\n' )
 
 
 class parisc_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "parisc_table")
+        lkddb.table.__init__(self, "parisc")
 
     cols = (('hw_type', fmt.m8x, "INTEGER"),
            ('hversion_rev', fmt.m8x, "INTEGER"),
@@ -317,15 +220,11 @@ class parisc_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m8x, fmt.m8x, fmt.m16x, fmt.m32x,
-                fmt.deps, fmt.filename)
-    line_templ = ("parisc %s %s %s %s\t%s\t%s\n")
-
 
 class sdio_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "sdio_table")
+        lkddb.table.__init__(self, "sdio")
 
     cols = (('class', fmt.m8x, "INTEGER"),
            ('vendor', fmt.m16x, "INTEGER"),
@@ -333,18 +232,11 @@ class sdio_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m8x, fmt.m16x, fmt.m16x,
-               fmt.deps, fmt.filename)
-    line_templ = ("sdio %s %s %s\t%s\t%s\n")
-
 
 class ssb_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "ssb_table")
-
-    row_fmt = (fmt.m16x, fmt.m16x, fmt.m8x,
-               fmt.deps, fmt.filename)
+        lkddb.table.__init__(self, "ssb")
 
     cols = (('vendor', fmt.m16x, "INTEGER"),
            ('coreid', fmt.m16x, "INTEGER"),
@@ -352,66 +244,43 @@ class ssb_table(lkddb.table):
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    line_templ = ("ssb %s %s %s\t%s\t%s\n")
-    fmt_line = ('ssb\t%(vendor)04x %(coreid)04x %(revision)02x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class virtio_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "virtio_table")
+        lkddb.table.__init__(self, "virtio")
 
     cols = (('device', fmt.m32x, "INTEGER"),
            ('vendor', fmt.m32x, "INTEGER"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.m32x, fmt.m32x,
-               fmt.deps, fmt.filename)
-    line_templ = ("virtio %s %s\t%s\t%s\n")
-    fmt_line = ('virtio\t%(device)08x %(vendor)08x' +
-                '\t%(deps)s\t%(filename)s\n' )
 
 class i2c_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "i2c_table")
+        lkddb.table.__init__(self, "i2c")
 
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.qstr, 
-               fmt.deps, fmt.filename)
-    line_templ = ("i2c %s\t%s\t%s\n")
-    fmt_line = ('i2c\t%(name)s' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class tc_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "tc_table")
+        lkddb.table.__init__(self, "tc")
 
     cols = (('vendor', fmt.qstr, "TEXT"),
 	   ('name', fmt.qstr, "TEXT"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
 
-    row_fmt = (fmt.qstr, fmt.qstr,
-               fmt.deps, fmt.filename)
-    line_templ = ("tc %s %s\t%s\t%s\n")
-    names = ("vendor", "name",
-         'deps', 'filename')
-    fmt_line = ('tc\t%(vendor)s %(name)s' +
-                '\t%(deps)s\t%(filename)s\n' )
-
 
 class zorro_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "zorro_table")
+        lkddb.table.__init__(self, "zorro")
 
     cols = (('id1', fmt.m16x, "INTEGER"),
            ('id2', fmt.m16x, "INTEGER"),
@@ -419,31 +288,15 @@ class zorro_table(lkddb.table):
            ('filename', fmt.filename, "...."))
 
 
-    row_fmt = (fmt.m16x, fmt.m16x,
-               fmt.deps, fmt.filename)
-    line_templ = ("zorro %s %s\t%s\t%s\n")
-    names = ("id1", "id2",
-         'deps', 'filename')
-    fmt_line = ('zorro\t%(id1)04x %(id2)04x' +
-                '\t%(deps)s\t%(filename)s\n' )
-
-
 class agp_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "agp_table")
+        lkddb.table.__init__(self, "agp")
 
     cols = (('chipset', fmt.m16x, "INTEGER"),
+	   ('chipset_name', fmt.qstr, "TEXT"),
            ('deps',  fmt.deps, "..."),
            ('filename', fmt.filename, "...."))
-
-    row_fmt = (fmt.m16x,
-               fmt.deps, fmt.filename)
-    line_templ = ("agp %s %s\t%s\t%s\n")
-    names = ("chipset", "chipset_name",
-         'deps', 'filename')
-    fmt_line = ('agp\t%(chipset)04x %(chipset_name)s' +
-                '\t%(deps)s\t%(filename)s\n' )
 
 
 def register():
