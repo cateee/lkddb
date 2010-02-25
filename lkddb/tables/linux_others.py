@@ -14,8 +14,9 @@ class i2c_snd_table(lkddb.table):
         lkddb.table.__init__(self, "i2c-snd")
 
     cols = (('name', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class platform_table(lkddb.table):
@@ -24,8 +25,9 @@ class platform_table(lkddb.table):
         lkddb.table.__init__(self, "platform")
 
     cols = (('name', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class fs_table(lkddb.table):
@@ -34,8 +36,9 @@ class fs_table(lkddb.table):
         lkddb.table.__init__(self, "fs")
 
     cols = (('name', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 def register():

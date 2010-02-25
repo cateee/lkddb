@@ -18,8 +18,9 @@ class pci_table(lkddb.table):
 	   ('subdevice', fmt.m16x, "INTEGER"),
 	   ('class', None, "INTEGER"),
            ('class_mask', fmt.special, "INTEGER"),
-	   ('deps', fmt.deps, "..."),
-	   ('filename', fmt.filename, "...."))
+	   ('deps', fmt.deps, "$deps"),
+	   ('filename', fmt.filename, "$filename"),
+	   ('version', None, "$kver"))
 
     def add_row_fmt(self, row):
 	m = fmt.mask_24m(fmt.m24x(row[4]), fmt.m24x(row[5]))
@@ -41,8 +42,9 @@ class usb_table(lkddb.table):
 	   ('bInterfaceProtocol', fmt.m8x, "INTEGER"),
            ('bcdDevice_lo', fmt.m16x, "INTEGER"),
 	   ('bcdDevice_hi', fmt.m16x, "INTEGER"),
-	   ('deps',  fmt.deps, "..."),
-	   ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class ieee1394_table(lkddb.table):
@@ -54,8 +56,9 @@ class ieee1394_table(lkddb.table):
 	   ('model_id', fmt.m24x, "INTEGER"),
 	   ('specifier_id', fmt.m24x, "INTEGER"),
 	   ('version', fmt.m24x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class hid_table(lkddb.table):
@@ -66,8 +69,9 @@ class hid_table(lkddb.table):
     cols = (('bus', fmt.m16x, "INTEGER"),
 	   ('vendor', fmt.m32x, "INTEGER"),
 	   ('product', fmt.m32x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class ccw_table(lkddb.table):
@@ -79,8 +83,9 @@ class ccw_table(lkddb.table):
 	   ('cu_model', fmt.m8x, "INTEGER"),
 	   ('dev_type', fmt.m16x, "INTEGER"),
 	   ('dev_model', fmt.m8x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 # s390 AP bus
@@ -90,8 +95,9 @@ class ap_table(lkddb.table):
         lkddb.table.__init__(self, "ap")
 
     cols = (('dev_type', fmt.m8x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class acpi_table(lkddb.table):
@@ -100,8 +106,9 @@ class acpi_table(lkddb.table):
         lkddb.table.__init__(self, "acpi")
 
     cols = (('id', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class pnp_table(lkddb.table):
@@ -118,8 +125,9 @@ class pnp_table(lkddb.table):
 	   ('n5', fmt.qstr, "TEXT"),
 	   ('n6', fmt.qstr, "TEXT"),
 	   ('n7', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class serio_table(lkddb.table):
@@ -131,8 +139,9 @@ class serio_table(lkddb.table):
            ('proto', fmt.m8x, "INTEGER"),
            ('id', fmt.m8x, "INTEGER"),
            ('extra', fmt.m8x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class of_table(lkddb.table):
@@ -143,8 +152,9 @@ class of_table(lkddb.table):
     cols = (('name', fmt.qstr, "TEXT"),
 	   ('type', fmt.qstr, "TEXT"),
 	   ('compatible', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class vio_table(lkddb.table):
@@ -154,8 +164,9 @@ class vio_table(lkddb.table):
 
     cols = (('type', fmt.qstr, "TEXT"),
            ('compat', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class pcmcia_table(lkddb.table):
@@ -172,8 +183,9 @@ class pcmcia_table(lkddb.table):
            ('n1', fmt.qstr, "TEXT"),
            ('n2', fmt.qstr, "TEXT"),
            ('n3', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class input_table(lkddb.table):
@@ -194,8 +206,9 @@ class input_table(lkddb.table):
            ('sndbit', fmt.m8x, "INTEGER"),
            ('ffbit', fmt.m8x, "INTEGER"),
            ('swbit', fmt.m8x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class eisa_table(lkddb.table):
@@ -204,8 +217,9 @@ class eisa_table(lkddb.table):
         lkddb.table.__init__(self, "eisa")
 
     cols = (('sig', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class parisc_table(lkddb.table):
@@ -217,8 +231,9 @@ class parisc_table(lkddb.table):
            ('hversion_rev', fmt.m8x, "INTEGER"),
            ('hversion', fmt.m16x, "INTEGER"),
            ('sversion', fmt.m32x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class sdio_table(lkddb.table):
@@ -229,8 +244,9 @@ class sdio_table(lkddb.table):
     cols = (('class', fmt.m8x, "INTEGER"),
            ('vendor', fmt.m16x, "INTEGER"),
            ('device', fmt.m16x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class ssb_table(lkddb.table):
@@ -241,8 +257,9 @@ class ssb_table(lkddb.table):
     cols = (('vendor', fmt.m16x, "INTEGER"),
            ('coreid', fmt.m16x, "INTEGER"),
            ('revision', fmt.m8x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class virtio_table(lkddb.table):
@@ -252,8 +269,9 @@ class virtio_table(lkddb.table):
 
     cols = (('device', fmt.m32x, "INTEGER"),
            ('vendor', fmt.m32x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class i2c_table(lkddb.table):
@@ -262,8 +280,9 @@ class i2c_table(lkddb.table):
         lkddb.table.__init__(self, "i2c")
 
     cols = (('name', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class tc_table(lkddb.table):
@@ -273,8 +292,9 @@ class tc_table(lkddb.table):
 
     cols = (('vendor', fmt.qstr, "TEXT"),
 	   ('name', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class zorro_table(lkddb.table):
@@ -284,8 +304,9 @@ class zorro_table(lkddb.table):
 
     cols = (('id1', fmt.m16x, "INTEGER"),
            ('id2', fmt.m16x, "INTEGER"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class agp_table(lkddb.table):
@@ -295,8 +316,9 @@ class agp_table(lkddb.table):
 
     cols = (('chipset', fmt.m16x, "INTEGER"),
 	   ('chipset_name', fmt.qstr, "TEXT"),
-           ('deps',  fmt.deps, "..."),
-           ('filename', fmt.filename, "...."))
+           ('deps', fmt.deps, "$deps"),
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 def register():

@@ -8,6 +8,7 @@ import sys
 import traceback
 import time
 import shelve
+import sqlite3
 
 # global variables
 
@@ -68,20 +69,9 @@ class table(object):
 	self.rows = []
 	self.rows_fmt = []
 	line_fmt = []
-	sql_cols = []
-	sql_create_col = []
 	for name, line, sql in self.cols:
 	    if line:
 		line_fmt.append(line)
-	    if sql:
-		sql_cols.append(name)
-		sql_create_col.append( "name " + sql)
-        if sql_cols:
-            self.sql_create = ( "CREATE TABLE IF NOT EXISTS " + name + " (" +
-		", ".join(sql_create_col) + " );" )
-	    self.sql_insert = ("INSERT INTO " + name + " (" +
-            	", ".join(sql_cols) + ") VALUES ("+
-                ", ".join(("?",)*len(sql_cols)) + ");")
 	if line_fmt:
 	    self.line_fmt = tuple(line_fmt)
 	    self.line_templ = name + " %s"*len(line_fmt) + '\n'
@@ -113,6 +103,61 @@ class table(object):
 	except TypeError:
 	    print_exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], d))
 	return lines
+    def prepare_sql(self, ver):
+        sql_cols = []
+        sql_create_col = []
+	sql_insert_value = []
+        for name, line, sql in self.cols:
+            if sql:
+		sql_cols.append(name)
+		if sql[0] != '$':
+                    sql_create_col.append(name + " " + sql)
+		    sql_insert_value.append('?')
+		else:
+		    if sql.startswith("$kver"):
+			sql_create_col.append(name + "INTEGER")
+			sql_insert_value.append(str(self.ver))
+		    elif sql == "$deps":
+			sql_create_col.append(name + " FOREIGN KEY (") ###################
+			sql_insert_value.append('?')
+                    elif sql == "$config":
+                        sql_create_col.append(name + " REFERENCES config(name)")
+                        sql_insert_value.append('?')
+                    elif sql == "$filename":
+                        sql_create_col.append(name + " REFERENCES filename(name)")
+                        sql_insert_value.append('?')
+        if sql_cols:
+            self.sql_create = ( "CREATE TABLE IF NOT EXISTS " + self.name + " (" +
+		" id INTEGER PRIMARY KEY,\n" +
+                ",\n ".join(sql_create_col) + " );" )
+            self.sql_insert = ("INSERT OR UPDATE INTO " + self.name + " (" +
+                ", ".join(sql_cols) + ") VALUES ("+
+                ", ".join(("?",)*len(sql_cols)) + ");")
+
+    def create_sql(self, cursor):
+	cursor.execute(self.sql_create)
+	sql = "INSERT OR IGNORE INTO `tables` (name) VALUES (" + self.name +");"
+	cursor.execute(sql);
+    def to_sql(self, db):
+	c.cursor(db)
+	for row in rows:
+	    c.execute(self.sql_insert, row + self.extra_data)
+	db.commit()
+	c.close()
+
+def create_generic_tables(c):
+    sql = "CREATE TABLE IF NOT EXISTS `tables` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
+    c.execute(sql);
+    sql = "CREATE TABLE IF NOT EXISTS `filename` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
+    c.execute(sql);
+    sql = "CREATE TABLE IF NOT EXISTS `config` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
+    c.execute(sql);
+    sql = """CREATE TABLE IF NOT EXISTS `deps` (
+ `config_id` INTEGER REFERENCE `config`,
+ `item_id` INTEGER,
+ `table_id` INTEGER REFERENCE `tables`
+);"""
+##################
 	
 #
 # top level source and device scanners handling
@@ -144,6 +189,23 @@ def format_tables():
     for s in _tables.itervalues():
 	s.fmt()
 
+def prepare_sql(db, create=True):
+    c = db.cursor()
+    if create:
+	create_generic_tables(c)
+    for s in _tables.itervalues():
+        s.prepare_sql()
+	if create:
+	  s.create_sql(c)  
+    db.commit()
+    c.close()
+
+def write_sql(db):
+    prepare_sql(db)
+    for s in _tables.itervalues():
+        s.in_sql(db)
+ 
+
 #
 # persistent data:
 #   - data:  in python shelve format
@@ -157,7 +219,10 @@ def write(data=None, list=None, sql=None):
     if list:
 	format_tables()
         write_list(list)
-
+    if sql:
+        db = sqlite3.connect(sql)
+	write_sql(db)
+	db.close()
 #
 
 def write_data(filename, new=True):

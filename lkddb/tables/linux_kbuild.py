@@ -44,8 +44,8 @@ class module_table(lkddb.table):
 
     cols = (('name', fmt.str, "TEXT"),
            ('descr', fmt.qstr, "TEXT"),
-           ('config',  fmt.str, "..."),
-           ('filename', fmt.filename, "...."))
+           ('config',  fmt.str, "$config"),
+           ('filename', fmt.filename, "$filename"))
 
 
 class firmware_table(lkddb.table):
@@ -53,6 +53,6 @@ class firmware_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "firmware")
 
-    cols = (('config',  fmt.str, "..."),
-           ('filename', fmt.filename, "...."))
+    cols = (('config',  fmt.str, "$config"),
+           ('filename', fmt.filename, "$filename"))
 

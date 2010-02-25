@@ -31,6 +31,9 @@ def register_browsers(kerneldir, dirs):
 
     parent_scanner = browse_sources.struct_parent_scanner(sources_, makefiles_)
 
+    print "stop devicetable scanner, in register_browsers in lkddb/linux/__init__.py"
+    return
+
     # parse_devicetables
     register_scanner(pci(parent_scanner))
     register_scanner(usb(parent_scanner))

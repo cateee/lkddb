@@ -42,6 +42,8 @@ class kver(lkddb.browser):
 		         int(dict["PATCHLEVEL"]) * 0x100   +
 		         int(dict["SUBLEVEL"])   )
         extra = dict["EXTRAVERSION"]
+	if version == 0x02040f and extra == "-greased-turkey":
+	    extra = ""
         ver_str = dict["VERSION"] +"."+ dict["PATCHLEVEL"] +"."+ dict["SUBLEVEL"] + extra
 
         local_ver = subprocess.Popen("/bin/sh scripts/setlocalversion",
@@ -281,10 +283,16 @@ class kconfigs(lkddb.browser):
             os.chdir(self.kerneldir)
             for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
-                    for kconf in fnmatch.filter(files, "Kconfig*"):
-                        filename = os.path.join(dir, kconf)
-                        lkddb.log_extra("Kconfig doing: " + filename)
-                        self.__parse_kconfig(filename)
+		    if lkddb.shared['kver'] < 0x020600:  ### find exact version
+                        for kconf in fnmatch.filter(files, "Config.in"):
+                            filename = os.path.join(dir, kconf)
+                            lkddb.log_extra("Kconfig (<2.6) doing: " + filename)
+                            self.__parse_config_in(filename)
+		    else:
+                        for kconf in fnmatch.filter(files, "Kconfig*"):
+       	                    filename = os.path.join(dir, kconf)
+                	    lkddb.log_extra("Kconfig (>=2.6) doing: " + filename)
+                            self.__parse_kconfig(filename)
         finally:
             os.chdir(orig_cwd)
 

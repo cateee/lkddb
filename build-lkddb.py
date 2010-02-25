@@ -30,8 +30,13 @@ def make(options, logfile, kerneldir, dirs):
         lkddb.print_exception("unknow error in main loop")
         raise
     lkddb.phase("write")
+    if options.sql:
+	sql = options.dbfile + ".db"
+    else:
+	sql = None
     lkddb.write(data = options.dbfile + ".data",
-		list = options.dbfile + ".list")
+		list = options.dbfile + ".list",
+		sql = sql)
 
 #
 # main
@@ -41,7 +46,7 @@ if __name__ == "__main__":
     
     usage = "Usage: %prog [options] kerneldir [subdirs...]"
     parser = optparse.OptionParser(usage=usage)
-    parser.set_defaults(verbose=1, dbfile="lkddb")
+    parser.set_defaults(verbose=1, dbfile="lkddb", sql=False)
     parser.add_option("-q", "--quiet",	dest="verbose",
                       action="store_const", const=0,
                       help="inhibit messages")
@@ -51,6 +56,9 @@ if __name__ == "__main__":
     parser.add_option("-b", "--base",	dest="dbfile",
                       action="store",	type="string",
                       help="base FILE name to read and write data", metavar="FILE")
+    parser.add_option("-d", "--database",   dest="sql",
+                      action="store_const", const=True,
+                      help="save data in sqlite database")
     parser.add_option("-l", "--log",	dest="logfile",
                       action="store",	type="string",
                       help="FILE to put log messages (default is stderr)", metavar="FILE")
