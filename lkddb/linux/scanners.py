@@ -14,7 +14,7 @@ from lkddb.parser import unwind_include
 
 __all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
 	   "split_funct", "split_structs",
-	   "extract_value", "extract_string")
+	   "extract_value", "extract_string", "extract_struct")
 
 class struct_subscanner(object):
 
@@ -200,7 +200,7 @@ def extract_value(field, dictionary):
 #        elif m[i] == "f":
 #            ret += v[i]
 #        else:
-#            print "Unknow mask", v, m, len
+#            #print "Unknow mask", v, m, len
 #            raise "KACerror"
 #    return ret
 
@@ -213,7 +213,7 @@ def extract_value(field, dictionary):
 #        if v[0] == '"'  and  v[-1] == '"'  and  len(v) == lenght+2:
 #            return v[1:-1]
 #        else:
-#            print "Error on assumptions in translating chars:", field, dictionary, lenght, default, v
+#            #print "Error on assumptions in translating chars:", field, dictionary, lenght, default, v
 #            raise "KACerror"
 #    else:
 #        return default
@@ -253,3 +253,13 @@ def extract_string(field, dictionary, default=""):
     else:
         return default
 
+
+def extract_struct(field, dictionary, default=""):
+    if dictionary.has_key(field):
+        v = dictionary[field]
+        if v[0] == '{' and  v[-1] == '}':
+	    return v[1:-1].strip()
+        lkddb.die("unknow structure format: %s" % v)
+    else:
+        return default
+    

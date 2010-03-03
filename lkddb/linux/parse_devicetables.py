@@ -17,6 +17,10 @@ device_driver_fields = (
 # Unwind some arrays (i.e. in pcmcia_device_id):
 unwind_array = ("n0", "n1", "n2", "n3", "n4", "n5", "n6", "n7", "n8", "n9")
 
+class intern_scanner(object):
+    def __init__(self, name):
+        self.name = name
+
 
 # PCI
 #    include/linux/mod_devicetable.h pci_device_id
@@ -256,11 +260,13 @@ class pnp(list_of_structs_scanner):
 
 # PNP #2, pnp_card_device_id include/linux/mod_devicetable.h drivers/pnp/card.c
 
+pnp_card_intern_scanner = intern_scanner("pnp_card_intern_scanner")
+
 class pnp_card(list_of_structs_scanner):
 
     def __init__(self, parent_scanner):
       list_of_structs_scanner.__init__(self,
-          name = '',
+          name = 'pnp_card',
           table_name = 'pnp',
           parent_scanner = parent_scanner,
           struct_name = "pnp_card_device_id",
@@ -271,12 +277,12 @@ class pnp_card(list_of_structs_scanner):
         v0 = extract_string("id", dict)
         if not v0:
             return None
-        prods = extract_string("devs")
+        prods = dict["devs"] ###extract_struct("devs", dict, '{{""}}')
         line = split_structs(prods)[0]
-        dict_prod = parse_struct(None, scanners.unwind_array,
+        dict_prod = parse_struct(pnp_card_intern_scanner, unwind_array,
                 line, None, None, ret=True)
-	vv = apply(lambda i: extract_string("n%u"%i, dict_prod), range(8))
-        return v0 + vv
+	vv = tuple(map(lambda n: extract_string(n, dict_prod, ""), unwind_array[:8]))
+        return (v0,) + vv
 
 
 # SERIO , serio_device_id include/linux/mod_devicetable.h drivers/input/serio/serio.c
@@ -352,6 +358,8 @@ class vio(list_of_structs_scanner):
 
 # PCMCIA , pcmcia_device_id include/linux/mod_devicetable.h drivers/pcmcia/ds.c
 
+pcmcia_intern_scanner = intern_scanner("pcmcia_intern_scanner")
+
 class pcmcia(list_of_structs_scanner):
     PCMCIA_DEV_ID_MATCH_MANF_ID   = 0x0001
     PCMCIA_DEV_ID_MATCH_CARD_ID   = 0x0002
@@ -393,10 +401,10 @@ class pcmcia(list_of_structs_scanner):
 	n0, n1, n2, n3 = ("", "", "", "")
 	if match & ( self.PCMCIA_DEV_ID_MATCH_PROD_ID1 | self.PCMCIA_DEV_ID_MATCH_PROD_ID2 |
                      self.PCMCIA_DEV_ID_MATCH_PROD_ID3 | self.PCMCIA_DEV_ID_MATCH_PROD_ID4 ):
+
             prods = dict["prod_id"]
-	    print "pcmcia struct", prods, split_structs(prods)
             line = split_structs(prods)[0]
-            dict_prod = parse_struct(None, unwind_array,
+            dict_prod = parse_struct(pcmcia_intern_scanner, unwind_array,
                                                 line, None, None, ret=True)
             if match & self.PCMCIA_DEV_ID_MATCH_PROD_ID1:
                 n0 = extract_string("n0", dict_prod)
@@ -594,6 +602,8 @@ class virtio(list_of_structs_scanner):
 
 # I2C i2c_device_id include/linux/mod_devicetable.h i2c_driver include/linux/i2c.h
 
+i2c_intern_scanner = intern_scanner("i2c_intern_scanner")
+
 class i2c(list_of_structs_scanner):
     def __init__(self, parent_scanner):
       list_of_structs_scanner.__init__(self,
@@ -609,7 +619,7 @@ class i2c(list_of_structs_scanner):
             return None
         block = dict["driver"]
         line = split_structs(block)[0]
-        driver_dict = parse_struct(None, device_driver_fields,
+        driver_dict = parse_struct(i2c_intern_scanner, device_driver_fields,
                 line, None, None, ret=True)
         v0 = extract_value("name", dict)
         return (v0,)

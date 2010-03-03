@@ -64,7 +64,7 @@ strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]
 
 def parse_header(src, filename, discard_source):
     "parse a single header file for #define, without recurse into other includes"
-    # print "parsing....", filename
+    #print "parsing....", filename
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
     dir, ignore = filename.rsplit("/", 1)
@@ -226,8 +226,8 @@ def expand_token(block, start, end, filename):
             elif c == ","  and  level == 1:
                 args.append(block[pstart:i].strip())
                 pstart = i+1
-#           else:
-#               print "unkow"
+           #else:
+               #print "unkow"
         if pstart:
             return (pend, expand_macro(tok, df, args, filename) + " ")
     df = search_define(tok, filename, defines_pln)

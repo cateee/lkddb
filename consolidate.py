@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#: build-lkddb.py : hardware database generator from linux kernel sources
+#: consolidate.py : consolidate data from different version
 #
 #  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
@@ -17,13 +17,15 @@ import lkddb.linux
 import lkddb.tables
 
 
-def make(options, logfile, tree, kerneldir, dirs):
+def make(options, logfile, args):
 
     lkddb.init(options.verbose, logfile)
-    if tree == None:
-        tree = lkddb.linux.linux_kernel(kerneldir, dirs)
-    lkddb.tables.register_linux_tables(tree)
-    lkddb.linux.register_browsers(tree)
+    tree = lkddb.linux.linux_kernel(None, (,)
+    lkddb.tables.register_linux_tables(tree))
+    consolidate = read_data(options.consolidate, False)
+    for dbfile in args:
+	consolidate_data(dbfile, False)
+
     try:
         lkddb.phase("init")
         lkddb.scan_sources()
@@ -46,56 +48,33 @@ def make(options, logfile, tree, kerneldir, dirs):
 
 if __name__ == "__main__":
     
-    usage = "Usage: %prog [options] kerneldir [subdirs...]"
+    usage = "Usage: %prog [options] file-to-consolidate..."
     parser = optparse.OptionParser(usage=usage)
-    parser.set_defaults(verbose=1, dbfile="lkddb", sql=False, versioned=False)
+    parser.set_defaults(verbose=1, consolidate="clkddb")
     parser.add_option("-q", "--quiet",	dest="verbose",
                       action="store_const", const=0,
                       help="inhibit messages")
     parser.add_option("-v", "--verbose", dest="verbose",
                       action="count",
                       help="increments verbosity")
-    parser.add_option("-b", "--base",	dest="dbfile",
+    parser.add_option("-c", "--consolidate", dest="consolidate",
                       action="store",	type="string",
                       help="base FILE name to read and write data", metavar="FILE")
-    parser.add_option("-d", "--database",   dest="sql",
-                      action="store_const", const=True,
-                      help="save data in sqlite database")
     parser.add_option("-l", "--log",	dest="logfile",
                       action="store",	type="string",
                       help="FILE to put log messages (default is stderr)", metavar="FILE")
-    parser.add_option("-k", "--versioned",   dest="versioned",
-                      action="store_const", const=True,
-                      help="use versioned files (log and db)")
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
-        parser.error("missing mandatory argument: kernel source directory")
-    kerneldir = os.path.normpath(args[0])
-    if kerneldir[-1] != "/":
-        kerneldir += "/"
-    if len(args) > 1:
-        dirs = args[1:]
-    else:
-        dirs = ("arch", "block", "crypto", "drivers", "firmware", "fs", "init",
-                "ipc", "kernel", "lib", "mm", "net", "security",
-                "sound", "usr", "virt")
-
-    tree = lkddb.linux.linux_kernel(kerneldir, dirs)
-
-    if options.versioned:
-	ver = tree.get_strversion()
-        options.dbfile += "-" + ver
-    else:
-	ver = ""
+        parser.error("missing mandatory argument: file to consolidate")
 
     if options.logfile:
         if options.logfile == "-":
                 logfile = sys.stdout
         else:
-            logfile = open(options.logfile + "-" + ver, "w")
+            logfile = open(options.logfile, "w")
     else:
             logfile = sys.stderr
 
-    make(options, logfile, tree, kerneldir, dirs)
+    make(options, logfile, args)
 

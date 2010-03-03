@@ -79,7 +79,7 @@ class linux_sources(lkddb.browser):
                         filename = os.path.join(dir, source)
                         if filename in skeleton_files:
                             continue
-                        # print "# Doing", filename
+                        #print "# Doing", filename
                         f = open(filename)
                         src = f.read()
                         f.close()
@@ -95,13 +95,13 @@ class linux_sources(lkddb.browser):
 	    s.finalize()
 
     def __read_includes(self, files, dir, dir_i):
-        # print "including dir ", dir, dir_i
+        #print "including dir ", dir, dir_i
         for source in files:
             filename_i = os.path.join(dir_i, source)
             f = open(os.path.join(dir, source))
             src = f.read()
             f.close()
-            # print "include: ", filename, filename_i, dir_i
+            #print "include: ", filename, filename_i, dir_i
             lkddb.parser.parse_header(src, filename_i, discard_source=True)
 
 
@@ -133,9 +133,9 @@ class struct_parent_scanner(lkddb.scanner):
         unwind_include(filename)
         for scanner in self.scanners:
             for block in scanner.regex.findall(src):
-#		print "---" #################
-#		print block #################
-#		print "===" #################
+		#print "---" #################
+		#print block #################
+		#print "===" #################
                 block = lkddb.parser.expand_block(block, filename)
                 for conf, sblock in ifdef_re.findall(block): ### here
                     sdep = dep.copy().add(conf)
@@ -167,14 +167,14 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
                     field, value = m.groups()
                     value = "{" + value + "}"
                 else:
-                    print "parse_line(): ", filename, line, param
-                    assert 0, "not expected syntax"
+                    lkddb.die("parse_line(): %s, %s, %s" % filename, line, param)
             res[field] = value
         else:
             try:
                 res[fields[nparam]] = param
             except IndexError:
-                print "Error: index error", table.name, fields, line, filename
+                lkddb.print_exception("Error: index error: %s, %s, %s, %s" %
+					(scanner.name, fields, line, filename))
                 raise
         nparam += 1
     if res:

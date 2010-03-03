@@ -9,8 +9,8 @@ from lkddb import fmt
 
 class pci_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "pci")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "pci", tree)
 
     cols = (('vendor', fmt.m16x, "INTEGER"),
 	   ('device', fmt.m16x, "INTEGER"),
@@ -29,8 +29,8 @@ class pci_table(lkddb.table):
 
 class usb_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "usb")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "usb", tree)
 
     cols = (('idVendor', fmt.m16x, "INTEGER"),
 	   ('idProduct', fmt.m16x, "INTEGER"),
@@ -49,8 +49,8 @@ class usb_table(lkddb.table):
 
 class ieee1394_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "ieee1394")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "ieee1394", tree)
 
     cols = (('vendor_id', fmt.m24x, "INTEGER"),
 	   ('model_id', fmt.m24x, "INTEGER"),
@@ -63,8 +63,8 @@ class ieee1394_table(lkddb.table):
 
 class hid_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "hid")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "hid", tree)
 
     cols = (('bus', fmt.m16x, "INTEGER"),
 	   ('vendor', fmt.m32x, "INTEGER"),
@@ -76,8 +76,8 @@ class hid_table(lkddb.table):
 
 class ccw_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "ccw")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "ccw", tree)
 
     cols = (('cu_type', fmt.m16x, "INTEGER"),
 	   ('cu_model', fmt.m8x, "INTEGER"),
@@ -91,8 +91,8 @@ class ccw_table(lkddb.table):
 # s390 AP bus
 class ap_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "ap")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "ap", tree)
 
     cols = (('dev_type', fmt.m8x, "INTEGER"),
            ('deps', fmt.deps, "$deps"),
@@ -102,8 +102,8 @@ class ap_table(lkddb.table):
 
 class acpi_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "acpi")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "acpi", tree)
 
     cols = (('id', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
@@ -113,8 +113,8 @@ class acpi_table(lkddb.table):
 
 class pnp_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "pnp")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "pnp", tree)
 
     cols = (('id', fmt.qstr, "TEXT"),
 	   ('n0', fmt.qstr, "TEXT"),
@@ -132,8 +132,8 @@ class pnp_table(lkddb.table):
 
 class serio_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "serio")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "serio", tree)
 
     cols = (('type', fmt.m8x, "INTEGER"),
            ('proto', fmt.m8x, "INTEGER"),
@@ -146,8 +146,8 @@ class serio_table(lkddb.table):
 
 class of_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "of")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "of", tree)
 
     cols = (('name', fmt.qstr, "TEXT"),
 	   ('type', fmt.qstr, "TEXT"),
@@ -159,8 +159,8 @@ class of_table(lkddb.table):
 
 class vio_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "vio")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "vio", tree)
 
     cols = (('type', fmt.qstr, "TEXT"),
            ('compat', fmt.qstr, "TEXT"),
@@ -171,8 +171,8 @@ class vio_table(lkddb.table):
 
 class pcmcia_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "pcmcia")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "pcmcia", tree)
 
     cols = (('manf_id', fmt.m16x, "INTEGER"),
            ('card_id', fmt.m16x, "INTEGER"),
@@ -190,22 +190,22 @@ class pcmcia_table(lkddb.table):
 
 class input_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "input")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "input", tree)
 
     cols = (('bustype', fmt.m16x, "INTEGER"),
            ('vendor', fmt.m16x, "INTEGER"),
            ('product', fmt.m16x, "INTEGER"),
            ('version', fmt.m16x, "INTEGER"),
-           ('evbit', fmt.m8x, "INTEGER"),
-           ('keybit', fmt.m16x, "INTEGER"),
-           ('relbit', fmt.m8x, "INTEGER"),
-           ('absbit', fmt.m8x, "INTEGER"),
-           ('mscbit', fmt.m8x, "INTEGER"),
-           ('ledbit', fmt.m8x, "INTEGER"),
-           ('sndbit', fmt.m8x, "INTEGER"),
-           ('ffbit', fmt.m8x, "INTEGER"),
-           ('swbit', fmt.m8x, "INTEGER"),
+           ('evbit', fmt.m32x, "INTEGER"),    # 0x1f
+           ('keybit', fmt.m32x, "INTEGER"),   # 0x71
+           ('relbit', fmt.m32x, "INTEGER"),   # 0x2ff
+           ('absbit', fmt.m16x, "INTEGER"),   # 0x0f
+           ('mscbit', fmt.m32x, "INTEGER"),   # 0x3f
+           ('ledbit', fmt.m16x, "INTEGER"),   # 0x0f
+           ('sndbit', fmt.m8x, "INTEGER"),    # 0x07
+           ('ffbit', fmt.m32x, "INTEGER"),    # 0x7f
+           ('swbit', fmt.m16x, "INTEGER"),    # 0x0f
            ('deps', fmt.deps, "$deps"),
            ('filename', fmt.filename, "$filename"),
            ('version', None, "$kver"))
@@ -213,8 +213,8 @@ class input_table(lkddb.table):
 
 class eisa_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "eisa")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "eisa", tree)
 
     cols = (('sig', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
@@ -224,8 +224,8 @@ class eisa_table(lkddb.table):
 
 class parisc_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "parisc")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "parisc", tree)
 
     cols = (('hw_type', fmt.m8x, "INTEGER"),
            ('hversion_rev', fmt.m8x, "INTEGER"),
@@ -238,8 +238,8 @@ class parisc_table(lkddb.table):
 
 class sdio_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "sdio")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "sdio", tree)
 
     cols = (('class', fmt.m8x, "INTEGER"),
            ('vendor', fmt.m16x, "INTEGER"),
@@ -251,8 +251,8 @@ class sdio_table(lkddb.table):
 
 class ssb_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "ssb")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "ssb", tree)
 
     cols = (('vendor', fmt.m16x, "INTEGER"),
            ('coreid', fmt.m16x, "INTEGER"),
@@ -264,8 +264,8 @@ class ssb_table(lkddb.table):
 
 class virtio_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "virtio")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "virtio", tree)
 
     cols = (('device', fmt.m32x, "INTEGER"),
            ('vendor', fmt.m32x, "INTEGER"),
@@ -276,8 +276,8 @@ class virtio_table(lkddb.table):
 
 class i2c_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "i2c")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "i2c", tree)
 
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
@@ -287,8 +287,8 @@ class i2c_table(lkddb.table):
 
 class tc_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "tc")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "tc", tree)
 
     cols = (('vendor', fmt.qstr, "TEXT"),
 	   ('name', fmt.qstr, "TEXT"),
@@ -299,8 +299,8 @@ class tc_table(lkddb.table):
 
 class zorro_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "zorro")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "zorro", tree)
 
     cols = (('id1', fmt.m16x, "INTEGER"),
            ('id2', fmt.m16x, "INTEGER"),
@@ -311,8 +311,8 @@ class zorro_table(lkddb.table):
 
 class agp_table(lkddb.table):
 
-    def __init__(self):
-        lkddb.table.__init__(self, "agp")
+    def __init__(self, tree):
+        lkddb.table.__init__(self, "agp", tree)
 
     cols = (('chipset', fmt.m16x, "INTEGER"),
 	   ('chipset_name', fmt.qstr, "TEXT"),
@@ -321,27 +321,27 @@ class agp_table(lkddb.table):
            ('version', None, "$kver"))
 
 
-def register():
-    lkddb.register_table('pci', pci_table())
-    lkddb.register_table('usb', usb_table())
-    lkddb.register_table('ieee1394', ieee1394_table())
-    lkddb.register_table('hid', hid_table())
-    lkddb.register_table('ccw', ccw_table())
-    lkddb.register_table('ap', ap_table())
-    lkddb.register_table('acpi', acpi_table())
-    lkddb.register_table('pnp', pnp_table())
-    lkddb.register_table('serio', serio_table())
-    lkddb.register_table('of', of_table())
-    lkddb.register_table('vio', vio_table())
-    lkddb.register_table('pcmcia', pcmcia_table())
-    lkddb.register_table('input', input_table())
-    lkddb.register_table('eisa', eisa_table())
-    lkddb.register_table('parisc', parisc_table())
-    lkddb.register_table('sdio', sdio_table())
-    lkddb.register_table('ssb', ssb_table())
-    lkddb.register_table('virtio', virtio_table())
-    lkddb.register_table('i2c', i2c_table())
-    lkddb.register_table('tc', tc_table())
-    lkddb.register_table('zorro', zorro_table())
-    lkddb.register_table('agp', agp_table())
+def register(tree):
+    lkddb.register_table('pci', pci_table(tree))
+    lkddb.register_table('usb', usb_table(tree))
+    lkddb.register_table('ieee1394', ieee1394_table(tree))
+    lkddb.register_table('hid', hid_table(tree))
+    lkddb.register_table('ccw', ccw_table(tree))
+    lkddb.register_table('ap', ap_table(tree))
+    lkddb.register_table('acpi', acpi_table(tree))
+    lkddb.register_table('pnp', pnp_table(tree))
+    lkddb.register_table('serio', serio_table(tree))
+    lkddb.register_table('of', of_table(tree))
+    lkddb.register_table('vio', vio_table(tree))
+    lkddb.register_table('pcmcia', pcmcia_table(tree))
+    lkddb.register_table('input', input_table(tree))
+    lkddb.register_table('eisa', eisa_table(tree))
+    lkddb.register_table('parisc', parisc_table(tree))
+    lkddb.register_table('sdio', sdio_table(tree))
+    lkddb.register_table('ssb', ssb_table(tree))
+    lkddb.register_table('virtio', virtio_table(tree))
+    lkddb.register_table('i2c', i2c_table(tree))
+    lkddb.register_table('tc', tc_table(tree))
+    lkddb.register_table('zorro', zorro_table(tree))
+    lkddb.register_table('agp', agp_table(tree))
 

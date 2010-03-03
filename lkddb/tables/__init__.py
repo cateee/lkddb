@@ -8,12 +8,12 @@ from lkddb import register_table
 
 from . import linux_kbuild, linux_devicetables, linux_others
 
-def register_linux_tables():
-    register_table('kver', linux_kbuild.kver_table())
-    register_table('kconf', linux_kbuild.kconf_table())
-    register_table('module', linux_kbuild.module_table())
-    register_table('firmware', linux_kbuild.firmware_table())
+def register_linux_tables(tree):
+    register_table('kver', linux_kbuild.kver_table(tree))
+    register_table('kconf', linux_kbuild.kconf_table(tree))
+    register_table('module', linux_kbuild.module_table(tree))
+    register_table('firmware', linux_kbuild.firmware_table(tree))
     
-    linux_devicetables.register()
-    linux_others.register()
+    linux_devicetables.register(tree)
+    linux_others.register(tree)
 

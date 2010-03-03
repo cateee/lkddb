@@ -34,6 +34,7 @@ _start_time = 0
 def init(verbose, logfile):
     global _browsers, _scanners, _tables, _views
     log_init(verbose, logfile)
+    _trees = []
     _browsers = []
     _scanners = []
     _tables = {}
@@ -50,6 +51,32 @@ def share(name, object):
 # Generic classes for device_class and source_trees
 #
 
+class tree(object):
+    def __init__(self, name):
+        self.name = name
+        self.version = None
+	self.strversion = None
+        self.ishead = None
+        self.isreleased = None
+    def get_version(self):
+        return self.version
+    def get_strversion(self):
+	return self.strversion
+    def is_released(self):
+        return self.isreleased
+    def is_head(self):
+        return self.ishead
+    def is_later(self, original_version):
+        if self.ishead:
+            return True
+        if not self.isreleased:
+            return False
+        return (self.version > original_version)
+    def is_older(self, original_version):
+        if self.ishead or not self.isreleased:
+            return False
+        return (self.version < original_version)
+
 class browser(object):
     def __init__(self, name):
         self.name = name
@@ -63,19 +90,18 @@ class scanner(object):
         self.name = name
 
 class table(object):
-
-    def __init__(self, name):
+    def __init__(self, name, tree):
         self.name = name
+	self.tree = tree
 	self.rows = []
 	self.rows_fmt = []
 	line_fmt = []
-	for name, line, sql in self.cols:
-	    if line:
-		line_fmt.append(line)
+	for col_name, col_line_fmt, col_sql in self.cols:
+	    if col_line_fmt:
+		line_fmt.append(col_line_fmt)
 	if line_fmt:
 	    self.line_fmt = tuple(line_fmt)
 	    self.line_templ = name + " %s"*len(line_fmt) + '\n'
-
     def add_row_fmt(self, row):
 	try:
 	    r = []
@@ -232,8 +258,8 @@ def write_data(filename, new=True):
     else:
         oflag = 'w'
     _persistent_data = shelve.open(filename, flag=oflag)
-    for s in _tables.itervalues():
-	_persistent_data[s.name] = s.rows
+    for t in _tables.itervalues():
+	_persistent_data[s.name] = t.rows
     _persistent_data.sync()
 
 def read_data(filename, rw=False):
@@ -243,18 +269,28 @@ def read_data(filename, rw=False):
     else:
             oflag = 'r'
     _persistent_data = shelve.open(filename, flag=oflag)
-    for s in _tables.itervalues():
-	log_extra("reading device " + s.name)
-	rows = _persistent_data.get(s.name, None)
+    for t in _tables.itervalues():
+	log_extra("reading table " + t.name)
+	rows = _persistent_data.get(t.name, None)
 	if rows != None:
-	    s.rows = rows
-	s.restore()
+	    t.rows = rows
+	t.restore()
+
+def consolidate_data(filename):
+    phase("reading 'data' to consolidate: %s" % filename)
+    oflag = 'r'
+    _persistent_data = shelve.open(filename, flag=oflag)
+    for t in _tables.itervalues():
+        log_extra("reading table " + t.name)
+        rows = _persistent_data.get(s.name, None)
+        if rows != None:
+	    t.consolidate(rows)
 
 def write_list(filename):
     phase("writing 'list'")
     lines = []
-    for s in _tables.itervalues():
-	new = s.get_lines()
+    for t in _tables.itervalues():
+	new = t.get_lines()
 	lines.extend(new)
     lines.sort()
     lines2 = []
@@ -265,6 +301,7 @@ def write_list(filename):
 	    old = l
     f = open(filename, "w")
     f.writelines(lines2)
+    f.flush()
     f.close()
 	
 #
@@ -276,6 +313,7 @@ def log_init(verbose=1, logfile=sys.stdout):
     _verbose = verbose
     _logfile = logfile
     _start_time = time.time()
+    _logfile.flush()
 
 def elapsed_time():
     return (time.time() - _start_time)
@@ -283,14 +321,20 @@ def elapsed_time():
 def log(message):
     if _verbose:
         _logfile.write("*%3.1f: %s\n" % (elapsed_time(),  message))
+	_logfile.flush()
 
 def log_extra(message):
     if _verbose > 1:
 	_logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
+	_logfile.flush()
 
 def die(message, errorcode=1):
+    sys.stdout.flush()
+    sys.stderr.flush()
     _logfile.write("***%3.1f: fatal error: %s\n" % (elapsed_time(),  message))
+    _logfile.flush()
     sys.stderr.write(message + "\n")
+    sys.stderr.flush()
     sys.exit(errorcode=1)
 
 def phase(phase):
@@ -299,6 +343,8 @@ def phase(phase):
     log_extra("PHASE:" + phase)
 
 def print_exception(msg=None):
+    sys.stdout.flush()
+    sys.stderr.flush()
     _logfile.write("=" * 50 + "\nEXCEPTION in %s (after %.1f seconds)\n" %
 			(_phase, elapsed_time()) )
     if msg:
