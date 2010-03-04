@@ -10,6 +10,15 @@ import time
 import shelve
 import sqlite3
 
+import lkddb.log
+
+
+# tasks
+TASK_BUILD = 1       # scan and build lkddb
+TASK_TABLE = 2       # read (and ev. format) tables
+TASK_CONSOLIDATE = 3 # consolidate trees
+
+
 # global variables
 
 # browse the files (of a source tree); select, open and preprocess files
@@ -24,16 +33,11 @@ _views = None
 _persistent_data = None
 #
 shared = {}
-#
-_verbose = 0
-_logfile = sys.stdout
-_phase = "(init)"
-_start_time = 0
 
 
-def init(verbose, logfile):
+def init(options):
     global _browsers, _scanners, _tables, _views
-    log_init(verbose, logfile)
+    lkddb.log.init(options)
     _trees = []
     _browsers = []
     _scanners = []
@@ -53,6 +57,11 @@ def share(name, object):
 
 class tree(object):
     def __init__(self, name):
+        self._browsers = []
+        self._scanners = []
+        self._tables = {}
+        self._views = []
+
         self.name = name
         self.version = None
 	self.strversion = None
@@ -100,9 +109,8 @@ class scanner(object):
         self.name = name
 
 class table(object):
-    def __init__(self, name, tree):
+    def __init__(self, name):
         self.name = name
-	self.tree = tree
 	self.rows = []
 	self.rows_fmt = []
 	self.consolidate = {}
@@ -152,7 +160,7 @@ class table(object):
                 log("assertion in table %s in fmt %s vith value %s [row:%s]" %
                     (self.name, f, v, row) )
 
-	    vmin, vmax, orow = consolidate.get(v, (version, version, None)):
+	    vmin, vmax, orow = consolidate.get(v, (version, version, None))
 	    if orow:
 	        nmin, nmax = tree.check_version(vmin, vmax)
 		if nmin != None:
@@ -335,54 +343,5 @@ def write_list(filename):
     f.writelines(lines2)
     f.flush()
     f.close()
-	
-#
-# logs
-#
 
-def log_init(verbose=1, logfile=sys.stdout):
-    global _verbose, _logfile, _start_time
-    _verbose = verbose
-    _logfile = logfile
-    _start_time = time.time()
-    _logfile.flush()
-
-def elapsed_time():
-    return (time.time() - _start_time)
-
-def log(message):
-    if _verbose:
-        _logfile.write("*%3.1f: %s\n" % (elapsed_time(),  message))
-	_logfile.flush()
-
-def log_extra(message):
-    if _verbose > 1:
-	_logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
-	_logfile.flush()
-
-def die(message, errorcode=1):
-    sys.stdout.flush()
-    sys.stderr.flush()
-    _logfile.write("***%3.1f: fatal error: %s\n" % (elapsed_time(),  message))
-    _logfile.flush()
-    sys.stderr.write(message + "\n")
-    sys.stderr.flush()
-    sys.exit(errorcode=1)
-
-def phase(phase):
-    global _phase
-    _phase = phase
-    log_extra("PHASE:" + phase)
-
-def print_exception(msg=None):
-    sys.stdout.flush()
-    sys.stderr.flush()
-    _logfile.write("=" * 50 + "\nEXCEPTION in %s (after %.1f seconds)\n" %
-			(_phase, elapsed_time()) )
-    if msg:
-        _logfile.write(msg + "\n")
-	_logfile.write("-" * 10)
-    traceback.print_exc(file=_logfile)
-    _logfile.write("-" * 50 + "\n")
-    _logfile.flush()
 

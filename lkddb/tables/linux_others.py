@@ -10,8 +10,8 @@ from lkddb import fmt
 
 class i2c_snd_table(lkddb.table):
 
-    def __init__(self, tree):
-        lkddb.table.__init__(self, "i2c-snd", tree)
+    def __init__(self):
+        lkddb.table.__init__(self, "i2c-snd")
 
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
@@ -21,8 +21,8 @@ class i2c_snd_table(lkddb.table):
 
 class platform_table(lkddb.table):
 
-    def __init__(self, tree):
-        lkddb.table.__init__(self, "platform", tree)
+    def __init__(self):
+        lkddb.table.__init__(self, "platform")
 
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
@@ -30,10 +30,10 @@ class platform_table(lkddb.table):
            ('version', None, "$kver"))
 
 
-class fs_table(lkddb.table, tree):
+class fs_table(lkddb.table):
 
     def __init__(self):
-        lkddb.table.__init__(self, "fs", tree)
+        lkddb.table.__init__(self, "fs")
 
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
@@ -41,9 +41,9 @@ class fs_table(lkddb.table, tree):
            ('version', None, "$kver"))
 
 
-def register(tree):
-    lkddb.register_table('i2c-snd', i2c_snd_table(tree))
-    lkddb.register_table('platform', platform_table(tree))
-    lkddb.register_table('fs', fs_table(tree))
+def register():
+    lkddb.register_table('i2c-snd', i2c_snd_table())
+    lkddb.register_table('platform', platform_table())
+    lkddb.register_table('fs', fs_table())
 
 

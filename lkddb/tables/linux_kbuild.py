@@ -8,8 +8,8 @@ from lkddb import fmt
 
 class kver_table(lkddb.table):
 
-    def __init__(self, tree):
-        lkddb.table.__init__(self, "kver", tree)
+    def __init__(self):
+        lkddb.table.__init__(self, "kver")
 
     cols = (('version', fmt.m32x, "INTEGER"),
            ('ver_str', fmt.str, "TEXT"),
@@ -19,8 +19,8 @@ class kver_table(lkddb.table):
 
 class kconf_table(lkddb.table):
 
-    def __init__(self, tree):
-        lkddb.table.__init__(self, "kconf", tree)
+    def __init__(self):
+        lkddb.table.__init__(self, "kconf")
 
     cols = (('config', None, "TEXT"),
            ('filename', None, "TEXT"),
@@ -39,8 +39,8 @@ class kconf_table(lkddb.table):
 
 class module_table(lkddb.table):
 
-    def __init__(self, tree):
-        lkddb.table.__init__(self, "module", tree)
+    def __init__(self):
+        lkddb.table.__init__(self, "module")
 
     cols = (('name', fmt.str, "TEXT"),
            ('descr', fmt.qstr, "TEXT"),
@@ -50,8 +50,8 @@ class module_table(lkddb.table):
 
 class firmware_table(lkddb.table):
 
-    def __init__(self, tree):
-        lkddb.table.__init__(self, "firmware", tree)
+    def __init__(self):
+        lkddb.table.__init__(self, "firmware")
 
     cols = (('config',  fmt.str, "$config"),
            ('filename', fmt.filename, "$filename"))

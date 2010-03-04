@@ -13,17 +13,15 @@ import fnmatch
 import glob
 
 import lkddb
+import lkddb.log
 import lkddb.linux
 import lkddb.tables
 
 
-def make(options, logfile, tree, kerneldir, dirs):
-
-    lkddb.init(options.verbose, logfile)
-    if tree == None:
-        tree = lkddb.linux.linux_kernel(kerneldir, dirs)
-    lkddb.tables.register_linux_tables(tree)
-    lkddb.linux.register_browsers(tree)
+def make(options, kerneldir, dirs):
+    tree = lkddb.linux.linux_kernel(lkddb.TASK_BUILD, kerneldir, dirs)
+    lkddb.tables.register_linux_tables()
+    lkddb.linux.register_browsers()
     try:
         lkddb.phase("init")
         lkddb.scan_sources()
@@ -61,7 +59,7 @@ if __name__ == "__main__":
     parser.add_option("-d", "--database",   dest="sql",
                       action="store_const", const=True,
                       help="save data in sqlite database")
-    parser.add_option("-l", "--log",	dest="logfile",
+    parser.add_option("-l", "--log",	dest="log_filename",
                       action="store",	type="string",
                       help="FILE to put log messages (default is stderr)", metavar="FILE")
     parser.add_option("-k", "--versioned",   dest="versioned",
@@ -81,21 +79,5 @@ if __name__ == "__main__":
                 "ipc", "kernel", "lib", "mm", "net", "security",
                 "sound", "usr", "virt")
 
-    tree = lkddb.linux.linux_kernel(kerneldir, dirs)
-
-    if options.versioned:
-	ver = tree.get_strversion()
-        options.dbfile += "-" + ver
-    else:
-	ver = ""
-
-    if options.logfile:
-        if options.logfile == "-":
-                logfile = sys.stdout
-        else:
-            logfile = open(options.logfile + "-" + ver, "w")
-    else:
-            logfile = sys.stderr
-
-    make(options, logfile, tree, kerneldir, dirs)
+    make(options, kerneldir, dirs)
 
