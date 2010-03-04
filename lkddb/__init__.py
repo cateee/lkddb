@@ -76,6 +76,16 @@ class tree(object):
         if self.ishead or not self.isreleased:
             return False
         return (self.version < original_version)
+    def check_version(vmin, vmax):
+	if self.ishead:
+	    if self.version >= vmax:
+		return vmin, self.version
+        if not self.isreleased:
+	    return None, None
+        if self.version > vmax:
+	    return vmin, self.version
+        if self.version < vmin:
+            return self.version, vmin
 
 class browser(object):
     def __init__(self, name):
@@ -95,6 +105,7 @@ class table(object):
 	self.tree = tree
 	self.rows = []
 	self.rows_fmt = []
+	self.consolidate = {}
 	line_fmt = []
 	for col_name, col_line_fmt, col_sql in self.cols:
 	    if col_line_fmt:
@@ -129,6 +140,25 @@ class table(object):
 	except TypeError:
 	    print_exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], d))
 	return lines
+    def consolidate(self, tree, version, rows):
+	phase("consolidating lines in " + self.name)
+        for row in self.rows:
+	    try:
+                r = []
+                for f, v in zip(self.line_fmt, row):
+                    r.append(f(v))
+		v = tuple(r)
+	    except AssertionError:
+                log("assertion in table %s in fmt %s vith value %s [row:%s]" %
+                    (self.name, f, v, row) )
+
+	    vmin, vmax, orow = consolidate.get(v, (version, version, None)):
+	    if orow:
+	        nmin, nmax = tree.check_version(vmin, vmax)
+		if nmin != None:
+		    consolidate[v] = (nmin, nmax, row)
+	    else:
+	        consolidate[v] = (vmin, vmax, orow)
     def prepare_sql(self, ver):
         sql_cols = []
         sql_create_col = []
@@ -280,11 +310,13 @@ def consolidate_data(filename):
     phase("reading 'data' to consolidate: %s" % filename)
     oflag = 'r'
     _persistent_data = shelve.open(filename, flag=oflag)
+    tree = _persistent_data['_tree']
+    version = tree.get_version()
     for t in _tables.itervalues():
         log_extra("reading table " + t.name)
         rows = _persistent_data.get(s.name, None)
         if rows != None:
-	    t.consolidate(rows)
+	    t.consolidate(tree, version, rows)
 
 def write_list(filename):
     phase("writing 'list'")
