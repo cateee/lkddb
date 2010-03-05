@@ -20,24 +20,26 @@ import lkddb.tables
 
 def make(options, kerneldir, dirs):
     tree = lkddb.linux.linux_kernel(lkddb.TASK_BUILD, kerneldir, dirs)
-    lkddb.tables.register_linux_tables()
-    lkddb.linux.register_browsers()
+    options.tree = tree
+    options.version = tree.get_strversion()
+    if options.versioned:
+        options.dbfile += "-" + options.version
+    lkddb.init(options)
     try:
-        lkddb.phase("init")
-        lkddb.scan_sources()
-        lkddb.finalize_sources()
+        lkddb.log.phase("init")
+        tree.scan_sources()
+        tree.finalize_sources()
     except:
-        lkddb.print_exception("unknow error in main loop")
+        lkddb.log.exception("unknow error in main loop")
         raise
-    lkddb.phase("write")
+    lkddb.log.phase("write")
     if options.sql:
 	sql = options.dbfile + ".db"
     else:
 	sql = None
-    lkddb.write(data = options.dbfile + ".data",
+    tree.write(data = options.dbfile + ".data",
 		list = options.dbfile + ".list",
 		sql = sql)
-
 #
 # main
 #

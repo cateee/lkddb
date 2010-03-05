@@ -32,17 +32,12 @@ _views = None
 #
 _persistent_data = None
 #
-shared = {}
 
+_tree = None
 
 def init(options):
     global _browsers, _scanners, _tables, _views
     lkddb.log.init(options)
-    _trees = []
-    _browsers = []
-    _scanners = []
-    _tables = {}
-    _views = []
 
 #
 # generic container to pass data between modules
@@ -51,22 +46,37 @@ def init(options):
 def share(name, object):
     shared[name] = object
 
+def set_working_tree(tree):
+    global _tree
+    _tree = tree
+def get_working_tree():
+    return _tree
+
 #
 # Generic classes for device_class and source_trees
 #
 
 class tree(object):
     def __init__(self, name):
-        self._browsers = []
-        self._scanners = []
-        self._tables = {}
-        self._views = []
+        self.browsers = []
+        self.scanners = []
+        self.tables = {}
+        self.views = []
 
         self.name = name
         self.version = None
 	self.strversion = None
         self.ishead = None
         self.isreleased = None
+
+    def save_versions(self):
+	return (self.version, self.strversion, self.ishead, self.isreleased)
+    def restore_versions(self, versions):
+        self.version = versions[0]
+        self.strversion = versions[1]
+        self.ishead = versions[2]
+        self.isreleased = versions[3]
+
     def get_version(self):
         return self.version
     def get_strversion(self):
@@ -85,7 +95,7 @@ class tree(object):
         if self.ishead or not self.isreleased:
             return False
         return (self.version < original_version)
-    def check_version(vmin, vmax):
+    def check_version(self, vmin, vmax):
 	if self.ishead:
 	    if self.version >= vmax:
 		return vmin, self.version
@@ -96,13 +106,126 @@ class tree(object):
         if self.version < vmin:
             return self.version, vmin
 
+    def register_browser(self, browser):
+        self.browsers.append(browser)
+    def register_scanner(self, scanner):
+        self.scanners.append(scanner)
+    def register_table(self, name, table):
+        assert(name not in self.tables)
+        self.tables[name] = table
+    def get_table(self, name):
+        return self.tables[name]
+
+    def scan_sources(self):
+        for s in self.browsers:
+            s.scan()
+    def finalize_sources(self):
+        for s in self.browsers:
+            s.finalize()
+
+    def format_tables(self):
+        for s in self.tables.itervalues():
+            s.fmt()
+    def prepare_sql(self, db, create=True):
+        c = db.cursor()
+        if create:
+            create_generic_tables(c)
+        for s in self.tables.itervalues():
+            s.prepare_sql()
+            if create:
+              s.create_sql(c)
+        db.commit()
+        c.close()
+    def write_sql(self, db):
+        prepare_sql(db)
+        for s in self.tables.itervalues():
+            s.in_sql(db)
+
+    #
+    # persistent data:
+    #   - data:  in python shelve format
+    #   - lines: in text (line based) format
+    #   - sql:   in SQL database
+    #
+
+    def write(self, data=None, list=None, sql=None):
+        if data:
+            self.write_data(data)
+        if list:
+            self.format_tables()
+            self.write_list(list)
+        if sql:
+            db = sqlite3.connect(sql)
+            self.write_sql(db)
+            db.close()
+
+    def write_data(self, filename, new=True):
+        lkddb.log.phase("writing 'data'")
+        if new:
+            oflag = 'n'
+        else:
+            oflag = 'w'
+        persistent_data = shelve.open(filename, flag=oflag)
+	persistent_data['_versions'] = self.save_versions()
+        for t in self.tables.itervalues():
+            persistent_data[t.name] = t.rows
+        persistent_data.sync()
+
+    def read_data(self, filename, rw=False):
+        lkddb.log.phase("reading 'data'")
+        if rw:
+                oflag = 'w'
+        else:
+                oflag = 'r'
+        persistent_data = shelve.open(filename, flag=oflag)
+        self.restore_versions(persistent_data['_versions'])
+        for t in self.tables.itervalues():
+            lkddb.log.log_extra("reading table " + t.name)
+            rows = persistent_data.get(t.name, None)
+            if rows != None:
+                t.rows = rows
+            t.restore()
+
+    def consolidate_data(self, filename):
+        lkddb.log.phase("reading 'data' to consolidate: %s" % filename)
+        oflag = 'r'
+        persistent_data = shelve.open(filename, flag=oflag)
+        tree = persistent_data['_tree']
+        version = self.get_version()
+        for t in self.tables.itervalues():
+            lkddb.log.log_extra("reading table " + t.name)
+            rows = persistent_data.get(s.name, None)
+            if rows != None:
+                t.consolidate(tree, version, rows)
+
+    def write_list(self, filename):
+        lkddb.log.phase("writing 'list'")
+        lines = []
+        for t in self.tables.itervalues():
+            new = t.get_lines()
+            lines.extend(new)
+        lines.sort()
+        lines2 = []
+        old = None
+        for l in lines:
+            if l != old:
+                lines2.append(l)
+                old = l
+        f = open(filename, "w")
+        f.writelines(lines2)
+        f.flush()
+        f.close()
+
+
+##########
+
 class browser(object):
     def __init__(self, name):
         self.name = name
     def scan(self):
-        phase("browse and scan " + self.name)
+        lkddb.log.phase("browse and scan " + self.name)
     def finalize(self):
-        phase("finalizing scan " + self.name)
+        lkddb.log.phase("finalizing scan " + self.name)
 
 class scanner(object):
     def __init__(self, name):
@@ -112,7 +235,7 @@ class table(object):
     def __init__(self, name):
         self.name = name
 	self.rows = []
-	self.rows_fmt = []
+	self.fullrows = []
 	self.consolidate = {}
 	line_fmt = []
 	for col_name, col_line_fmt, col_sql in self.cols:
@@ -121,45 +244,36 @@ class table(object):
 	if line_fmt:
 	    self.line_fmt = tuple(line_fmt)
 	    self.line_templ = name + " %s"*len(line_fmt) + '\n'
-    def add_row_fmt(self, row):
+    def add_fullrow(self, row):
 	try:
 	    r = []
 	    for f, v in zip(self.line_fmt, row):
 		r.append(f(v))
-	    self.rows_fmt.append(tuple(r))
+	    self.fullrows.append((row, tuple(r)))
 	except AssertionError:
-	    log("assertion in table %s in fmt %s vith value %s [row:%s]" %
+	    lkddb.log.log("assertion in table %s in fmt %s vith value %s [row:%s]" %
 		(self.name, f, v, row) )
     def add_row(self, dict):
 	self.rows.append(dict)
     def restore(self):
 	pass
     def fmt(self):
-	phase("formatting " + self.name)
+	lkddb.log.phase("formatting " + self.name)
         for row in self.rows:
-            self.add_row_fmt(row)
+            self.add_fullrow(row)
     def get_lines(self):
 	### TODO: change to an iteractor ########################
-	phase("printing lines in " + self.name)
+	lkddb.log.phase("printing lines in " + self.name)
 	lines = []
 	try:
-	    for d in self.rows_fmt:
-	        lines.append(self.line_templ % d)
+	    for row, row_fmt, in self.full_rows:
+	        lines.append(self.line_templ % row_fmt)
 	except TypeError:
-	    print_exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], d))
+	    lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], row_fmt))
 	return lines
-    def consolidate(self, tree, version, rows):
-	phase("consolidating lines in " + self.name)
-        for row in self.rows:
-	    try:
-                r = []
-                for f, v in zip(self.line_fmt, row):
-                    r.append(f(v))
-		v = tuple(r)
-	    except AssertionError:
-                log("assertion in table %s in fmt %s vith value %s [row:%s]" %
-                    (self.name, f, v, row) )
-
+    def consolidate(self, version, rows):
+	lkddb.log.phase("consolidating lines in " + self.name)
+        for row, row_fmt in self.fullrows:
 	    vmin, vmax, orow = consolidate.get(v, (version, version, None))
 	    if orow:
 	        nmin, nmax = tree.check_version(vmin, vmax)
@@ -222,126 +336,4 @@ def create_generic_tables(c):
  `table_id` INTEGER REFERENCE `tables`
 );"""
 ##################
-	
-#
-# top level source and device scanners handling
-#
-
-def register_browser(browser):
-    _browsers.append(browser)
-
-def register_scanner(scanner):
-    _scanners.append(scanner)
-
-def register_table(name, table):
-    assert(name not in _tables)
-    _tables[name] = table
-
-def get_table(name):
-    return _tables[name]
-
-
-def scan_sources():
-    for s in _browsers:
-	s.scan()
-
-def finalize_sources():
-    for s in _browsers:
-	s.finalize()
-
-def format_tables():
-    for s in _tables.itervalues():
-	s.fmt()
-
-def prepare_sql(db, create=True):
-    c = db.cursor()
-    if create:
-	create_generic_tables(c)
-    for s in _tables.itervalues():
-        s.prepare_sql()
-	if create:
-	  s.create_sql(c)  
-    db.commit()
-    c.close()
-
-def write_sql(db):
-    prepare_sql(db)
-    for s in _tables.itervalues():
-        s.in_sql(db)
- 
-
-#
-# persistent data:
-#   - data:  in python shelve format
-#   - lines: in text (line based) format
-#   - sql:   in SQL database
-#
-
-def write(data=None, list=None, sql=None):
-    if data:
-	write_data(data)
-    if list:
-	format_tables()
-        write_list(list)
-    if sql:
-        db = sqlite3.connect(sql)
-	write_sql(db)
-	db.close()
-#
-
-def write_data(filename, new=True):
-    phase("writing 'data'")
-    if new:
-        oflag = 'n'
-    else:
-        oflag = 'w'
-    _persistent_data = shelve.open(filename, flag=oflag)
-    for t in _tables.itervalues():
-	_persistent_data[s.name] = t.rows
-    _persistent_data.sync()
-
-def read_data(filename, rw=False):
-    phase("reading 'data'")
-    if rw:
-            oflag = 'w'
-    else:
-            oflag = 'r'
-    _persistent_data = shelve.open(filename, flag=oflag)
-    for t in _tables.itervalues():
-	log_extra("reading table " + t.name)
-	rows = _persistent_data.get(t.name, None)
-	if rows != None:
-	    t.rows = rows
-	t.restore()
-
-def consolidate_data(filename):
-    phase("reading 'data' to consolidate: %s" % filename)
-    oflag = 'r'
-    _persistent_data = shelve.open(filename, flag=oflag)
-    tree = _persistent_data['_tree']
-    version = tree.get_version()
-    for t in _tables.itervalues():
-        log_extra("reading table " + t.name)
-        rows = _persistent_data.get(s.name, None)
-        if rows != None:
-	    t.consolidate(tree, version, rows)
-
-def write_list(filename):
-    phase("writing 'list'")
-    lines = []
-    for t in _tables.itervalues():
-	new = t.get_lines()
-	lines.extend(new)
-    lines.sort()
-    lines2 = []
-    old = None
-    for l in lines:
-	if l != old:
-	    lines2.append(l)
-	    old = l
-    f = open(filename, "w")
-    f.writelines(lines2)
-    f.flush()
-    f.close()
-
 

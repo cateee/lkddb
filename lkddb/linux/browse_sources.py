@@ -11,6 +11,7 @@ import glob
 import fnmatch
 
 import lkddb
+import lkddb.log
 import lkddb.parser
 from lkddb.parser import unwind_include
 
@@ -44,7 +45,7 @@ class linux_sources(lkddb.browser):
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
-            lkddb.phase("headers")
+            lkddb.log.phase("headers")
             for dir, d_, files in os.walk("include"):
                 p = dir.split("/")
 	        if len(p) < 2 or p[1] == "asm"  or  p[1] == "asm-um"  or  p[1] == "config":
@@ -69,7 +70,7 @@ class linux_sources(lkddb.browser):
 
             lkddb.parser.unwind_include_all()
 
-            lkddb.phase("sources")
+            lkddb.log.phase("sources")
             for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
 	            self.__read_includes(fnmatch.filter(files, "*.h"), dir, dir)

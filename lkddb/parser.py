@@ -16,6 +16,7 @@
 import re
 import os.path
 import lkddb
+import lkddb.log
 #import lkddb.linux.kbuild
 
 #
@@ -77,7 +78,7 @@ def parse_header(src, filename, discard_source):
             if not incl.endswith('.h"')  and not incl.endswith(".agh"):
                 fn = os.path.join(dir, incl[1:-1])
                 if not os.path.isfile(fn):
-                    lkddb.log("preprocessor: parse_header(): unknow c-include in %s: %s" % (
+                    lkddb.log.log("preprocessor: parse_header(): unknow c-include in %s: %s" % (
                         filename, incl))
                     continue
                 f = open(fn)
@@ -93,7 +94,7 @@ def parse_header(src, filename, discard_source):
             # it is a non .h recursive include (set called, from above
             continue
         else:
-            lkddb.log("preprocessor: parse_header(): unknow include in %s: '%s'" % (
+            lkddb.log.log("preprocessor: parse_header(): unknow include in %s: '%s'" % (
                 filename, incl))
     for id, defs in define_re.findall(src):
         defines_pln.setdefault(id, {})

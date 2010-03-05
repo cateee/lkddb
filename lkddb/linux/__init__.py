@@ -7,6 +7,7 @@ import os
 import subprocess
 
 import lkddb
+import lkddb.tables
 #from lkddb import register_browser, register_scanner, get_table
 
 # sources
@@ -22,58 +23,62 @@ def register_browsers(tree):
     dirs = tree.dirs
 
     # sources
-    kver_ = kver(lkddb.get_table('kver'), kerneldir)
-    lkddb.register_browser(kver_)
+    kver_ = kver(tree.get_table('kver'), tree)
+    tree.register_browser(kver_)
 
-    makefiles_ = makefiles(lkddb.get_table('firmware'), kerneldir, dirs)
-    lkddb.register_browser(makefiles_)
+    makefiles_ = makefiles(tree.get_table('firmware'), kerneldir, dirs)
+    tree.register_browser(makefiles_)
 
-    kconfigs_ = kconfigs(lkddb.get_table('kconf'), lkddb.get_table('module'),
-				 kerneldir, dirs, makefiles_)
-    lkddb.register_browser(kconfigs_)
+    kconfigs_ = kconfigs(tree.get_table('kconf'), tree.get_table('module'),
+				 kerneldir, dirs, makefiles_, tree)
+    tree.register_browser(kconfigs_)
 
     sources_ = browse_sources.linux_sources(kerneldir, dirs)
-    lkddb.register_browser(sources_)
+    tree.register_browser(sources_)
 
     parent_scanner = browse_sources.struct_parent_scanner(sources_, makefiles_)
 
     # parse_devicetables
-    lkddb.register_scanner(pci(parent_scanner))
-    lkddb.register_scanner(usb(parent_scanner))
-    lkddb.register_scanner(ieee1394(parent_scanner))
-    lkddb.register_scanner(hid(parent_scanner))
-    lkddb.register_scanner(ccw(parent_scanner))
-    lkddb.register_scanner(ap(parent_scanner))
-    lkddb.register_scanner(acpi(parent_scanner))
-    lkddb.register_scanner(pnp(parent_scanner))
-    lkddb.register_scanner(pnp_card(parent_scanner))
-    lkddb.register_scanner(serio(parent_scanner))
-    lkddb.register_scanner(of(parent_scanner))
-    lkddb.register_scanner(vio(parent_scanner))
-    lkddb.register_scanner(pcmcia(parent_scanner))
-    lkddb.register_scanner(input(parent_scanner))
-    lkddb.register_scanner(eisa(parent_scanner))
-    lkddb.register_scanner(parisc(parent_scanner))
-    lkddb.register_scanner(sdio(parent_scanner))
-    lkddb.register_scanner(ssb(parent_scanner))
-    lkddb.register_scanner(virtio(parent_scanner))
-    lkddb.register_scanner(i2c(parent_scanner))
-    lkddb.register_scanner(tc(parent_scanner))
-    lkddb.register_scanner(zorro(parent_scanner))
-    lkddb.register_scanner(agp(parent_scanner))
+    tree.register_scanner(pci(parent_scanner, tree))
+    tree.register_scanner(usb(parent_scanner, tree))
+    tree.register_scanner(ieee1394(parent_scanner, tree))
+    tree.register_scanner(hid(parent_scanner, tree))
+    tree.register_scanner(ccw(parent_scanner, tree))
+    tree.register_scanner(ap(parent_scanner, tree))
+    tree.register_scanner(acpi(parent_scanner, tree))
+    tree.register_scanner(pnp(parent_scanner, tree))
+    tree.register_scanner(pnp_card(parent_scanner, tree))
+    tree.register_scanner(serio(parent_scanner, tree))
+    tree.register_scanner(of(parent_scanner, tree))
+    tree.register_scanner(vio(parent_scanner, tree))
+    tree.register_scanner(pcmcia(parent_scanner, tree))
+    tree.register_scanner(input(parent_scanner, tree))
+    tree.register_scanner(eisa(parent_scanner, tree))
+    tree.register_scanner(parisc(parent_scanner, tree))
+    tree.register_scanner(sdio(parent_scanner, tree))
+    tree.register_scanner(ssb(parent_scanner, tree))
+    tree.register_scanner(virtio(parent_scanner, tree))
+    tree.register_scanner(i2c(parent_scanner, tree))
+    tree.register_scanner(tc(parent_scanner, tree))
+    tree.register_scanner(zorro(parent_scanner, tree))
+    tree.register_scanner(agp(parent_scanner, tree))
 
     # parse_others
-    lkddb.register_scanner(i2c_snd(parent_scanner))
-    lkddb.register_scanner(platform(parent_scanner))
-    lkddb.register_scanner(fs(parent_scanner))
+    tree.register_scanner(i2c_snd(parent_scanner, tree))
+    tree.register_scanner(platform(parent_scanner, tree))
+    tree.register_scanner(fs(parent_scanner, tree))
 
+###
 
 class linux_kernel(lkddb.tree):
 
-    def __init__(self, kerneldir, dirs):
+    def __init__(self, task, kerneldir, dirs):
         lkddb.tree.__init__(self, "linux-kernel")
 	self.kerneldir = kerneldir
 	self.dirs = dirs
+	lkddb.tables.register_linux_tables(self)
+	if task == lkddb.TASK_BUILD:
+	    register_browsers(self)
 
     def get_version(self):
 	if self.version == None:

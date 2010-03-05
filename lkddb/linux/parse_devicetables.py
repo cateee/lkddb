@@ -27,9 +27,11 @@ class intern_scanner(object):
 #    drivers/pci/pci-driver.c pci_match_id
 
 class pci(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
       	  name = 'pci',
+          tree = tree,
           table_name = 'pci',
 	  parent_scanner = parent_scanner,
           struct_name = "pci_device_id",
@@ -64,9 +66,10 @@ class usb(list_of_structs_scanner):
     USB_DEVICE_ID_MATCH_INT_SUBCLASS = 0x0100
     USB_DEVICE_ID_MATCH_INT_PROTOCOL = 0x0200
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'usb',
+          tree = tree,
 	  table_name = 'usb',
           parent_scanner = parent_scanner,
           struct_name = "usb_device_id",
@@ -115,9 +118,10 @@ class ieee1394(list_of_structs_scanner):
     IEEE1394_MATCH_SPECIFIER_ID = 0x0004
     IEEE1394_MATCH_VERSION      = 0x0008
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'ieee1394',
+          tree = tree,
 	  table_name = 'ieee1394',
           parent_scanner = parent_scanner,
           struct_name = "ieee1394_device_id",
@@ -142,9 +146,11 @@ class ieee1394(list_of_structs_scanner):
 
 
 class hid(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'hid',
+          tree = tree,
           table_name = 'hid',
           parent_scanner = parent_scanner,
           struct_name = "hid_device_id",
@@ -167,9 +173,10 @@ class ccw(list_of_structs_scanner):
     CCW_DEVICE_ID_MATCH_DEVICE_TYPE  = 0x04
     CCW_DEVICE_ID_MATCH_DEVICE_MODEL = 0x08
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'ccw',
+          tree = tree,
           table_name = 'ccw',
           parent_scanner = parent_scanner,
           struct_name = "ccw_device_id",
@@ -198,9 +205,10 @@ class ccw(list_of_structs_scanner):
 class ap(list_of_structs_scanner):
     AP_DEVICE_ID_MATCH_DEVICE_TYPE = 0x01
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'ap',
+          tree = tree,
           table_name = 'ap',
           parent_scanner = parent_scanner,
           struct_name = "ap_device_id",
@@ -222,9 +230,10 @@ class ap(list_of_structs_scanner):
 
 class acpi(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'acpi',
+          tree = tree,
           table_name = 'acpi',
           parent_scanner = parent_scanner,
           struct_name = "acpi_device_id",
@@ -242,9 +251,10 @@ class acpi(list_of_structs_scanner):
 
 class pnp(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'pnp',
+          tree = tree,
           table_name = 'pnp',
           parent_scanner = parent_scanner,
           struct_name = "pnp_device_id",
@@ -264,9 +274,10 @@ pnp_card_intern_scanner = intern_scanner("pnp_card_intern_scanner")
 
 class pnp_card(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'pnp_card',
+          tree = tree,
           table_name = 'pnp',
           parent_scanner = parent_scanner,
           struct_name = "pnp_card_device_id",
@@ -288,9 +299,11 @@ class pnp_card(list_of_structs_scanner):
 # SERIO , serio_device_id include/linux/mod_devicetable.h drivers/input/serio/serio.c
 
 class serio(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'serio',
+          tree = tree,
           table_name = 'serio',
           parent_scanner = parent_scanner,
           struct_name = "serio_device_id",
@@ -317,9 +330,10 @@ class serio(list_of_structs_scanner):
 
 class of(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'of',
+          tree = tree,
           table_name = 'of',
           parent_scanner = parent_scanner,
           struct_name = "of_device_id",
@@ -339,9 +353,10 @@ class of(list_of_structs_scanner):
 
 class vio(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'vio',
+          tree = tree,
           table_name = 'vio',
           parent_scanner = parent_scanner,
           struct_name = "vio_device_id",
@@ -373,9 +388,10 @@ class pcmcia(list_of_structs_scanner):
     PCMCIA_DEV_ID_MATCH_FAKE_CIS  = 0x0200
     PCMCIA_DEV_ID_MATCH_ANONYMOUS = 0x0400
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'pcmcia',
+          tree = tree,
           table_name = 'pcmcia',
           parent_scanner = parent_scanner,
           struct_name = "pcmcia_device_id",
@@ -434,9 +450,10 @@ class input(list_of_structs_scanner):
     INPUT_DEVICE_ID_MATCH_FFBIT   = 0x0800
     INPUT_DEVICE_ID_MATCH_SWBIT   = 0x1000
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'input',
+          tree = tree,
           table_name = 'input',
           parent_scanner = parent_scanner,
           struct_name = "input_device_id",
@@ -485,9 +502,10 @@ class input(list_of_structs_scanner):
 
 class eisa(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'eisa',
+          tree = tree,
           table_name = 'eisa',
           parent_scanner = parent_scanner,
           struct_name = "eisa_device_id",
@@ -505,9 +523,10 @@ class eisa(list_of_structs_scanner):
 
 class parisc(list_of_structs_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'parisc',
+          tree = tree,
           table_name = 'parisc',
           parent_scanner = parent_scanner,
           struct_name = "parisc_device_id",
@@ -533,9 +552,11 @@ class parisc(list_of_structs_scanner):
 # SDIO, sdio_device_id include/linux/mod_devicetable.h drivers/mmc/core/sdio_bus.c
 
 class sdio(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'sdio',
+          tree = tree,
           table_name = 'sdio',
           parent_scanner = parent_scanner,
           struct_name = "sdio_device_id",
@@ -554,9 +575,11 @@ class sdio(list_of_structs_scanner):
 # SSB, sdio_device_id include/linux/mod_devicetable.h drivers/ssb/main.c
 
 class ssb(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'ssb',
+          tree = tree,
           table_name = 'ssb',
           parent_scanner = parent_scanner,
           struct_name = "ssb_device_id",
@@ -581,9 +604,11 @@ class ssb(list_of_structs_scanner):
 # virtio, sdio_device_id include/linux/mod_devicetable.h drivers/virtio/virtio.c
 
 class virtio(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'virtio',
+          tree = tree,
           table_name = 'virtio',
           parent_scanner = parent_scanner,
           struct_name = "virtio_device_id",
@@ -605,9 +630,11 @@ class virtio(list_of_structs_scanner):
 i2c_intern_scanner = intern_scanner("i2c_intern_scanner")
 
 class i2c(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'i2c',
+          tree = tree,
           table_name = 'i2c',
           parent_scanner = parent_scanner,
           struct_name = "i2c_device_id",
@@ -628,9 +655,11 @@ class i2c(list_of_structs_scanner):
 # TC, tc_device_id include/linux/tc.h drivers/tc/tc-driver.c
 
 class tc(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'tc',
+          tree = tree,
           table_name = 'tc',
           parent_scanner = parent_scanner,
           struct_name = "tc_device_id",
@@ -648,9 +677,11 @@ class tc(list_of_structs_scanner):
 # zorro, zorro_device_id include/linux/zorro.h drivers/zorro/zorro-driver.c
 
 class zorro(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'zorro',
+          tree = tree,
           table_name = 'zorro',
           parent_scanner = parent_scanner,
           struct_name = "zorro_device_id",
@@ -670,9 +701,11 @@ class zorro(list_of_structs_scanner):
 # AGP, agp_device_ids drivers/char/agp/agp.h drivers/char/agp/
 
 class agp(list_of_structs_scanner):
-    def __init__(self, parent_scanner):
+
+    def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
           name = 'agp',
+          tree = tree,
           table_name = 'agp',
           parent_scanner = parent_scanner,
           struct_name = "agp_device_id",

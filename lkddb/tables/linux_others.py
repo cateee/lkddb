@@ -41,9 +41,9 @@ class fs_table(lkddb.table):
            ('version', None, "$kver"))
 
 
-def register():
-    lkddb.register_table('i2c-snd', i2c_snd_table())
-    lkddb.register_table('platform', platform_table())
-    lkddb.register_table('fs', fs_table())
+def register(tree):
+    tree.register_table('i2c-snd', i2c_snd_table())
+    tree.register_table('platform', platform_table())
+    tree.register_table('fs', fs_table())
 
 

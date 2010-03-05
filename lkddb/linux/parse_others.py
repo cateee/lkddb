@@ -19,9 +19,10 @@ device_driver_fields = (
 
 class i2c_snd(function_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       function_scanner.__init__(self,
           name = 'i2c_snd',
+          tree = tree,
           table_name = 'i2c-snd',
           parent_scanner = parent_scanner,
           funct_name = "snd_i2c_device_create",
@@ -38,9 +39,10 @@ class i2c_snd(function_scanner):
 
 class platform(struct_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       struct_scanner.__init__(self,
           name = 'platform',
+          tree = tree,
           table_name = 'platform',
           parent_scanner = parent_scanner,
           struct_name = "platform_driver",
@@ -62,9 +64,10 @@ class platform(struct_scanner):
 
 class fs(struct_scanner):
 
-    def __init__(self, parent_scanner):
+    def __init__(self, parent_scanner, tree):
       struct_scanner.__init__(self,
           name = 'fs',
+	  tree = tree,
           table_name = 'fs',
           parent_scanner = parent_scanner,
           struct_name = "file_system_type",

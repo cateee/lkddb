@@ -10,6 +10,7 @@
 import re
 
 import lkddb
+import lkddb.log
 from lkddb.parser import unwind_include
 
 __all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
@@ -18,10 +19,11 @@ __all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
 
 class struct_subscanner(object):
 
-    def __init__(self, name, parent_scanner, table_name):
+    def __init__(self, name, tree, parent_scanner, table_name):
 	self.name = name
+	self.tree = tree
 	self.parent_scanner = parent_scanner
-	self.table = lkddb.get_table(table_name)
+	self.table = self.tree.get_table(table_name)
 	parent_scanner.register(self)
 	self.raw = []
 
@@ -31,7 +33,7 @@ class struct_subscanner(object):
             try:
                 row = self.store(data)
             except:
-                lkddb.print_exception(
+                lkddb.log.exception(
                     "scanner<%s>.finalize: filename: %s, data: %s" % (
                     self.name, filename, data) )
                 continue
@@ -41,8 +43,8 @@ class struct_subscanner(object):
 # ---------------
 
 class list_of_structs_scanner(struct_subscanner):
-    def __init__(self, name, parent_scanner, struct_name, struct_fields, table_name):
-        struct_subscanner.__init__(self, name=name, parent_scanner=parent_scanner, table_name=table_name)
+    def __init__(self, name, tree, parent_scanner, struct_name, struct_fields, table_name):
+        struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
         self.struct_name = struct_name
         self.struct_fields = struct_fields
         regex = r"\b%s\s+\w+\s*\w*\s*\[[^];]*\]\s*\w*\s*=\s*\{(.*?)\}\s*;" % struct_name
@@ -50,8 +52,8 @@ class list_of_structs_scanner(struct_subscanner):
         self.splitter = split_structs
 
 class struct_scanner(struct_subscanner):
-    def __init__(self, name, parent_scanner, struct_name, table_name, struct_fields):
-	struct_subscanner.__init__(self, name=name, parent_scanner=parent_scanner, table_name=table_name)
+    def __init__(self, name, tree, parent_scanner, struct_name, table_name, struct_fields):
+	struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
         self.struct_name = struct_name
         self.struct_fields = struct_fields
         regex = r"\b%s\s+\w+\s*\w*\s*\w*\s*=\s*(\{.*?\})\w*;" % struct_name
@@ -59,8 +61,8 @@ class struct_scanner(struct_subscanner):
         self.splitter = split_structs
 
 class function_scanner(struct_subscanner):
-    def __init__(self, name, parent_scanner, table_name, funct_name, funct_fields):
-	struct_subscanner.__init__(self, name=name, parent_scanner=parent_scanner, table_name=table_name)
+    def __init__(self, name, tree, parent_scanner, table_name, funct_name, funct_fields):
+	struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
         self.struct_name = funct_name
         self.struct_fields = funct_fields
         regex = ( r"\b%s\s*\(([^()]*(?:\([^()]*\))?[^()]*(?:\([^()]*\))?[^()]*)\)"
@@ -68,6 +70,7 @@ class function_scanner(struct_subscanner):
         self.regex = re.compile(regex, re.DOTALL)
         self.splitter = split_funct
 
+###
 
 def split_funct(block):
     return split_structs("{" + block + "}")
@@ -150,14 +153,14 @@ def extract_value(field, dictionary):
             elif val.find("?") >=0:
                 return value_expand_tri(val)
             elif val.find("=") >=0:
-                lkddb.log("Hmmmm, %s in '%s'" % (field, dictionary))
+                lkddb.log.log("Hmmmm, %s in '%s'" % (field, dictionary))
                 return eval(val[val.find("=")+1:])
             else:
                 print "value():", field, dictionary
                 print "'%s'" % val
                 raise
         except NameError:
-            lkddb.log("value error: expected number in field %s from %s"
+            lkddb.log.log("value error: expected number in field %s from %s"
 			% (field, dictionary))
             return -1
         except:
@@ -171,7 +174,7 @@ def extract_value(field, dictionary):
                 # ('X') --eval()--> X --> ord(X)
                 return ord(ret)
             else:
-                lkddb.log("str_value(): Numeric value of '%s'" % ret)
+                lkddb.log.log("str_value(): Numeric value of '%s'" % ret)
                 raise
     else:
         return 0
@@ -241,7 +244,7 @@ def extract_string_rec(v, default=""):
         if m:
             field, value = m.groups()
             return extract_string_rec(value, default)
-        lkddb.log("Error on assumptions in translating strings: value '%s'" % v)
+        lkddb.log.log("Error on assumptions in translating strings: value '%s'" % v)
 	assert(True)
         return default
 
@@ -259,7 +262,7 @@ def extract_struct(field, dictionary, default=""):
         v = dictionary[field]
         if v[0] == '{' and  v[-1] == '}':
 	    return v[1:-1].strip()
-        lkddb.die("unknow structure format: %s" % v)
+        lkddb.log.die("unknow structure format: %s" % v)
     else:
         return default
     

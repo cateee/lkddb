@@ -13,53 +13,18 @@ import lkddb
 # kernel version and name
 
 class kver(lkddb.browser):
-    def __init__(self, kver_table, kerneldir):
+
+    def __init__(self, kver_table, tree):
         lkddb.browser.__init__(self, "kver")
 	self.table = kver_table
-	self.kerneldir = kerneldir
+	self.tree = tree
+	self.kerneldir = tree.kerneldir
 
     def scan(self):
         "Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)" 
 	lkddb.browser.scan(self)
-        dict = {}
-        f = open(os.path.join(self.kerneldir, "Makefile"))
-	for i in range(10):
-	    line = f.readline().strip()
-	    if not line or line[0] == '#':
-		continue
-	    try:
-		label, value = line.split('=', 1)
-	    except ValueError:
-		continue
-	    dict[label.strip()] = value.strip()
-	f.close()
-	assert(dict.has_key("VERSION"))
-	assert(dict.has_key("PATCHLEVEL"))
-	assert(dict.has_key("SUBLEVEL"))
-	assert(dict.has_key("EXTRAVERSION"))
-
-        version =  ( int(dict["VERSION"])    * 0x10000 +
-		         int(dict["PATCHLEVEL"]) * 0x100   +
-		         int(dict["SUBLEVEL"])   )
-        extra = dict["EXTRAVERSION"]
-	if version == 0x02040f and extra == "-greased-turkey":
-	    extra = ""
-        ver_str = dict["VERSION"] +"."+ dict["PATCHLEVEL"] +"."+ dict["SUBLEVEL"] + extra
-
-        local_ver = subprocess.Popen("/bin/sh scripts/setlocalversion",
-		shell=True, cwd=self.kerneldir,
-		stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
-        if local_ver  or  not extra.isdigit():
-	    # not a x.y.z or x.y.z.w release
-            ver_str = ver_str + local_ver
-            is_a_release = 1
-        else:
-            is_a_release = 0
-	name = dict.get("NAME", '(not named)')
-
-	self.table.add_row((version, ver_str, is_a_release, name))
-        lkddb.share('kver', version)
-	lkddb.share('kver_str', ver_str)
+	self.table.add_row((self.tree.version, self.tree.strversion,
+				self.tree.is_a_release, self.tree.name))
 
 
 # parse kbuild files (Makefiles) and extract the file dependencies
@@ -116,7 +81,7 @@ class makefiles(lkddb.browser):
         try:
             files = os.listdir(subdir)
         except OSError:
-            lkddb.log("parse_kbuild: not a directory: %s" % subdir)
+            lkddb.log.log("parse_kbuild: not a directory: %s" % subdir)
             return
         if main != 1  and  "Kbuild" in files:
 	    f = open(os.path.join(subdir, 'Kbuild'))
@@ -131,7 +96,7 @@ class makefiles(lkddb.browser):
             src += '\n' + kbuild_normalize.sub(" ", f.read())
             f.close()
         if not src:
-            lkddb.log("No Makefile/Kbuild in %s" % subdir)
+            lkddb.log.log("No Makefile/Kbuild in %s" % subdir)
             return
 
 #	if mk in self.makefiles:
@@ -148,7 +113,7 @@ class makefiles(lkddb.browser):
 		break
 	    mk2 = s.path.join(subdir, m.group(1))
             if not os.path.isfile(mk2):
-	        lkddb.log("parse_kbuild: could not find included file (from %s): %s" %
+	        lkddb.log.log("parse_kbuild: could not find included file (from %s): %s" %
                                 (subdir, mk2))
 		src[m.start:m.end] = ""
 		continue
@@ -208,7 +173,7 @@ class makefiles(lkddb.browser):
 		    if rule == "fw-shipped":
 			for f in files.split():
 			    if f.find("$") > -1:
-				lkddb.log("this firmware include indirect firmwares '%s': '%s'" %
+				lkddb.log.log("this firmware include indirect firmwares '%s': '%s'" %
 					(dep[2:-1], os.path.join(subdir,f)))
 			    else:
 			        self.firmware_table.add_row((dep[2:-1], os.path.join(subdir,f)))
@@ -219,7 +184,7 @@ class makefiles(lkddb.browser):
                 self.__parse_kbuild_alias(subdir, rule, dep, files)
                 continue
             else:
-                lkddb.log("parse_kbuild: unknow dep in %s: '%s'" % (subdir, dep))
+                lkddb.log.log("parse_kbuild: unknow dep in %s: '%s'" % (subdir, dep))
                 continue
 
             for f in files.split():
@@ -235,7 +200,7 @@ class makefiles(lkddb.browser):
                         v.update(self.dependencies[fc])
                     self.dependencies[fc] = v
                 else:
-                    lkddb.log_extra(
+                    lkddb.log.log_extra(
 			"parse_kbuild: unknow target in '%s': '%s, was %s'" % (
 			subdir, f, (rule, dep, files)))
 
@@ -278,31 +243,34 @@ C_TOP=0; C_CONF=1; C_HELP=2
 
 
 class kconfigs(lkddb.browser):
-    def __init__(self, kconf_table, module_table, kerneldir, dirs, makefiles):
+
+    def __init__(self, kconf_table, module_table, kerneldir, dirs, makefiles, tree):
         lkddb.browser.__init__(self, "kconfigs")
 	self.kconf_table = kconf_table
 	self.module_table = module_table
         self.kerneldir = kerneldir
 	self.dirs = dirs
 	self.makefiles = makefiles
-	# two kind of "devices": config and module
+	self.tree = tree
+	# two kind of "tables": config and module
 
     def scan(self):
+	old_kernel = (self.tree.version < 0x020600)  ### find exact version
 	lkddb.browser.scan(self)
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
             for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
-		    if lkddb.shared['kver'] < 0x020600:  ### find exact version
+		    if old_kernel:
                         for kconf in fnmatch.filter(files, "Config.in"):
                             filename = os.path.join(dir, kconf)
-                            lkddb.log_extra("Kconfig (<2.6) doing: " + filename)
+                            lkddb.log.log_extra("Kconfig (<2.6) doing: " + filename)
                             self.__parse_config_in(filename)
 		    else:
                         for kconf in fnmatch.filter(files, "Kconfig*"):
        	                    filename = os.path.join(dir, kconf)
-                	    lkddb.log_extra("Kconfig (>=2.6) doing: " + filename)
+                	    lkddb.log.log_extra("Kconfig (>=2.6) doing: " + filename)
                             self.__parse_kconfig(filename)
         finally:
             os.chdir(orig_cwd)
@@ -353,7 +321,7 @@ class kconfigs(lkddb.browser):
             if tok in frozenset(("help", "---help---")):
                 if context != C_CONF:
                     help = ""
-                    lkddb.log(
+                    lkddb.log.log(
 			"kconfig: error help out of context (%s), in %s, after '%s'" %
                                				(context, filename, config))
                 context = C_HELP
@@ -367,7 +335,7 @@ class kconfigs(lkddb.browser):
                     div = args[0]
                     if not (div == '"'  or  div == "'"):
                         descr = args
-                        lkddb.log("kconfig: bad line in %s %s: '%s'" %
+                        lkddb.log.log("kconfig: bad line in %s %s: '%s'" %
 								(filename, config, line))
                     else:
                         if div == '"':
@@ -437,19 +405,19 @@ class kconfigs(lkddb.browser):
 
             if mod:
 		if mod.find(" ") > -1:
-		    lkddb.log("warning: multiple modules in '%s': '%s" %
+		    lkddb.log.log("warning: multiple modules in '%s': '%s" %
 				(config, mod))
                 for name in mod.split():
 		    #if config == "CONFIG_3C359": ############################
 			#print "CONFIG_3C359 name", name
                     if not name.endswith(".o"):
                         if name[-1] == "/":
-                            lkddb.log(
+                            lkddb.log.log(
 				"Kconfig: name '%s' doesn't end with '.o (%s from %s)"
 							% (name, config, filename))
                         continue
 		    self.module_table.add_row((name[:-2], descr, config, filename))
             else:
-                lkddb.log("kconfig: could not find the module obj of %s from %s" % (config, filename))
+                lkddb.log.log("kconfig: could not find the module obj of %s from %s" % (config, filename))
 
 

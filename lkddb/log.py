@@ -49,7 +49,7 @@ def init(options):
         if _logfile != None:
             _logfile.flush()
             _logfile.close()
-        _logfile = open(log_filename, 'r')
+        _logfile = open(log_filename, 'w')
     _start_time = time.time()
     _logfile.flush()
 
