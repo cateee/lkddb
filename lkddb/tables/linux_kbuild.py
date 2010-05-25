@@ -1,6 +1,6 @@
-#: lkddb/linux/version.py : sources reader for Linux kernels
+#: lkddb/linux/linux_kbuild.py : sources reader for Linux kernels
 #
-#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
 
 import lkddb

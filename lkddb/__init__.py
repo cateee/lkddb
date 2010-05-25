@@ -244,6 +244,8 @@ class table(object):
 	if line_fmt:
 	    self.line_fmt = tuple(line_fmt)
 	    self.line_templ = name + " %s"*len(line_fmt) + '\n'
+	else:
+	    self.line_fmt = ()
     def add_fullrow(self, row):
 	try:
 	    r = []
@@ -258,6 +260,8 @@ class table(object):
     def restore(self):
 	pass
     def fmt(self):
+	if not self.line_fmt:
+	    return
 	lkddb.log.phase("formatting " + self.name)
         for row in self.rows:
             self.add_fullrow(row)
@@ -266,7 +270,7 @@ class table(object):
 	lkddb.log.phase("printing lines in " + self.name)
 	lines = []
 	try:
-	    for row, row_fmt, in self.full_rows:
+	    for row, row_fmt, in self.fullrows:
 	        lines.append(self.line_templ % row_fmt)
 	except TypeError:
 	    lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], row_fmt))
