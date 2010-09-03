@@ -17,30 +17,16 @@ import lkddb.linux
 import lkddb.tables
 
 
-def make(options, logfile, args):
+def make(options, args):
 
-    lkddb.init(options.verbose, logfile)
-    tree = lkddb.linux.linux_kernel(None, (,)
-    lkddb.tables.register_linux_tables(tree))
-    consolidate = read_data(options.consolidate, False)
-    for dbfile in args:
-	consolidate_data(dbfile, False)
+    tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
+    lkddb.init(options)
+    lkddb.log.phase("read files to consolidate")
+    for f in args:
+	tree.read_consolidate(f)
 
-    try:
-        lkddb.phase("init")
-        lkddb.scan_sources()
-        lkddb.finalize_sources()
-    except:
-        lkddb.print_exception("unknow error in main loop")
-        raise
-    lkddb.phase("write")
-    if options.sql:
-	sql = options.dbfile + ".db"
-    else:
-	sql = None
-    lkddb.write(data = options.dbfile + ".data",
-		list = options.dbfile + ".list",
-		sql = sql)
+    lkddb.log.phase("write consolidate main file")
+    tree.write_consolidate(filename=options.consolidated)
 
 #
 # main
@@ -50,31 +36,24 @@ if __name__ == "__main__":
     
     usage = "Usage: %prog [options] file-to-consolidate..."
     parser = optparse.OptionParser(usage=usage)
-    parser.set_defaults(verbose=1, consolidate="clkddb")
+    parser.set_defaults(verbose=1, consolidated="clkddb")
     parser.add_option("-q", "--quiet",	dest="verbose",
                       action="store_const", const=0,
                       help="inhibit messages")
     parser.add_option("-v", "--verbose", dest="verbose",
                       action="count",
                       help="increments verbosity")
-    parser.add_option("-c", "--consolidate", dest="consolidate",
+    parser.add_option("-o", "--output", dest="consolidated",
                       action="store",	type="string",
                       help="base FILE name to read and write data", metavar="FILE")
-    parser.add_option("-l", "--log",	dest="logfile",
+    parser.add_option("-l", "--log",	dest="log_filename",
                       action="store",	type="string",
                       help="FILE to put log messages (default is stderr)", metavar="FILE")
     (options, args) = parser.parse_args()
 
     if len(args) < 1:
-        parser.error("missing mandatory argument: file to consolidate")
+        parser.error("missing mandatory argument: on or more files to consolidate")
 
-    if options.logfile:
-        if options.logfile == "-":
-                logfile = sys.stdout
-        else:
-            logfile = open(options.logfile, "w")
-    else:
-            logfile = sys.stderr
-
-    make(options, logfile, args)
+    options.versioned = False
+    make(options, args)
 

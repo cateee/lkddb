@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# few utilities:
+#
+# 'clean': remove some knowing working file
+# 'tar': build the tar archive to distribute
+# 'print': print the "print" statments (normally used for debugging)
+# 'diff': compare output of new and old lkddb
+
+
 set -e
 
 case "$1" in
@@ -9,8 +17,9 @@ case "$1" in
     ;;
 
     'tar' )     $0 clean
-		(cd .. ; tar cf lkddb-`date --rfc-3339=date`.tar --exclude='*.list' --exclude='*.data' --exclude='log-*' lkddb ;
-		gzip -9 lkddb-`date --rfc-3339=date`.tar)
+		(cd .. ;
+		 tar cf lkddb-`date --rfc-3339=date`.tar --exclude='*.list' --exclude='*.data' --exclude='log-*' --exclude='*.log' lkddb ;
+		 gzip -9 lkddb-`date --rfc-3339=date`.tar)
     ;;
 
     'print' )   find . -name '*.py' | xargs grep '[^#.]print'
@@ -23,4 +32,5 @@ diff -u a b > d
     ;;
 
 esac
+
 

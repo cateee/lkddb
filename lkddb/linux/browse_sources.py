@@ -174,7 +174,7 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
             try:
                 res[fields[nparam]] = param
             except IndexError:
-                lkddb.print_exception("Error: index error: %s, %s, %s, %s" %
+                lkddb.log.exception("Error: index error: %s, %s, %s, %s" %
 					(scanner.name, fields, line, filename))
                 raise
         nparam += 1

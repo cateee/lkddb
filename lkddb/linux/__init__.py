@@ -124,8 +124,10 @@ class linux_kernel(lkddb.tree):
         if self.local_ver  or  not self.extra.isdigit():
             # not a x.y.z or x.y.z.w release
             self.strversion += self.local_ver
-            self.is_a_release = 1
+            self.isreleased = False
+	    self.ishead = True
         else:
-            self.is_a_release = 0
+            self.isreleased = True
+	    self.ishead = False
         self.name = self.dict.get("NAME", '(not named)')
 
