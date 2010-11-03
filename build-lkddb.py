@@ -26,8 +26,9 @@ def make(options, kerneldir, dirs):
         options.dbfile += "-" + options.version
     lkddb.init(options)
     try:
-        lkddb.log.phase("init")
+        lkddb.log.phase("scan")
         tree.scan_sources()
+	lkddb.log.phase("finalize")
         tree.finalize_sources()
     except:
         lkddb.log.exception("unknow error in main loop")
@@ -37,9 +38,9 @@ def make(options, kerneldir, dirs):
 	sql = options.dbfile + ".db"
     else:
 	sql = None
-    tree.write(data = options.dbfile + ".data",
-		list = options.dbfile + ".list",
-		sql = sql)
+    tree.write(data_filename = options.dbfile + ".data",
+		list_filename = options.dbfile + ".list",
+		sql_filename = sql)
 #
 # main
 #

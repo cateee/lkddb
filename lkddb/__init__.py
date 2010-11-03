@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #:  lkddb_utils.py : utilities for lkddb
 #
-#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
 
 import sys
@@ -123,16 +123,14 @@ class tree(object):
     #   - consolidate: in python shelve format [crows (with all versions)]
     #
 
-    def write(self, data=None, list=None, sql=None):
-        if data:
-            self.write_data(data)
-        if list:
+    def write(self, data_filename=None, list_filename=None, sql_filename=None):
+        if data_filename:
+            self.write_data(data_filename)
+        if list_filename:
             self.format_tables()
-            self.write_list(list)
-        if sql:
-            db = sqlite3.connect(sql)
-            self.write_sql(db)
-            db.close()
+            self.write_list(list_filename)
+        if sql_filename:
+            self.write_sql(sql_filename)
 
     def write_data(self, filename, new=True):
         lkddb.log.phase("writing 'data'")
@@ -215,7 +213,6 @@ class tree(object):
         persistent_data.sync()
         persistent_data.close()
 
-
     def write_list(self, filename):
         lkddb.log.phase("writing 'list'")
         lines = []
@@ -233,6 +230,23 @@ class tree(object):
         f.writelines(lines2)
         f.flush()
         f.close()
+
+    def write_sql(self, filename):
+        lkddb.log.phase("writing 'sql'")
+	ver = self.version 
+	db = sqlite3.connect(filename)
+	c = db.cursor()
+	lfddb = lkddb.create_generic_tables(c)
+        for t in self.tables.itervalues():
+	    t.prepare_sql(ver)
+            t.create_sql(c)
+	db.commit()
+	c.close()
+	for t in self.tables.itervalues():
+	    t.to_sql(db)
+	db.commit()
+        db.close()
+
 
 
 ##########
@@ -343,7 +357,7 @@ class table(object):
 		else:
 		    if sql.startswith("$kver"):
 			sql_create_col.append(name + "INTEGER")
-			sql_insert_value.append(str(self.ver))
+			sql_insert_value.append(str(ver))
 		    elif sql == "$deps":
 			sql_create_col.append(name + " FOREIGN KEY (") ###################
 			sql_insert_value.append('?')
@@ -366,7 +380,7 @@ class table(object):
 	sql = "INSERT OR IGNORE INTO `tables` (name) VALUES (" + self.name +");"
 	cursor.execute(sql);
     def to_sql(self, db):
-	c.cursor(db)
+	c = db.cursor(db)
 	for row in rows:
 	    c.execute(self.sql_insert, row + self.extra_data)
 	db.commit()
