@@ -11,6 +11,8 @@ class kver_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "kver")
 
+    kind = ("linux-kernel", "special")
+
     cols = (('version', fmt.m32x, "INTEGER"),
            ('ver_str', fmt.str, "TEXT"),
            ('is_a_release', fmt.int, "INTEGER"),
@@ -22,12 +24,16 @@ class kconf_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "kconf")
 
-    cols = (('config', None, "TEXT"),
-           ('filename', None, "TEXT"),
-           ('type', None, "TEXT"),
+    kind = ("linux-kernel", "device")
+
+    cols = (('type', None, "TEXT"),
            ('descr', None, "TEXT"),
            ('depends', None, "TEXT"),
-           ('help', None, "TEXT"))
+           ('help', None, "TEXT"),
+	   ('config', None, "TEXT"),
+           ('filename', None, "TEXT"),
+           ('version', None, "$kver"))
+
 
     def add_row_fmt(self, row):
 	pass
@@ -42,10 +48,13 @@ class module_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "module")
 
+    kind = ("linux-kernel", "device")
+
     cols = (('name', fmt.str, "TEXT"),
            ('descr', fmt.qstr, "TEXT"),
            ('config',  fmt.str, "$config"),
-           ('filename', fmt.filename, "$filename"))
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
 
 
 class firmware_table(lkddb.table):
@@ -53,6 +62,10 @@ class firmware_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "firmware")
 
+    kind = ("linux-kernel", "device")
+
     cols = (('config',  fmt.str, "$config"),
-           ('filename', fmt.filename, "$filename"))
+           ('filename', fmt.filename, "$filename"),
+           ('version', None, "$kver"))
+
 

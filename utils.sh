@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# few utilities:
+# few developement utilities:
 #
-# 'clean': remove some knowing working file
-# 'tar': build the tar archive to distribute
-# 'print': print the "print" statments (normally used for debugging)
+# 'clean': remove some working files
+# 'tar': create a tar archive ready to be distributed
+# 'print': search for active "print" statements (should be used only for debugging)
+# 'todo': search for TODOs and incomplete code
 # 'diff': compare output of new and old lkddb
 
 
@@ -18,11 +19,14 @@ case "$1" in
 
     'tar' )     $0 clean
 		(cd .. ;
-		 tar cf lkddb-`date --rfc-3339=date`.tar --exclude='*.list' --exclude='*.data' --exclude='log-*' --exclude='*.log' lkddb ;
+		 tar cf lkddb-`date --rfc-3339=date`.tar --exclude-vcs --exclude='*.list' --exclude='*.data' --exclude='log-*' --exclude='*.log' lkddb ;
 		 gzip -9 lkddb-`date --rfc-3339=date`.tar)
     ;;
 
     'print' )   find . -name '*.py' | xargs grep '[^#.]print'
+    ;;
+
+    'todo' )	find . -name '*.py' | xargs grep -Er '([#?!]{3,}|[^.]print)' *.py
     ;;
 
     'diff' )

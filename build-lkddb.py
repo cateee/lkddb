@@ -64,7 +64,7 @@ if __name__ == "__main__":
                       help="save data in sqlite database")
     parser.add_option("-l", "--log",	dest="log_filename",
                       action="store",	type="string",
-                      help="FILE to put log messages (default is stderr)", metavar="FILE")
+                      help="FILE to put log messages (default to stderr)", metavar="FILE")
     parser.add_option("-k", "--versioned",   dest="versioned",
                       action="store_const", const=True,
                       help="use versioned files (log and db)")

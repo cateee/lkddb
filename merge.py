@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: merge.py : merge data from different version into a big database
 #
-#  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
 
 import sys
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     usage = "Usage: %prog [options] file-to-consolidate..."
     parser = optparse.OptionParser(usage=usage)
-    parser.set_defaults(verbose=1, consolidated="clkddb")
+    parser.set_defaults(verbose=1, consolidated="lkddb-all.data")
     parser.add_option("-q", "--quiet",	dest="verbose",
                       action="store_const", const=0,
                       help="inhibit messages")

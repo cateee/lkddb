@@ -1,16 +1,25 @@
 #!/usr/bin/python
 #: build-lkddb.py : hardware database generator from kernel sources
 #
-#  Copyright (c) 2007,2008  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  Copyright (c) 2007,2008,2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 (or later) for details
 
-import sys, os, os.path, re, string, time, optparse, sqlite3
+import sys
+import os
+import os.path
+import re
+import string
+import time
+import optparse
+import sqlite3
 
 
 escapemap = (
 	("&", "&amp;"),  # first item, not to replace e.g. the '&' in '&gt;'
 	("<", "&lt;"),
-	(">", "&gt;"))
+	(">", "&gt;"),
+        ('"', "&quot;"),
+        ("'": "&apos;"))
 
 def escape(src):
     for c, esc in escapemap:
@@ -19,8 +28,10 @@ def escape(src):
 
 
 config_re = re.compile(r"CONFIG_([^_]\w*)")
+
 help_local_re = re.compile(r"<file:([^>]*)>")
 help_remote_re = re.compile(r"<(http:[^>]*)>")
+
 def prepare_help(help):
     help = help.replace("&", "&amp;")
     help = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', help)

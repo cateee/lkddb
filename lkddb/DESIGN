@@ -1,0 +1,68 @@
+The idea of data flow:
+
+'tree -> browser -> scanner [-> subscanner] -> table'
+
+
+'tree': Every project has a 'tree'. Tree as own version.
+	as a main container.
+
+'browser': selects the different file types, handling them differently
+	thus we open a file only once
+	Because of this, we do parsing in two stages: one reading the files
+	and the second stage we do the rest of the job (but this time we could
+	use info from other files (e.g. *.h)
+
+'scanner': this is the main part: it find the tables on a specific part of
+	code.
+	Note: one table could have different scanners (e.g. if usage in the
+	source if different), or a scanner could have different tables
+	Note: instead of table the output could go to subscanner.
+	[which are similar to scanner, but using as input only a part of a file]
+
+'table': the container of data
+
+
+#################
+
+- 'kernel' tree: linux kernel tree (from 2.6.0: new build system)
+-- 'kver' browser: main Makefile
+----- 'kver' table:
+-- 'makefiles' browser: all other Makefiles
+----- 'firmware' table:
+-- 'kconfigs' browser: KConfig (and similar) files
+----- 'kconfig' table
+----- 'module' table
+-- 'sources' browser: *.c and *.h files
+--- 'parent_scanner' scanner: scan the devicetables
+---- 'pci' subscanner: pci
+---- (usb, ieee1394, hid, ccw, ap, acpi, pnp, pnp_card, serio, of, ....)
+---- 'i2c_snd'
+---- 'platform'
+---- 'fs'
+
+
+================
+kind:
+
+("linux-kernel", "device"):
+- specific fields
+- ...
+- deps (kernel CONFIG_ variable)
+- filename (relative to kernel root)
+- version (only released)
+
+("linux-kernel", "special"):
+- specific table
+
+
+=============
+index:
+>0 : put in key (in numering order)
+0: put only on value
+<0 : special
+
+kernel:
+-1: deps/config  (put in secondary index, first item)
+-2: filename (put in secondary index, second item)
+-3: version (not indexed)
+

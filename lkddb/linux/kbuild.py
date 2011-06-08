@@ -385,7 +385,7 @@ class kconfigs(lkddb.browser):
                 # e.g. depents after "menu" or prompt and default after "choice"
                 continue
             dict[tok] = args
-        if context == C_CONF:
+        if context == C_CONF  or  context == C_HELP:
             self.__kconf_save(config, dict, type, descr, depends, help, filename)
 
 

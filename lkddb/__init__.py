@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #:  lkddb_utils.py : utilities for lkddb
 #
-#  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
 
 import sys
@@ -17,14 +17,14 @@ import lkddb.log
 # tasks
 TASK_BUILD = 1       # scan and build lkddb
 TASK_TABLE = 2       # read (and ev. format) tables
-TASK_CONSOLIDATE = 3 # consolidate trees
+TASK_CONSOLIDATE = 3 # consolidate trees (with versions)
 
 
 def init(options):
     lkddb.log.init(options)
 
 #
-# generic container to pass data between modules
+# generic container to pass global data between modules
 #
 
 def share(name, object):
@@ -34,7 +34,11 @@ def share(name, object):
 # Generic classes for device_class and source_trees
 #
 
+
 class tree(object):
+    "defines sources of a project with task, a base path, a version and some related browsers"
+    # e.g. kernel sources
+
     def __init__(self, name):
         self.browsers = []
         self.scanners = []
@@ -171,7 +175,7 @@ class tree(object):
     def read_consolidate(self, filename):
         lkddb.log.phase("reading data-file to consolidate: %s" % filename)
         persistent_data = shelve.open(filename, flag='r')
-	self.restore_versions(persistent_data['_versions'])
+	#self.restore_versions(persistent_data['_versions']) ###
         try:
 	    tables = persistent_data['_tables']
         except KeyError:
@@ -210,6 +214,19 @@ class tree(object):
         persistent_data['_tables'] = tuple(self.tables.keys())
         for t in self.tables.itervalues():
             persistent_data[t.name] = t.crows
+        persistent_data.sync()
+        persistent_data.close()
+
+    def append_data(self, filename, table_list):
+	"append new tables to an existing consolidated data file"
+	persistent_data = shelve.open(filename, flag='w')
+	consolidated = persistent_data['_consolidated']
+	tables = persistent_data['_tables']
+	for t in table_list:
+	    if not t.name in tables:
+		tables += (t.name,)
+	    persistent_data[t.name] = t.crows
+	persistent_data['_tables'] = tables
         persistent_data.sync()
         persistent_data.close()
 
@@ -252,6 +269,9 @@ class tree(object):
 ##########
 
 class browser(object):
+    "scan a tree. In two phases: 'scan' read the tree; 'finalize' do the rest"
+    # two phases: only after reading all sources, we can do cross-references
+
     def __init__(self, name):
         self.name = name
     def scan(self):
@@ -270,7 +290,7 @@ class table(object):
 	self.fullrows = []
 	self.consolidate = {}
 	line_fmt = []
-	for col_name, col_line_fmt, col_sql in self.cols:
+	for col_index, col_name, col_line_fmt, col_sql in self.cols:
 	    if col_line_fmt:
 		line_fmt.append(col_line_fmt)
 	if line_fmt:

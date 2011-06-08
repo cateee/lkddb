@@ -13,6 +13,8 @@ class i2c_snd_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "i2c-snd")
 
+    kind = "linux-kernel/device"
+
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
            ('filename', fmt.filename, "$filename"),
@@ -24,6 +26,8 @@ class platform_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "platform")
 
+    kind = "linux-kernel/device"
+
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
            ('filename', fmt.filename, "$filename"),
@@ -34,6 +38,8 @@ class fs_table(lkddb.table):
 
     def __init__(self):
         lkddb.table.__init__(self, "fs")
+
+    kind = "linux-kernel/device"
 
     cols = (('name', fmt.qstr, "TEXT"),
            ('deps', fmt.deps, "$deps"),
