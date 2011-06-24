@@ -24,7 +24,7 @@ def init(options):
     lkddb.log.init(options)
 
 #
-# generic container to pass global data between modules
+# Generic container to pass global data between modules
 #
 
 def share(name, object):
@@ -175,7 +175,7 @@ class tree(object):
     def read_consolidate(self, filename):
         lkddb.log.phase("reading data-file to consolidate: %s" % filename)
         persistent_data = shelve.open(filename, flag='r')
-	#self.restore_versions(persistent_data['_versions']) ###
+	### self.restore_versions(persistent_data['_versions']) ###
         try:
 	    tables = persistent_data['_tables']
         except KeyError:
@@ -265,9 +265,6 @@ class tree(object):
         db.close()
 
 
-
-##########
-
 class browser(object):
     "scan a tree. In two phases: 'scan' read the tree; 'finalize' do the rest"
     # two phases: only after reading all sources, we can do cross-references
@@ -279,9 +276,11 @@ class browser(object):
     def finalize(self):
         lkddb.log.phase("finalizing scan " + self.name)
 
+
 class scanner(object):
     def __init__(self, name):
         self.name = name
+
 
 class table(object):
     def __init__(self, name):
@@ -290,23 +289,56 @@ class table(object):
 	self.fullrows = []
 	self.consolidate = {}
 	line_fmt = []
+	line_indices = []
 	for col_index, col_name, col_line_fmt, col_sql in self.cols:
 	    if col_line_fmt:
+		line_indices.append(col_index)
 		line_fmt.append(col_line_fmt)
+	self.line_fmt = tuple(line_fmt)
+	self.line_len = len(line_fmt)
+	self.col_len = len(self.cols)
+	self.key1_len = len(filter(lambda v: v>0, line_indices))
+        self.key2_len = len(filter(lambda v: -10<v<0, line_indices))
+	self.values_len = len(filter(lambda v: v==0, line_indices))
+	assert self.line_len == (self.key1_len + self.key2_len + self.values_len)
+
+	indices = [0] * self.line_len
+	indices_inv = [0] * self.line_len
+	i_val = self.key1_len
+        for i in range(self.line_len):
+            idx = line_indices[i]
+            if idx > 0:
+                indices[i] = idx-1
+		indices_inv[idx-1] = i
+            elif -10 < idx < 0:
+                indices[i] = self.key1_len + self.values_len + abs(idx)-1
+		indices_inv[self.key1_len + self.values_len + abs(idx)-1] = i
+            elif idx == 0:
+                indices[i] = i_val
+		indices_inv[i_val] = i
+		i_val += 1
+            else:
+                assert False, "unkown code of index"
+	self.indices = tuple(indices)
+	self.indices_inv = tuple(indices_inv)
 	if line_fmt:
-	    self.line_fmt = tuple(line_fmt)
-	    self.line_templ = name + " %s"*len(line_fmt) + '\n'
-	else:
-	    self.line_fmt = ()
+	    self.line_templ = name + ( " %s" * self.key1_len + " : %s" * self.values_len + " : %s" * self.key2_len +'\n')
+	
     def add_fullrow(self, row):
+	# format data
+	r = []
 	try:
-	    r = []
-	    for f, v in zip(self.line_fmt, row):
-		r.append(f(v))
-	    self.fullrows.append((row, tuple(r)))
-	except AssertionError:
-	    lkddb.log.log("assertion in table %s in fmt %s vith value %s [row:%s]" %
-		(self.name, f, v, row) )
+            for f, v in zip(self.line_fmt, self.pre_row_fmt(row)):
+                r.append(f(v))
+        except AssertionError:
+            lkddb.log.log("assertion in table %s in fmt %s vith value %s [row:%s]" %
+                (self.name, f, v, row) )
+	    return
+	# order data
+	rr = tuple(map(lambda i: r[self.indices_inv[i]], range(self.line_len)))
+	self.fullrows.append(tuple(rr))
+    def pre_row_fmt(self, row):
+	return row
     def add_row(self, dict):
 	self.rows.append(dict)
     def restore(self):
@@ -322,8 +354,8 @@ class table(object):
 	lkddb.log.phase("printing lines in " + self.name)
 	lines = []
 	try:
-	    for row, row_fmt in self.fullrows:
-	        lines.append(self.line_templ % row_fmt)
+	    for fullrow in self.fullrows:
+	        lines.append(self.line_templ % fullrow)
 	except TypeError:
 	    lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], row_fmt))
 	return lines
@@ -336,33 +368,46 @@ class table(object):
 #	for key, crow in self.crows.iteritems():
 #	    #### do it only once!
 #	    crow[1].discard(-1)
-#        # check versions:
-	if not consolidated:
-            if versions[2]:  # ishead
-                fix_versions = set((-1,))
-	    elif versions[3]:  # isreleased
-	        fix_versions = set((versions[0],))
-	    else:
-		print versions
-		lkddb.log.log_extra('not considering: not head and not released')
-		return
+
 	# consolitating    
 	if consolidated:
-	    for fullrow, all_versions in self.crows_tmp:
-		key = fullrow[1]
-		actual_crow = self.crows.get(key, None)
-		if actual_crow == None:
-		    self.crows[key] = (fullrow, all_versions)
-		else:
-		    self.crows[key][1].update(all_versions)
+	    for key1, values1 in self.crows_tmp.iteritems():
+		for key2, values2 in values1.iteritems():
+		    values, all_versions = values2
+		    actual_crow = self.crows.get(key1, None)
+		    if actual_crow == None:
+			self.crows[key1] = {key2: [values, all_versions]}
+		    else:
+			actual_sub_crow = actual_crow.get(key2, None)
+			if actual_sub_crow == None:
+			    self.crows[key1][key2] = [values, all_versions]
+			else:
+			    self.crows[key1][key2][0] = values
+			    self.crows[key1][key2][1].update(all_versions)
 	else:
+            if versions[2]:  # ishead
+                fix_versions = set(("HEAD",))
+            elif versions[3]:  # isreleased
+                fix_versions = set((versions[1],))
+            else:
+                lkddb.log.log_extra('not considering: not head and not released')
+		assert False, 'not considering: not head and not released'
+                return
+
             for fullrow in self.fullrows:
-		key = fullrow[1]
-		actual_crow = self.crows.get(key, None)
+                key1 = fullrow[:self.key1_len]
+                key2 = fullrow[self.key1_len+self.values_len:]
+                values = fullrow[self.key1_len:self.key1_len+self.values_len]
+		actual_crow = self.crows.get(key1, None)
                 if actual_crow == None:
-                    self.crows[key] = (fullrow, fix_versions)
+                    self.crows[key1] = {key2: [values, fix_versions]}
                 else:
-                    self.crows[key][1].update(fix_versions)
+		    actual_sub_crow = actual_crow.get(key2, None)
+		    if actual_sub_crow == None:
+			self.crows[key1][key2] = [values, fix_versions]
+		    else:
+			self.crows[key1][key2][0] = values
+			self.crows[key1][key2][1].update(fix_versions)
 
     def prepare_sql(self, ver):
         sql_cols = []

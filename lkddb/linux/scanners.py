@@ -179,47 +179,6 @@ def extract_value(field, dictionary):
     else:
         return 0
 
-#def mask_value(val, any, deep):
-#    "convert numeric 'val' in a string.  If 'any', then write the mask" 
-#    ret = "." * deep
-#    if any < 0  and  val < 0:
-#        return ret
-#    elif val == any:
-#        return ret
-#    form = "%%%u.%ux" % (deep, deep)
-#    try:
-#        ret = form % val
-#    except TypeError:
-#        if val[0] == "'"  and  val[2] == "'"  and  len(val) == 3:
-#            ret = form % ord(val[1])
-#    return ret
-
-
-#def mask_mask(v, m, len=6):
-#    ret = ""
-#    for i in range(len):
-#        if m[i] == "0":
-#            ret += "."
-#        elif m[i] == "f":
-#            ret += v[i]
-#        else:
-#            #print "Unknow mask", v, m, len
-#            raise "KACerror"
-#    return ret
-
-#def chars(field, dictionary, lenght=4, default="...."):
-#    if dictionary.has_key(field):
-#        v = dictionary[field]
-#        l = len(v)
-#        if l == 2:
-#            return default
-#        if v[0] == '"'  and  v[-1] == '"'  and  len(v) == lenght+2:
-#            return v[1:-1]
-#        else:
-#            #print "Error on assumptions in translating chars:", field, dictionary, lenght, default, v
-#            raise "KACerror"
-#    else:
-#        return default
 
 char_cast_re = re.compile(r"\(\s*char\s*\*\s*\)\s*", re.DOTALL)
 null_pointer_re = re.compile(r"\(\s*void\s*\*\)\s*0", re.DOTALL)

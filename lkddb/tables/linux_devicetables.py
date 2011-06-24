@@ -2,7 +2,7 @@
 #:  devicetables.py : device tables template for source scanning and reporting
 #
 #  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  This is free software, see GNU General Public License v2 (or later) for details
 
 import lkddb
 from lkddb import fmt
@@ -18,15 +18,15 @@ class pci_table(lkddb.table):
 	   (2, 'device', fmt.m16x, "INTEGER"),
 	   (3, 'subvendor', fmt.m16x, "INTEGER"),
 	   (4, 'subdevice', fmt.m16x, "INTEGER"),
-	   (0, 'class', None, "INTEGER"),
+	   (-77, 'class', None, "INTEGER"),
            (5, 'class_mask', fmt.special, "INTEGER"),
 	   (-1, 'deps', fmt.deps, "$deps"),
 	   (-2, 'filename', fmt.filename, "$filename"),
-	   (-3, 'version', None, "$kver"))
+	   (-99, 'version', None, "$kver"))
 
-    def add_row_fmt(self, row):
+    def pre_row_fmt(self, row):
 	m = fmt.mask_24m(fmt.m24x(row[4]), fmt.m24x(row[5]))
-        lkddb.table.add_row_fmt(self, row[:4] + (m,) + row[6:])
+        return lkddb.table.pre_row_fmt(self, row[:4] + (m,) + row[6:])
 
 
 class usb_table(lkddb.table):
@@ -48,7 +48,7 @@ class usb_table(lkddb.table):
 	   (0, 'bcdDevice_hi', fmt.m16x, "INTEGER"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class ieee1394_table(lkddb.table):
@@ -64,7 +64,7 @@ class ieee1394_table(lkddb.table):
 	   (4, 'version', fmt.m24x, "INTEGER"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class hid_table(lkddb.table):
@@ -79,7 +79,7 @@ class hid_table(lkddb.table):
 	   (3, 'product', fmt.m32x, "INTEGER"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class ccw_table(lkddb.table):
@@ -95,7 +95,7 @@ class ccw_table(lkddb.table):
 	   (4, 'dev_model', fmt.m8x, "INTEGER"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 # s390 AP bus
@@ -109,7 +109,7 @@ class ap_table(lkddb.table):
     cols = ((1, 'dev_type', fmt.m8x, "INTEGER"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class acpi_table(lkddb.table):
@@ -122,7 +122,7 @@ class acpi_table(lkddb.table):
     cols = ((1, 'id', fmt.qstr, "TEXT"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class pnp_table(lkddb.table):
@@ -143,7 +143,7 @@ class pnp_table(lkddb.table):
 	   (0, 'n7', fmt.qstr, "TEXT"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class serio_table(lkddb.table):
@@ -159,7 +159,7 @@ class serio_table(lkddb.table):
            (4, 'extra', fmt.m8x, "INTEGER"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class of_table(lkddb.table):
@@ -174,7 +174,7 @@ class of_table(lkddb.table):
 	   (0, 'compatible', fmt.qstr, "TEXT"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class vio_table(lkddb.table):
@@ -188,7 +188,7 @@ class vio_table(lkddb.table):
            (0, 'compat', fmt.qstr, "TEXT"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class pcmcia_table(lkddb.table):
@@ -209,7 +209,7 @@ class pcmcia_table(lkddb.table):
            (0, 'n3', fmt.qstr, "TEXT"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
-           (-3, 'version', None, "$kver"))
+           (-99, 'version', None, "$kver"))
 
 
 class input_table(lkddb.table):
@@ -219,22 +219,22 @@ class input_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('bustype', fmt.m16x, "INTEGER"),
-           ('vendor', fmt.m16x, "INTEGER"),
-           ('product', fmt.m16x, "INTEGER"),
-           ('version', fmt.m16x, "INTEGER"),
-           ('evbit', fmt.m32x, "INTEGER"),    # 0x1f
-           ('keybit', fmt.m32x, "INTEGER"),   # 0x71
-           ('relbit', fmt.m32x, "INTEGER"),   # 0x2ff
-           ('absbit', fmt.m16x, "INTEGER"),   # 0x0f
-           ('mscbit', fmt.m32x, "INTEGER"),   # 0x3f
-           ('ledbit', fmt.m16x, "INTEGER"),   # 0x0f
-           ('sndbit', fmt.m8x, "INTEGER"),    # 0x07
-           ('ffbit', fmt.m32x, "INTEGER"),    # 0x7f
-           ('swbit', fmt.m16x, "INTEGER"),    # 0x0f
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'bustype', fmt.m16x, "INTEGER"),
+           (2, 'vendor', fmt.m16x, "INTEGER"),
+           (3, 'product', fmt.m16x, "INTEGER"),
+           (4, 'version', fmt.m16x, "INTEGER"),
+           (0, 'evbit', fmt.m32x, "INTEGER"),    # 0x1f
+           (0, 'keybit', fmt.m32x, "INTEGER"),   # 0x71
+           (0, 'relbit', fmt.m32x, "INTEGER"),   # 0x2ff
+           (0, 'absbit', fmt.m16x, "INTEGER"),   # 0x0f
+           (0, 'mscbit', fmt.m32x, "INTEGER"),   # 0x3f
+           (0, 'ledbit', fmt.m16x, "INTEGER"),   # 0x0f
+           (0, 'sndbit', fmt.m8x, "INTEGER"),    # 0x07
+           (0, 'ffbit', fmt.m32x, "INTEGER"),    # 0x7f
+           (0, 'swbit', fmt.m16x, "INTEGER"),    # 0x0f
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class eisa_table(lkddb.table):
@@ -244,10 +244,10 @@ class eisa_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('sig', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'sig', fmt.qstr, "TEXT"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class parisc_table(lkddb.table):
@@ -257,13 +257,13 @@ class parisc_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('hw_type', fmt.m8x, "INTEGER"),
-           ('hversion_rev', fmt.m8x, "INTEGER"),
-           ('hversion', fmt.m16x, "INTEGER"),
-           ('sversion', fmt.m32x, "INTEGER"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'hw_type', fmt.m8x, "INTEGER"),
+           (2, 'hversion_rev', fmt.m8x, "INTEGER"),
+           (3, 'hversion', fmt.m16x, "INTEGER"),
+           (4, 'sversion', fmt.m32x, "INTEGER"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class sdio_table(lkddb.table):
@@ -273,12 +273,12 @@ class sdio_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('class', fmt.m8x, "INTEGER"),
-           ('vendor', fmt.m16x, "INTEGER"),
-           ('device', fmt.m16x, "INTEGER"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'class', fmt.m8x, "INTEGER"),
+           (2, 'vendor', fmt.m16x, "INTEGER"),
+           (3, 'device', fmt.m16x, "INTEGER"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class ssb_table(lkddb.table):
@@ -288,12 +288,12 @@ class ssb_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('vendor', fmt.m16x, "INTEGER"),
-           ('coreid', fmt.m16x, "INTEGER"),
-           ('revision', fmt.m8x, "INTEGER"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'vendor', fmt.m16x, "INTEGER"),
+           (2, 'coreid', fmt.m16x, "INTEGER"),
+           (3, 'revision', fmt.m8x, "INTEGER"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class virtio_table(lkddb.table):
@@ -303,11 +303,11 @@ class virtio_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('device', fmt.m32x, "INTEGER"),
-           ('vendor', fmt.m32x, "INTEGER"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'device', fmt.m32x, "INTEGER"),
+           (2, 'vendor', fmt.m32x, "INTEGER"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class i2c_table(lkddb.table):
@@ -317,10 +317,10 @@ class i2c_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('name', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'name', fmt.qstr, "TEXT"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class tc_table(lkddb.table):
@@ -330,11 +330,11 @@ class tc_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('vendor', fmt.qstr, "TEXT"),
-	   ('name', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'vendor', fmt.qstr, "TEXT"),
+	   (2, 'name', fmt.qstr, "TEXT"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class zorro_table(lkddb.table):
@@ -344,11 +344,11 @@ class zorro_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('id1', fmt.m16x, "INTEGER"),
-           ('id2', fmt.m16x, "INTEGER"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'id1', fmt.m16x, "INTEGER"),
+           (2, 'id2', fmt.m16x, "INTEGER"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class agp_table(lkddb.table):
@@ -358,11 +358,11 @@ class agp_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('chipset', fmt.m16x, "INTEGER"),
-	   ('chipset_name', fmt.qstr, "TEXT"),
-           ('deps', fmt.deps, "$deps"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'chipset', fmt.m16x, "INTEGER"),
+	   (2, 'chipset_name', fmt.qstr, "TEXT"),
+           (-1, 'deps', fmt.deps, "$deps"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 def register(tree):

@@ -316,6 +316,10 @@ class kconfigs(lkddb.browser):
                 else:
                     context = C_CONF
                 config = args
+		if " " in args or "#" in args:
+		    lkddb.log.log("kconfig: error: invalid syntax in %s: '''%s %s'''" %
+					(filename, tok, args))
+		    config = args.split()[0]
                 help = ""
                 dict = {}
                 type = None
@@ -326,7 +330,7 @@ class kconfigs(lkddb.browser):
                 if context != C_CONF:
                     help = ""
                     lkddb.log.log(
-			"kconfig: error help out of context (%s), in %s, after '%s'" %
+			"kconfig: error: help out of context (%s), in %s, after '%s'" %
                                				(context, filename, config))
                 context = C_HELP
                 ident = -1
@@ -400,7 +404,7 @@ class kconfigs(lkddb.browser):
                 depends = depends[0]
         else:
             depends = ""
-	self.kconf_table.add_row((config, filename, type, descr, depends, help.strip()))
+	self.kconf_table.add_row((type, descr, depends, help.strip(), config, filename))
 
         if type == "tristate"  or  type == "def_tristate":
 	    mod = self.makefiles.modules.get(config, None)

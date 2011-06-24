@@ -83,3 +83,6 @@ def filename(value):
 def deps(value):
     return value
 
+def config_short(value):
+    return "CONFIG_" + value
+

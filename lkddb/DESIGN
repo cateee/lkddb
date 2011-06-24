@@ -20,6 +20,10 @@ The idea of data flow:
 	[which are similar to scanner, but using as input only a part of a file]
 
 'table': the container of data
+	rows: a list of: a "line" of raw data as dictionary
+	fullrows: a list of: a "line" of formatted (string) data as list
+		(it is composed of key1, key2 and values elements)
+	crows: a dictionary (key1) of dictionary (key2), of (values, all_versions)
 
 
 #################
@@ -57,12 +61,14 @@ kind:
 
 =============
 index:
->0 : put in key (in numering order)
-0: put only on value
-<0 : special
+>0 : key1 (in numering order)
+0: values (in definition order)
+-10<x<0 : key2 (in absolute order)
+-77 : ignore
+-99 : version (ignore)
 
 kernel:
 -1: deps/config  (put in secondary index, first item)
 -2: filename (put in secondary index, second item)
--3: version (not indexed)
+-99: version (not indexed)
 

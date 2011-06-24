@@ -13,10 +13,10 @@ class kver_table(lkddb.table):
 
     kind = ("linux-kernel", "special")
 
-    cols = (('version', fmt.m32x, "INTEGER"),
-           ('ver_str', fmt.str, "TEXT"),
-           ('is_a_release', fmt.int, "INTEGER"),
-           ('name', fmt.qstr, "TEXT"))
+    cols = ((0, 'version', fmt.m32x, "INTEGER"),
+           (0, 'ver_str', fmt.str, "TEXT"),
+           (0, 'is_a_release', fmt.int, "INTEGER"),
+           (0, 'name', fmt.qstr, "TEXT"))
 
 
 class kconf_table(lkddb.table):
@@ -24,19 +24,15 @@ class kconf_table(lkddb.table):
     def __init__(self):
         lkddb.table.__init__(self, "kconf")
 
-    kind = ("linux-kernel", "device")
+    kind = ("linux-kernel", "special")
 
-    cols = (('type', None, "TEXT"),
-           ('descr', None, "TEXT"),
-           ('depends', None, "TEXT"),
-           ('help', None, "TEXT"),
-	   ('config', None, "TEXT"),
-           ('filename', None, "TEXT"),
-           ('version', None, "$kver"))
-
-
-    def add_row_fmt(self, row):
-	pass
+    cols = ((0, 'type', fmt.str, "TEXT"),
+           (0, 'descr', fmt.str, "TEXT"),
+           (0, 'depends', fmt.str, "TEXT"),
+           (0, 'help', fmt.str, "TEXT"),
+	   (-1, 'config', fmt.str, "TEXT"),
+           (-2, 'filename', fmt.filename, "TEXT"),
+           (-99, 'version', None, "$kver"))
 
     def get_lines(self):
         # we don't export lines for kconf: multiline data
@@ -50,11 +46,11 @@ class module_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('name', fmt.str, "TEXT"),
-           ('descr', fmt.qstr, "TEXT"),
-           ('config',  fmt.str, "$config"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((1, 'name', fmt.str, "TEXT"),
+           (2, 'descr', fmt.qstr, "TEXT"),
+           (-1, 'config',  fmt.str, "$config"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 
 class firmware_table(lkddb.table):
@@ -64,8 +60,8 @@ class firmware_table(lkddb.table):
 
     kind = ("linux-kernel", "device")
 
-    cols = (('config',  fmt.str, "$config"),
-           ('filename', fmt.filename, "$filename"),
-           ('version', None, "$kver"))
+    cols = ((-1, 'config',  fmt.str, "$config"),
+           (-2, 'filename', fmt.filename, "$filename"),
+           (-99, 'version', None, "$kver"))
 
 

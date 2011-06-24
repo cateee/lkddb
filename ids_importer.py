@@ -1,8 +1,14 @@
 #!/usr/bin/python
+#: ids_importer.py : import ids
+#
+#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 (or later) for details
 
-# convert .ids files into list files
 
-import sys, sqlite3
+import sys
+
+import lkddb
+
 
 dbfile="lkddb.db"
 

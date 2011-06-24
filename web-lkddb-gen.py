@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#: build-lkddb.py : hardware database generator from kernel sources
+#: web-lkddb-gen.py : prepare html pages from consolidated lkddb data
 #
 #  Copyright (c) 2007,2008,2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details

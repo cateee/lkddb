@@ -9,5 +9,11 @@ The result: two lines?
 
 handle if/else construct in makefiles
 
+move to python3
 
+handle old [pre 2.6] kbuild (both make and config]
 
+check the version code. probably we could remove most of code. We need only a string
+(ad possibly a "POST-3.1", "POST-3.0-rc3" [no!! we don't save versions])
+
+check header of our files and check license (v2 or later), copyright

@@ -116,18 +116,22 @@ class linux_kernel(lkddb.tree):
         if self.version == 0x02040f and self.extra == "-greased-turkey":
             self.dict["NAME"] = "greased-turkey"
             self.extra = ""
-        self.strversion = self.dict["VERSION"] +"."+ self.dict["PATCHLEVEL"] +"."+ self.dict["SUBLEVEL"] + self.extra
+	if self.dict["VERSION"] == "3" and self.dict["SUBLEVEL"] == "0":
+	    # 3.x versions
+	    self.strversion = self.dict["VERSION"] +"."+ self.dict["PATCHLEVEL"] + self.extra
+	else:
+            self.strversion = self.dict["VERSION"] +"."+ self.dict["PATCHLEVEL"] +"."+ self.dict["SUBLEVEL"] + self.extra
 
         self.local_ver = subprocess.Popen("/bin/sh scripts/setlocalversion",
                 shell=True, cwd=self.kerneldir,
                 stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
-        if self.local_ver  or  not self.extra.isdigit():
+        if self.local_ver  or  (self.extra and not self.extra.isdigit()):
             # not a x.y.z or x.y.z.w release
             self.strversion += self.local_ver
-            self.isreleased = False
 	    self.ishead = True
+	    self.isreleased = False
         else:
-            self.isreleased = True
 	    self.ishead = False
+	    self.isreleased = True
         self.name = self.dict.get("NAME", '(not named)')
 
