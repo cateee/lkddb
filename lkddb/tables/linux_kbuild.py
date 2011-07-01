@@ -13,10 +13,14 @@ class kver_table(lkddb.table):
 
     kind = ("linux-kernel", "special")
 
-    cols = ((0, 'version', fmt.m32x, "INTEGER"),
+    cols = ((1, 'version', fmt.int, "INTEGER"),
+	   (2, 'patchlevel', fmt.int, "INTEGER"),
+	   (3, 'sublevel', fmt.int, "INTEGER"),
+	   (4, 'extraversion', fmt.int, "INTEGER"),
+	   (0, 'localversion', fmt.int, "INTEGER"),
            (0, 'ver_str', fmt.str, "TEXT"),
-           (0, 'is_a_release', fmt.int, "INTEGER"),
-           (0, 'name', fmt.qstr, "TEXT"))
+           (0, 'name', fmt.qstr, "TEXT"),
+	   (-99, 'version', None, "$kver"))
 
 
 class kconf_table(lkddb.table):

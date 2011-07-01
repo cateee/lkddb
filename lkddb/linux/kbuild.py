@@ -23,12 +23,10 @@ class kver(lkddb.browser):
     def scan(self):
         "Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)" 
 	lkddb.browser.scan(self)
-	if self.tree.isreleased:
-	    is_a_release = 1
-	else:
-	    is_a_release = 0
-	self.table.add_row((self.tree.version, self.tree.strversion,
-				is_a_release, self.tree.name))
+	version_dict = self.tree.version_dict
+	self.table.add_row((version_dict['version'], version_dict['patchlevel'], version_dict['sublevel'],
+			    version_dict['numeric2'], version_dict['numeric3'],
+			    version_dict['str'], version_dict['name'] ))
 
 
 # parse kbuild files (Makefiles) and extract the file dependencies

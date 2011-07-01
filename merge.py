@@ -14,19 +14,25 @@ import glob
 
 import lkddb
 import lkddb.linux
-import lkddb.tables
-
+import lkddb.ids
 
 def make(options, args):
 
-    tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
     lkddb.init(options)
+
+    storage = lkddb.storage()
+    tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
+    storage.register_tree(tree)
+    tree = lkddb.ids.ids_files(lkddb.TASK_CONSOLIDATE, None)
+    storage.register_tree(tree)
+
     lkddb.log.phase("read files to consolidate")
+
     for f in args:
-	tree.read_consolidate(f)
+	storage.read_consolidate(f)
 
     lkddb.log.phase("write consolidate main file")
-    tree.write_consolidate(filename=options.consolidated)
+    storage.write_consolidate(filename=options.consolidated)
 
 #
 # main

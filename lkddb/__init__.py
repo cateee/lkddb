@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#:  lkddb_utils.py : utilities for lkddb
+#:  lkddb/__init__.py : utilities for lkddb
 #
 #  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
@@ -12,7 +12,6 @@ import shelve
 import sqlite3
 
 import lkddb.log
-
 
 # tasks
 TASK_BUILD = 1       # scan and build lkddb
@@ -34,62 +33,96 @@ def share(name, object):
 # Generic classes for device_class and source_trees
 #
 
+class storage(object):
+    "container of trees (for persistent_data)"
+
+    def __init__(self):
+	self.available_trees = {}   # treename -> tree
+	self.available_tables = {}  # tablename -> (treename, table)
+	self.readed_trees = {}	    # treename -> tree
+
+    def register_tree(self, tree):
+	self.available_trees[tree.name] = tree
+	for tabname, tab in tree.tables.iteritems():
+	    self.available_tables[tabname] = (tree.name, tab)
+
+    def read_consolidate(self, filename):
+        lkddb.log.phase("reading data-file to consolidate: %s" % filename)
+	if not os.path.exists(filename):
+	    lkddb.log.die("file '%s' don't exist" % filename)
+        persistent_data = shelve.open(filename, flag='r')
+        try:
+	    trees = persistent_data['_trees']
+            tables = persistent_data['_tables']
+        except KeyError:
+            lkddb.log.die("invalid data in file '%s'" % filename)
+	consolidated = persistent_data.get('_consolidated', False)
+	for treename in trees:
+	    tree = self.available_trees[treename]
+	    tree.read_consolidate(consolidated, persistent_data)
+	persistent_data.close()
+	self.readed_trees.update(map(lambda name: (name, self.available_trees[name]), trees))
+
+    def write_consolidate(self, filename, new=True):
+        lkddb.log.phase("writing consolidate data '%s'" % filename)
+        if new:
+            oflag = 'n'
+        else:
+            oflag = 'w'
+        persistent_data = shelve.open(filename, flag=oflag)
+        persistent_data['_consolidated'] = True
+	persistent_data['_trees'] = []
+	persistent_data['_tables'] = []
+	persistent_data['_versions'] = set(())
+	for tree in self.readed_trees.itervalues():
+	    lkddb.log.phase("writing consolidated tree '%s'" % tree.name)
+	    new_persistent = tree.write_consolidate()
+	    new_tables = new_persistent['_tables']
+	    persistent_data['_trees'].append(tree.name)
+            persistent_data['_tables'].extend(new_tables)
+            persistent_data['_versions'].update(new_persistent['_versions'])
+	    for t in new_tables:
+		if persistent_data.has_key(t):
+		    lkddb.log.die("two different trees share the table name '%s'" % t)
+		persistent_data[t] = new_persistent[t]
+        persistent_data.sync()
+        persistent_data.close()
+
 
 class tree(object):
     "defines sources of a project with task, a base path, a version and some related browsers"
     # e.g. kernel sources
 
     def __init__(self, name):
+	self.name = name
+
         self.browsers = []
         self.scanners = []
         self.tables = {}
         self.views = []
 
-        self.name = name
-        self.version = None
-	self.strversion = None
-        self.ishead = None
-        self.isreleased = None
+        #self.version = [ "tree", (num_version), "strversion", series ]
+	#self_consolidated_versions = set((self.version))
+	self.version = None
+	self.consolidated_versions = set(())
 
-    def save_versions(self):
-	return (self.version, self.strversion, self.ishead, self.isreleased)
-    def restore_versions(self, versions):
-        self.version = versions[0]
-        self.strversion = versions[1]
-        self.ishead = versions[2]
-        self.isreleased = versions[3]
     def get_version(self):
-        return self.version
+        if self.version == None:
+            self.retrive_version()
+        return self.version[1]
     def get_strversion(self):
-	return self.strversion
-    def is_released(self):
-        return self.isreleased
-    def is_head(self):
-        return self.ishead
-    def is_later(self, original_version):
-        if self.ishead:
-            return True
-        if not self.isreleased:
-            return False
-        return (self.version > original_version)
-    def is_older(self, original_version):
-        if self.ishead or not self.isreleased:
-            return False
-        return (self.version < original_version)
-    def check_version(self, vmin, vmax):
-	if self.isreleased:
-	    return min(self.version, vmin), max(self.version, vmax)
-	elif self.ishead:
-	    if self.version >= vmax:
-		return vmin, self.version
-	return vmin, vmax
+        if self.version == None:
+            self.retrive_version()
+        return self.version[2]
+    def retrive_version(self):
+	pass
 
     def register_browser(self, browser):
         self.browsers.append(browser)
     def register_scanner(self, scanner):
         self.scanners.append(scanner)
     def register_table(self, name, table):
-        assert(name not in self.tables)
+        assert name not in self.tables, "table '%s' already registered'" % name
         self.tables[name] = table
     def get_table(self, name):
         return self.tables[name]
@@ -143,8 +176,9 @@ class tree(object):
         else:
             oflag = 'w'
         persistent_data = shelve.open(filename, flag=oflag)
-	persistent_data['_versions'] = self.save_versions()
+	persistent_data['_version'] = self.version
 	persistent_data['_tables'] = tuple(self.tables.keys())
+	persistent_data['_trees'] = [self.name]
         for t in self.tables.itervalues():
             persistent_data[t.name] = t.rows
         persistent_data.sync()
@@ -156,9 +190,12 @@ class tree(object):
             persistent_data = shelve.open(filename, flag='r')
 	    try:
 		tables = persistent_data['_tables']
-                self.restore_versions(persistent_data['_versions'])
+		trees = persistent_data['_trees']
+                self.version = persistent_data['_version']
 	    except KeyError:
                 lkddb.log.die("invalid data in file '%s'" % filename)
+	    if not trees.has_key(self.name):
+		lkddb.log.die("file '%s' is not a valid data file for tree %s" % (filename, self.name))
             for t in self.tables.itervalues():
                 if t.name not in tables:
                     lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
@@ -172,23 +209,14 @@ class tree(object):
 	else:
             lkddb.log.die("could not read file '%s' % filename")
 
-    def read_consolidate(self, filename):
-        lkddb.log.phase("reading data-file to consolidate: %s" % filename)
-        persistent_data = shelve.open(filename, flag='r')
-	### self.restore_versions(persistent_data['_versions']) ###
-        try:
-	    tables = persistent_data['_tables']
-        except KeyError:
-            lkddb.log.die("invalid data in file '%s'" % filename)
-	consolidated = persistent_data.get('_consolidated', False)
+    def read_consolidate(self, consolidated, persistent_data):
 	if not consolidated:
-	    versions = persistent_data['_versions']
+	    ver = persistent_data['_version']
+	    self.consolidated_versions.add(ver)
 	else:
-	    versions = None
+	    ver = None
+	    self.consolidated_versions.update(persistent_data['_versions'])
         for t in self.tables.itervalues():
-	    if t.name not in tables:
-		lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
-		continue
             lkddb.log.log_extra("reading table " + t.name)
             rows = persistent_data.get(t.name, None)
             if rows != None:
@@ -198,27 +226,21 @@ class tree(object):
 		    t.fmt()
 		else:
 		    t.crows_tmp = rows
-                t.consolidate_table(consolidated, versions)
+                t.consolidate_table(consolidated, ver)
 		if consolidated:
 		    del t.crows_tmp
-	persistent_data.close()
 
-    def write_consolidate(self, filename, new=True):
-        lkddb.log.phase("writing consolidate data '%s'" % filename)
-        if new:
-            oflag = 'n'
-        else:
-            oflag = 'w'
-        persistent_data = shelve.open(filename, flag=oflag)
-        persistent_data['_consolidated'] = True
+    def write_consolidate(self):
+	persistent_data = {}
         persistent_data['_tables'] = tuple(self.tables.keys())
+	persistent_data['_versions'] = self.consolidated_versions
         for t in self.tables.itervalues():
             persistent_data[t.name] = t.crows
-        persistent_data.sync()
-        persistent_data.close()
+	return persistent_data
 
     def append_data(self, filename, table_list):
 	"append new tables to an existing consolidated data file"
+	assert False, "remove this function"
 	persistent_data = shelve.open(filename, flag='w')
 	consolidated = persistent_data['_consolidated']
 	tables = persistent_data['_tables']
@@ -339,8 +361,8 @@ class table(object):
 	self.fullrows.append(tuple(rr))
     def pre_row_fmt(self, row):
 	return row
-    def add_row(self, dict):
-	self.rows.append(dict)
+    def add_row(self, row):
+	self.rows.append(row)
     def restore(self):
 	pass
     def fmt(self):
@@ -360,7 +382,7 @@ class table(object):
 	    lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], row_fmt))
 	return lines
 
-    def consolidate_table(self, consolidated, versions):
+    def consolidate_table(self, consolidated, ver):
 	lkddb.log.phase("consolidating lines in " + self.name)
 	if not hasattr(self, 'crows'):
 	    self.crows = {}
@@ -385,29 +407,20 @@ class table(object):
 			    self.crows[key1][key2][0] = values
 			    self.crows[key1][key2][1].update(all_versions)
 	else:
-            if versions[2]:  # ishead
-                fix_versions = set(("HEAD",))
-            elif versions[3]:  # isreleased
-                fix_versions = set((versions[1],))
-            else:
-                lkddb.log.log_extra('not considering: not head and not released')
-		assert False, 'not considering: not head and not released'
-                return
-
             for fullrow in self.fullrows:
                 key1 = fullrow[:self.key1_len]
                 key2 = fullrow[self.key1_len+self.values_len:]
                 values = fullrow[self.key1_len:self.key1_len+self.values_len]
 		actual_crow = self.crows.get(key1, None)
                 if actual_crow == None:
-                    self.crows[key1] = {key2: [values, fix_versions]}
+                    self.crows[key1] = {key2: [values, set((ver,))]}
                 else:
 		    actual_sub_crow = actual_crow.get(key2, None)
 		    if actual_sub_crow == None:
-			self.crows[key1][key2] = [values, fix_versions]
+			self.crows[key1][key2] = [values, set((ver,))]
 		    else:
 			self.crows[key1][key2][0] = values
-			self.crows[key1][key2][1].update(fix_versions)
+			self.crows[key1][key2][1].add(ver)
 
     def prepare_sql(self, ver):
         sql_cols = []

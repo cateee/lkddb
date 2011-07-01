@@ -14,22 +14,25 @@ import time
 
 import lkddb
 import lkddb.linux
+import lkddb.ids
 import lkddb.tables
 
 
 configs = {}
+ids = {}
 
 
 
-def assemble_config_data(tree):
-    for t in tree.tables.itervalues():
-	for key1, values1 in t.crows.iteritems():
-	    for key2, values2 in values1.iteritems():
-#	   	print t.name, ">>>", key1, ">>", key2 , "---", values2
-		if t.kind == ("linux-kernel", "device") or (
-		   t.kind == ("linux-kernel", "special") and t.name == "kconf"):
-#		    if t.kind == ("linux-kernel", "special") and t.name == "kconf":
-#			print t.name, key1, key2
+
+def assemble_config_data(storage):
+    for tname, textra in storage.available_tables.iteritems():
+	treename = textra[0]
+	t = textra[1]
+        if t.kind == ("linux-kernel", "device") or (
+            t.kind == ("linux-kernel", "special") and t.name == "kconf"):
+	    for key1, values1 in t.crows.iteritems():
+	        for key2, values2 in values1.iteritems():
+#	   	    print t.name, ">>>", key1, ">>", key2 , "---", values2
 	   	    for config in key2[0].split():
                         if not config.startswith("CONFIG_") or config == "CONFIG_":
                             lkddb.log.log("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
@@ -40,6 +43,13 @@ def assemble_config_data(tree):
 		        if not t.name in configs[config]:
 		            configs[config][t.name] = []
 		        configs[config][t.name].append((key1, key2, values2[0], values2[1]))
+        elif t.kind == ("ids", "ids"):
+	    ids[t.name] = {}
+            for key1, values1 in t.crows.iteritems():
+                for key2, values2 in values1.iteritems():
+		    pass ##################################################
+#                   print t.name, ">>>", key1, ">>", key2 , "---", values2
+
 
 
 def generate_pages(templdir, webdir):
@@ -115,8 +125,8 @@ def generate_pages(templdir, webdir):
 		
 	#------
 	# PCI
-        if table.has_key('kconf'):
-            rows = table['kconf']
+        if table.has_key('pci'):
+            rows = table['pci']
 	    for key1, key2, values, versions in rows:
 		vendor, device, subvendor, subdevice, class_mask = key1
 		
@@ -205,19 +215,25 @@ def kernel_interval(min_ver, max_ver):
     return ret, ret2
 
 def ver_str(versions):
-    vers = list(versions)
+    vers = map(lambda v: v[2], versions)
     vers.sort()
     return ", ".join(vers)
 
 
 def make(options, templdir, webdir):
     
-    tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
     lkddb.init(options)
+
+    storage = lkddb.storage()
+    linux_kernel_tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
+    storage.register_tree(linux_kernel_tree)
+    ids_files_tree = lkddb.ids.ids_files(lkddb.TASK_CONSOLIDATE, None)
+    storage.register_tree(ids_files_tree)
+
     lkddb.log.phase("read consolidated file")
-    tree.read_consolidate(options.consolidated)
-    lkddb.log.phase("assemble page data")
-    assemble_config_data(tree)
+    storage.read_consolidate(options.consolidated)
+    lkddb.log.phase("assemble config page data")
+    assemble_config_data(storage)
     lkddb.log.phase("assemble page data")
     generate_pages(templdir, webdir)
     lkddb.log.phase("END [gen-web-lkddb.py]")

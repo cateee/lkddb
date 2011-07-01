@@ -79,7 +79,7 @@ def die(message, errorcode=1):
     _logfile.flush()
     sys.stderr.write(message + "\n")
     sys.stderr.flush()
-    sys.exit(errorcode=1)
+    sys.exit(1)
 
 def phase(phase):
     global _phase

@@ -1,4 +1,4 @@
-#: lkddb/sources/linux/__init__.py : scanners for Linux kernels
+#: lkddb/linux/__init__.py : scanners for Linux kernels
 #
 #  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 for details
@@ -8,7 +8,6 @@ import subprocess
 
 import lkddb
 import lkddb.tables
-#from lkddb import register_browser, register_scanner, get_table
 
 # sources
 from .kbuild import kver, makefiles, kconfigs
@@ -17,7 +16,7 @@ from parse_devicetables import *
 from parse_others import *
 
 
-def register_browsers(tree):
+def register_linux_browsers(tree):
 
     kerneldir = tree.kerneldir
     dirs = tree.dirs
@@ -76,23 +75,16 @@ class linux_kernel(lkddb.tree):
         lkddb.tree.__init__(self, "linux-kernel")
 	self.kerneldir = kerneldir
 	self.dirs = dirs
+        if task == lkddb.TASK_BUILD:
+            self.retrive_version()
 	lkddb.tables.register_linux_tables(self)
 	if task == lkddb.TASK_BUILD:
-	    register_browsers(self)
-
-    def get_version(self):
-	if self.version == None:
 	    self.retrive_version()
-        return self.version
-
-    def get_strversion(self):
-        if self.strversion == None:
-            self.retrive_version()
-        return self.strversion
+	    register_linux_browsers(self)
 
     def retrive_version(self):
 	"Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"
-        self.dict = {}
+        version_dict = {}
         f = open(os.path.join(self.kerneldir, "Makefile"))
         for i in range(10):
             line = f.readline().strip()
@@ -102,36 +94,65 @@ class linux_kernel(lkddb.tree):
                 label, value = line.split('=', 1)
             except ValueError:
                 continue
-            self.dict[label.strip()] = value.strip()
+            version_dict[label.strip()] = value.strip()
         f.close()
-        assert(self.dict.has_key("VERSION"))
-        assert(self.dict.has_key("PATCHLEVEL"))
-        assert(self.dict.has_key("SUBLEVEL"))
-        assert(self.dict.has_key("EXTRAVERSION"))
+        assert(version_dict.has_key("VERSION"))
+        assert(version_dict.has_key("PATCHLEVEL"))
+        assert(version_dict.has_key("SUBLEVEL"))
+        assert(version_dict.has_key("EXTRAVERSION"))
 
-        self.version =  ( int(self.dict["VERSION"])    * 0x10000 +
-                         int(self.dict["PATCHLEVEL"]) * 0x100   +
-                         int(self.dict["SUBLEVEL"])   )
-        self.extra = self.dict["EXTRAVERSION"]
-        if self.version == 0x02040f and self.extra == "-greased-turkey":
-            self.dict["NAME"] = "greased-turkey"
-            self.extra = ""
-	if self.dict["VERSION"] == "3" and self.dict["SUBLEVEL"] == "0":
-	    # 3.x versions
-	    self.strversion = self.dict["VERSION"] +"."+ self.dict["PATCHLEVEL"] + self.extra
+	version_dict['version'] = int(version_dict["VERSION"])
+	version_dict['patchlevel'] = int(version_dict["PATCHLEVEL"])
+	version_dict['sublevel'] = int(version_dict["SUBLEVEL"])
+
+        version_dict['numeric'] =  ( version_dict["version"]    * 0x10000 +
+                         	     version_dict["patchlevel"] * 0x100   +
+                         	     version_dict["sublevel"]   )
+        version_dict['extra'] = version_dict["EXTRAVERSION"]
+        if version_dict['numeric'] == 0x02040f and version_dict['extra'] == "-greased-turkey":
+            version_dict["name"] = "greased-turkey"
+            version_dict['extra'] = ""
 	else:
-            self.strversion = self.dict["VERSION"] +"."+ self.dict["PATCHLEVEL"] +"."+ self.dict["SUBLEVEL"] + self.extra
+	   version_dict["name"] = version_dict.get("NAME", "")
+	if version_dict["VERSION"] == "3" and version_dict["SUBLEVEL"] == "0":
+	    # 3.x versions
+	    version_dict['str'] = version_dict["VERSION"] +"."+ version_dict["PATCHLEVEL"] + version_dict['extra']
+	else:
+            version_dict['str'] = version_dict["VERSION"] +"."+ version_dict["PATCHLEVEL"] +"."+ version_dict["SUBLEVEL"] + version_dict['extra']
 
-        self.local_ver = subprocess.Popen("/bin/sh scripts/setlocalversion",
+	if not version_dict['extra']:
+	    version_dict['numeric2'] = 0
+	elif version_dict['extra'].isdigit():
+	    version_dict['numeric2'] = int(version_dict['extra'])
+	elif version_dict['extra'].startswith("-rc") and version_dict['extra'][3:].isdigit():
+	    version_dict['numeric2'] = -0x100 + int(version_dict['extra'][3:])
+        elif version_dict['extra'].startswith("-pre") and version_dict['extra'][4:].isdigit():
+            version_dict['numeric2'] = -0x200 + int(version_dict['extra'][4:])
+        elif version_dict['extra'].startswith("pre") and version_dict['extra'][3:].isdigit():
+            version_dict['numeric2'] = -0x200 + int(version_dict['extra'][3:])
+	else:
+	    assert False, "Unknow structure of EXTRAVERSION (%s) in kernel version" % version_dict["EXTRAVERSION"]
+
+        version_dict['local_ver'] = subprocess.Popen("/bin/sh scripts/setlocalversion",
                 shell=True, cwd=self.kerneldir,
                 stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
-        if self.local_ver  or  (self.extra and not self.extra.isdigit()):
+	if not version_dict['local_ver']:
+	    version_dict['numeric3'] = 0
+	elif version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and version_dict['local_ver'][1:6].isdigit():
+	    version_dict['numeric3'] = int(version_dict['local_ver'][1:6])
+	else:
+	    assert False, "Unknow structure of scripts/setlocalversion (%s) in kernel version" % version_dict["local_ver"]
+
+	if version_dict['numeric3'] == 0  and  version_dict['extra'] >= 0:
+	    # a x.y.z or x.y.z.w relase
+	    version_dict['isrelease'] = True
+            version_dict['serie'] = 1
+	else:
             # not a x.y.z or x.y.z.w release
-            self.strversion += self.local_ver
-	    self.ishead = True
-	    self.isreleased = False
-        else:
-	    self.ishead = False
-	    self.isreleased = True
-        self.name = self.dict.get("NAME", '(not named)')
+            version_dict['str'] += version_dict['local_ver']
+	    version_dict['isrelease'] = False
+	    version_dict['serie'] = -1
+	self.version_dict = version_dict
+	self.version = (self.name, (version_dict['numeric'], version_dict['numeric2'], version_dict['numeric3']),
+			version_dict['str'], version_dict['serie'])
 
