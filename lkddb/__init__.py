@@ -58,10 +58,11 @@ class storage(object):
             lkddb.log.die("invalid data in file '%s'" % filename)
 	consolidated = persistent_data.get('_consolidated', False)
 	for treename in trees:
+	    lkddb.log.log_extra("consolidating tree '%s'" % treename)
 	    tree = self.available_trees[treename]
 	    tree.read_consolidate(consolidated, persistent_data)
+	    self.readed_trees.update(map(lambda name: (name, self.available_trees[name]), trees))
 	persistent_data.close()
-	self.readed_trees.update(map(lambda name: (name, self.available_trees[name]), trees))
 
     def write_consolidate(self, filename, new=True):
         lkddb.log.phase("writing consolidate data '%s'" % filename)
@@ -70,21 +71,25 @@ class storage(object):
         else:
             oflag = 'w'
         persistent_data = shelve.open(filename, flag=oflag)
-        persistent_data['_consolidated'] = True
-	persistent_data['_trees'] = []
-	persistent_data['_tables'] = []
-	persistent_data['_versions'] = set(())
+	trees = []
+	tables = []
+	versions = set(())
 	for tree in self.readed_trees.itervalues():
 	    lkddb.log.phase("writing consolidated tree '%s'" % tree.name)
 	    new_persistent = tree.write_consolidate()
 	    new_tables = new_persistent['_tables']
-	    persistent_data['_trees'].append(tree.name)
-            persistent_data['_tables'].extend(new_tables)
-            persistent_data['_versions'].update(new_persistent['_versions'])
+	    trees.append(tree.name)
+            tables.extend(new_tables)
+            versions.update(new_persistent['_versions'])
 	    for t in new_tables:
 		if persistent_data.has_key(t):
 		    lkddb.log.die("two different trees share the table name '%s'" % t)
 		persistent_data[t] = new_persistent[t]
+	persistent_data['_trees'] = trees
+        persistent_data['_tables'] = tables
+        persistent_data['_versions'] = versions
+	persistent_data['_consolidated'] = True
+
         persistent_data.sync()
         persistent_data.close()
 
@@ -200,7 +205,7 @@ class tree(object):
                 if t.name not in tables:
                     lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
                     continue
-                lkddb.log.log_extra("reading table " + t.name)
+                lkddb.log.log_extra("reading table '%s'" % t.name)
                 rows = persistent_data.get(t.name, None)
                 if rows != None:
                     t.rows = rows
@@ -217,7 +222,7 @@ class tree(object):
 	    ver = None
 	    self.consolidated_versions.update(persistent_data['_versions'])
         for t in self.tables.itervalues():
-            lkddb.log.log_extra("reading table " + t.name)
+            lkddb.log.log_extra("reading table '%s'" % t.name)
             rows = persistent_data.get(t.name, None)
             if rows != None:
 		if not consolidated:
@@ -229,6 +234,11 @@ class tree(object):
                 t.consolidate_table(consolidated, ver)
 		if consolidated:
 		    del t.crows_tmp
+	    else:
+		lkddb.log.log_extra("table '%s' is empty" % t.name)
+	        if not hasattr(self, 'crows'):
+	            self.crows = {}
+
 
     def write_consolidate(self):
 	persistent_data = {}

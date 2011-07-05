@@ -26,6 +26,7 @@ ids = {}
 
 def assemble_config_data(storage):
     for tname, textra in storage.available_tables.iteritems():
+	print "doing ", tname, textra[1].name, "in", textra[0]
 	treename = textra[0]
 	t = textra[1]
         if t.kind == ("linux-kernel", "device") or (
@@ -45,11 +46,10 @@ def assemble_config_data(storage):
 		        configs[config][t.name].append((key1, key2, values2[0], values2[1]))
         elif t.kind == ("ids", "ids"):
 	    ids[t.name] = {}
-            for key1, values1 in t.crows.iteritems():
-                for key2, values2 in values1.iteritems():
-		    pass ##################################################
-#                   print t.name, ">>>", key1, ">>", key2 , "---", values2
-
+	    for key1, values1 in t.crows.iteritems():
+		for key2, values2 in values1.iteritems():
+		    ids[t.name][key1] = values2[0]
+		    print key1, "---", values2[0]
 
 
 def generate_pages(templdir, webdir):
@@ -57,7 +57,7 @@ def generate_pages(templdir, webdir):
     template_config = string.Template(f.read())
     f.close()
     for config_full, table in configs.iteritems():
-	print config_full ####
+	# print config_full ####
 	config = config_full[7:]
 	if config == "_UNKNOW__":
 	    continue
@@ -120,21 +120,59 @@ def generate_pages(templdir, webdir):
 				    "<br />error: definition not found!</p>\n\n")
 	    pageitems['prompt'] = config_full
 
-	hardware = []
+	#------
+	# start of systems and sources
+
+	systems = [] # -> system, [formated lines]
 	sources = []
 		
 	#------
 	# PCI
         if table.has_key('pci'):
             rows = table['pci']
+	    sub_ids = ids.get('pci_ids', None)
+	    lines = []
 	    for key1, key2, values, versions in rows:
 		vendor, device, subvendor, subdevice, class_mask = key1
-		
-	
+		line = ""
+                if vendor != "....":
+                    line += "vendor: <code>" + vendor + "</code>"
+		    if sub_ids and sub_ids.has_key((vendor, "....", "....", "....")):
+                         line += ' ("<i>' + escape(sub_ids[(vendor, "....", "....", "....")]) + '</i>")'
+                    if device != "....":
+                        line += ", device: <code>" + device + "</code>"
+			if sub_ids and sub_ids.has_key((vendor, device, "....", "....")):
+                            line += ' ("<i>' + escape(sub_ids[(vendor, device, "....", "....")]) + '</i>")'
+                        if subvendor != "...."  and  subdevice != "....":
+                            line +=  ", subvendor: <code>" + subvendor + "</code>, subdevice: <code>" + subdevice + "</code>"
+			    if sub_ids and sub_ids.has_key((vendor, device, subvendor, subdevice)):
+                                line += ' ("<i>' + escape(sub_ids[(vendor, device, subvendor, subdevice)]) + '</i>")'
+		if line:
+		    lines.append(line)
+	    if lines:
+	        lines.sort()
+	        systems.append(('PCI', '<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>', lines))
+		sources.append('The <a href="http://pciids.sourceforge.net/">Linux PCI ID Repository</a>.')
 
-	pageitems['hardware'] = "<p><b>MISSING 'hardware'</b></p>"
+		
+        #------
+        # Assemble hardware and sources
+	
+	hardware = ""
+	for title, descr, lines in systems:
+	    hardware += ( '<h3>' + system + '</h3>\n' + descr + '\n<ul class="dblist">\n<li>' 
+				+ "</li>\n<li>".join(lines)
+				+ '</li>\n</ul>\n')
+
+	if sources:
+	    # Note: in template we set already few sources
+	    pageitems['sources'] =  "</li>\n<li>".join(sources)
+	else:
+	    pageitems['sources'] = ""
+
+     
+	pageitems['hardware'] = hardware
         pageitems['lkddb'] = "<p><b>MISSING 'lkddb'</b></p>"
-        pageitems['sources'] = "<p><b>MISSING 'sources'</b></p>"
 	pageitems['year'] = "<b>MISSING 'year'</b>"
 	f = open(os.path.join(webdir, config+".html"), "w")
 	f.write(template_config.substitute(pageitems))
@@ -142,6 +180,20 @@ def generate_pages(templdir, webdir):
 	f.close()
 
 # some utility formating functions
+
+escapemap = (
+        ("&", "&amp;"),  # first item, not to replace e.g. the '&' in '&gt;'
+        ("<", "&lt;"),
+        (">", "&gt;"),
+        ('"', "&quot;"),
+        ("'", "&apos;"))
+
+def escape(src):
+    for c, esc in escapemap:
+        src = src.replace(c, esc)
+    return src
+
+
 
 config_re = re.compile(r"CONFIG_([^_]\w*)")
 
@@ -221,7 +273,6 @@ def ver_str(versions):
 
 
 def make(options, templdir, webdir):
-    
     lkddb.init(options)
 
     storage = lkddb.storage()
