@@ -43,7 +43,7 @@ bigtest: tests ids.data
 	time python ./merge.py -vv -l merge.log -o lkddb-all.data lkddb-[23].*.data ids.data
 	time python ./gen-web-lkddb.py -vv -l web.log -f lkddb-all.data templates/ web-out/
 
-tar: clean manifest
+tar: manifest
 	./utils.sh tar
 
 manifest:

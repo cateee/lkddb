@@ -19,7 +19,7 @@ case "$1" in
 
     'tar' )     $0 clean
 		(cd .. ;
-		 tar cf lkddb-`date --rfc-3339=date`.tar --exclude-vcs --exclude='*.list' --exclude='*.data' --exclude='log-*' --exclude='*.log' --exclude="log" lkddb --exclude="web-out";
+		 tar cf lkddb-`date --rfc-3339=date`.tar --exclude-vcs --exclude='*.list' --exclude='*.data' --exclude='*.log' --exclude="*.ids" --exclude="web-out" lkddb ;
 		 gzip -9 lkddb-`date --rfc-3339=date`.tar)
     ;;
 

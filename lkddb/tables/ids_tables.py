@@ -32,6 +32,7 @@ class pci_class_ids_table(lkddb.table):
     cols = ((1, 'class', fmt.m8x, "INTEGER"),
            (2, 'subclass', fmt.m8x, "INTEGER"),
            (3, 'prog-inf', fmt.m8x, "INTEGER"),
+	   (0, 'name', fmt.str, "TEXT"),
            (-99, 'version', None, "$kver"))
 
 
@@ -58,6 +59,7 @@ class usb_class_ids_table(lkddb.table):
     cols = ((1, 'class', fmt.m8x, "INTEGER"),
            (2, 'subclass', fmt.m8x, "INTEGER"),
            (3, 'protocol', fmt.m8x, "INTEGER"),
+	   (0, 'name', fmt.str, "TEXT"),
            (-99, 'version', None, "$kver"))
 
 

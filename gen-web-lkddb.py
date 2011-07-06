@@ -48,8 +48,8 @@ def assemble_config_data(storage):
 	    ids[t.name] = {}
 	    for key1, values1 in t.crows.iteritems():
 		for key2, values2 in values1.iteritems():
-		    ids[t.name][key1] = values2[0]
-		    print key1, "---", values2[0]
+#		    print t.name, ">>>", key1, ">>", key2 , "---", values2
+		    ids[t.name][key1] = values2[0][0]
 
 
 def generate_pages(templdir, webdir):
@@ -130,23 +130,45 @@ def generate_pages(templdir, webdir):
 	# PCI
         if table.has_key('pci'):
             rows = table['pci']
-	    sub_ids = ids.get('pci_ids', None)
+	    sub_ids = ids.get('pci_ids', {})
+	    sub_class_ids = ids.get('pci_class_ids', {})
 	    lines = []
 	    for key1, key2, values, versions in rows:
 		vendor, device, subvendor, subdevice, class_mask = key1
 		line = ""
                 if vendor != "....":
                     line += "vendor: <code>" + vendor + "</code>"
-		    if sub_ids and sub_ids.has_key((vendor, "....", "....", "....")):
-                         line += ' ("<i>' + escape(sub_ids[(vendor, "....", "....", "....")]) + '</i>")'
+		    name = sub_ids.get((vendor, "....", "....", "...."), None)
+		    if name:
+                         line += ' ("<i>' + escape(name) + '</i>")'
                     if device != "....":
                         line += ", device: <code>" + device + "</code>"
-			if sub_ids and sub_ids.has_key((vendor, device, "....", "....")):
-                            line += ' ("<i>' + escape(sub_ids[(vendor, device, "....", "....")]) + '</i>")'
+			name = sub_ids.get((vendor, device, "....", "...."), None)
+			if name:
+                            line += ' ("<i>' + escape(name) + '</i>")'
                         if subvendor != "...."  and  subdevice != "....":
                             line +=  ", subvendor: <code>" + subvendor + "</code>, subdevice: <code>" + subdevice + "</code>"
-			    if sub_ids and sub_ids.has_key((vendor, device, subvendor, subdevice)):
-                                line += ' ("<i>' + escape(sub_ids[(vendor, device, subvendor, subdevice)]) + '</i>")'
+			    name = sub_ids.get((vendor, device, subvendor, subdevice), None)
+			    if name:
+                                line += ' ("<i>' + escape(name) + '</i>")'
+		class_, subclass, prog_if = ( class_mask[0:2], class_mask[2:4], class_mask[4:6])
+		if class_ != "..":
+		    if line:
+			line += ", "
+                    line += "class: <code>" + class_ + "</code>"
+		    name = sub_class_ids.get((class_, "..", ".."), None)
+		    if name:
+                        line += ' ("<i>' + escape(name) + '</i>")'
+                    if subclass != "..":
+                        line += ", subclass: <code>" + subclass + "</code>"
+			name = sub_class_ids.get((class_, subclass, ".."), None)
+			if name:
+                            line += ' ("<i>' + escape(name) + '</i>")'
+                        if prog_if != "..":
+                            line += ", prog-if: <code>" + prog_if + "</code>"
+			    name = sub_class_ids.get((class_, subclass, prog_if), None)
+			    if name:
+                                line += ' ("<i>' + escape(name) + '</i>")'
 		if line:
 		    lines.append(line)
 	    if lines:
@@ -154,13 +176,78 @@ def generate_pages(templdir, webdir):
 	        systems.append(('PCI', '<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>', lines))
 		sources.append('The <a href="http://pciids.sourceforge.net/">Linux PCI ID Repository</a>.')
 
-		
+        #------
+        # USB
+        if table.has_key('usb'):
+            rows = table['usb']
+            sub_ids = ids.get('usb_ids', {})
+            sub_class_ids = ids.get('usb_class_ids', {})
+            lines = []
+            for key1, key2, values, versions in rows:
+		vendor, product, dev_class, dev_subclass, dev_protocol, if_class, if_subclass, if_protocol = key1
+                line = ""
+                if vendor != "....":
+                    line += "vendor: <code>" +  vendor + "</code>"
+		    name = sub_ids.get((vendor, "...."), None)
+		    if name:
+                        line += ' ("<i>' + escape(name) + '</i>")'
+                    if product != "....":
+                        line += ", product: <code>" + product + "</code>"
+			name = sub_ids.get((vendor, product), None)
+			if name:
+                             line += ' ("<i>' + escape(name) + '</i>")'
+		# USB: device class
+                if dev_class != "..":
+                    if line != "":
+                        line += ", "
+                    line += "device class: <code>" + dev_class + "</code>"
+		    name = sub_class_ids.get((dev_class, "..", ".."), None)
+                    if name:
+                         line += ' ("<i>' + escape(name) + '</i>")'
+                    if dev_subclass != "..":
+                        line += ", subclass: <code>" + dev_subclass + "</code>"
+			name = sub_class_ids.get((dev_class, dev_subclass, ".."), None)
+                        if name:
+                            line += ' ("<i>' + escape(name) + '</i>")'
+                        if dev_protocol != "..":
+                            line +=  ", protocol: <code>" + dev_protocol + "</code>"
+			    name = sub_class_ids.get((dev_class, dev_subclass, dev_protocol), None)
+                            if name:
+                                line += ' ("<i>' + escape(name) + '</i>")'
+
+                # USB: interface class
+                if if_class != "..":
+                    if line != "":
+                        line += ", "
+                    line += "interface class: <code>" + if_class + "</code>"
+                    name = sub_class_ids.get((if_class, "..", ".."), None)
+                    if name:
+                         line += ' ("<i>' + escape(name) + '</i>")'
+                    if if_subclass != "..":
+                        line += ", subclass: <code>" + if_subclass + "</code>"
+                        name = sub_class_ids.get((if_class, if_subclass, ".."), None)
+                        if name:
+                            line += ' ("<i>' + escape(name) + '</i>")'
+                        if if_protocol != "..":
+                            line +=  ", protocol: <code>" + if_protocol + "</code>"
+                            name = sub_class_ids.get((if_class, if_subclass, if_protocol), None)
+                            if name:
+                                line += ' ("<i>' + escape(name) + '</i>")'
+
+                if line:
+                    lines.append(line)
+            if lines:
+                lines.sort()
+                systems.append(('USB', '<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>', lines))
+                sources.append('The <a href="http://www.linux-usb.org/usb-ids.html">Linux USB ID Repository</a>.')
+
+
         #------
         # Assemble hardware and sources
 	
 	hardware = ""
 	for title, descr, lines in systems:
-	    hardware += ( '<h3>' + system + '</h3>\n' + descr + '\n<ul class="dblist">\n<li>' 
+	    hardware += ( '<h3>' + title + '</h3>\n' + descr + '\n<ul class="dblist">\n<li>' 
 				+ "</li>\n<li>".join(lines)
 				+ '</li>\n</ul>\n')
 
