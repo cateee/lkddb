@@ -51,7 +51,7 @@ class module_table(lkddb.table):
     kind = ("linux-kernel", "device")
 
     cols = ((1, 'name', fmt.str, "TEXT"),
-           (2, 'descr', fmt.qstr, "TEXT"),
+           (0, 'descr', fmt.qstr, "TEXT"),
            (-1, 'config',  fmt.str, "$config"),
            (-2, 'filename', fmt.filename, "$filename"),
            (-99, 'version', None, "$kver"))

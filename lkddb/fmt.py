@@ -70,6 +70,11 @@ def str(value):
 def qstr(value):
     return '"' + value + '"'
 
+def dqstr(value):
+    if value[0] == value[-1]  and  ( value[0] == "'" or value[1] == '"'):
+	return value[1:-1]
+    else:
+	return value
 
 def int(value):
     return "%d" % value

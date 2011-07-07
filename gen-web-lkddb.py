@@ -17,18 +17,17 @@ import lkddb.linux
 import lkddb.ids
 import lkddb.tables
 
-
+tables = {}
 configs = {}
 ids = {}
-
-
-
+config_pages = {}  # 'A' -> [ ('CONFIG_ATM', '2.6.25, 2.6.26'), ('CONFIG_ABC', ...]
 
 def assemble_config_data(storage):
     for tname, textra in storage.available_tables.iteritems():
-	print "doing ", tname, textra[1].name, "in", textra[0]
+#	print "doing ", tname, textra[1].name, "in", textra[0]
 	treename = textra[0]
 	t = textra[1]
+	tables[tname] = t
         if t.kind == ("linux-kernel", "device") or (
             t.kind == ("linux-kernel", "special") and t.name == "kconf"):
 	    for key1, values1 in t.crows.iteritems():
@@ -52,25 +51,44 @@ def assemble_config_data(storage):
 		    ids[t.name][key1] = values2[0][0]
 
 
-def generate_pages(templdir, webdir):
+def generate_config_pages(templdir, webdir):
     f = open(os.path.join(templdir, "template-config.html"), "r")
     template_config = string.Template(f.read())
     f.close()
+    year = time.strftime("%Y", time.gmtime())
     for config_full, table in configs.iteritems():
 	# print config_full ####
 	config = config_full[7:]
 	if config == "_UNKNOW__":
 	    continue
 	assert config[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789es"
+	subindex = config[0].upper()
 	pageitems = {
 	    'config': config,
-	    'subindex': config[0].upper(),
+	    'subindex': subindex,
+	    'year': year
 	}
-	
+	if not config_pages.has_key(subindex):
+	    config_pages[subindex] = []
+	config_pages[subindex].append(config_full)
+
+        #-------
+        # module
+	lines = []
+	if table.has_key('module'):
+            rows = table['module']
+	    for key1, key2, values, versions in rows:
+		lines.append('<code>' + key1[0] + '</code> ("<i>' + values[0] + '</i>")')
+	if lines:
+	    modules = "<li>modules built: " +", ".join(lines)+ "</li>\n"
+	else:
+	    modules = ""
+
 	#-------
 	# kconf
 	saved = {}
 	favorite_prompt = None
+	versions_strings = []  # used for index pages
 	if table.has_key('kconf'):
 	    rows = table['kconf']
 	    if len(rows) > 1:
@@ -92,11 +110,14 @@ def generate_pages(templdir, webdir):
 		        saved[descr] = 1
 	        else:
 		    favorite_prompt = descr
+		ver = ver_str(versions)
+		versions_strings.append(ver)
 	        text += (" <li>prompt: " +descr+ "</li>\n" +
                          " <li>type: "   +typ+ "</li>\n" +
                          " <li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
                          " <li>defined in " + url_filename(filename) + "</li>\n" +
-                         " <li>found in Linux kernels: " +ver_str(versions)+ "</li>\n</ul>\n")
+                         " <li>found in Linux kernels: " +ver+ "</li>\n" +
+			 modules + "</ul>\n")
 	        if len(rows) > 1:
 		    text += "\n<h3>Help text</h3>\n<p>"
 	        else:
@@ -239,8 +260,52 @@ def generate_pages(templdir, webdir):
             if lines:
                 lines.sort()
                 systems.append(('USB', '<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>', lines))
-                sources.append('The <a href="http://www.linux-usb.org/usb-ids.html">Linux USB ID Repository</a>.')
+                #sources.append('The <a href="http://www.linux-usb.org/usb-ids.html">Linux USB ID Repository</a>.')
 
+        #------
+        # EISA
+        if table.has_key('eisa'):
+            rows = table['eisa']
+            sub_ids = ids.get('eisa_ids', {})
+            lines = []
+            for key1, key2, values, versions in rows:
+		line = ""
+                sig = key1[0][1:-1]
+                line += "signature: <code>" + sig + "</code>"
+                name = sub_ids.get((sig,), None)
+                if name:
+                     line += ' ("<i>' + escape(name) + '</i>")'
+                lines.append(line)
+            if lines:
+                lines.sort()
+                systems.append(('EISA', '<p>Numeric ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>', lines))
+                sources.append('The <a href="http://www.kernel.org/">Linux Kernel</a> (eisa.ids)</a>.')
+
+        #------
+        # ZORRO
+        if table.has_key('zorro'):
+            rows = table['zorro']
+            sub_ids = ids.get('zorro_ids', {})
+            lines = []
+            for key1, key2, values, versions in rows:
+                manufacter, product = key1
+                line = ""
+                if manufacter != "....":
+                    line += "vendor: <code>" + manufacter + "</code>"
+                    name = sub_ids.get((manufacter, "...."), None)
+                    if name:
+                         line += ' ("<i>' + escape(name) + '</i>")'
+                    if product != "....":
+                        line += ", device: <code>" + product + "</code>"
+                        name = sub_ids.get((manufacter, product), None)
+                        if name:
+                            line += ' ("<i>' + escape(name) + '</i>")'
+                if line:
+                    lines.append(line)
+            if lines:
+                lines.sort()
+                systems.append(('ZORRO', '<p>Numeric ID (from LKDDb) and names (from zorro.ids) of recognized devices:</p>', lines))
+                sources.append('The <a href="http://www.kernel.org/">Linux Kernel</a> (zorro.ids)')
 
         #------
         # Assemble hardware and sources
@@ -250,6 +315,22 @@ def generate_pages(templdir, webdir):
 	    hardware += ( '<h3>' + title + '</h3>\n' + descr + '\n<ul class="dblist">\n<li>' 
 				+ "</li>\n<li>".join(lines)
 				+ '</li>\n</ul>\n')
+	pageitems['hardware'] = hardware
+
+        #------
+        # lkddb
+	
+        lines = []
+	for tname, t in table.iteritems():
+	    line_templ = tables[tname].line_templ
+            for key1, key2, values, versions in rows:
+		row = key1 + key2 + values
+		lines.append(line_templ % row)
+	lines.sort()
+	lkddb = ( '<h3>LKDDb</h3>\n<ul class="dblist">\n<li>'
+                   + "</li>\n<li>".join(lines)
+                   + '</li>\n</ul>\n')
+	pageitems['lkddb'] = lkddb
 
 	if sources:
 	    # Note: in template we set already few sources
@@ -257,14 +338,56 @@ def generate_pages(templdir, webdir):
 	else:
 	    pageitems['sources'] = ""
 
-     
-	pageitems['hardware'] = hardware
-        pageitems['lkddb'] = "<p><b>MISSING 'lkddb'</b></p>"
-	pageitems['year'] = "<b>MISSING 'year'</b>"
+        if not config_pages.has_key(subindex):
+            config_pages[subindex] = []
+        config_pages[subindex].append((config_full, ", ".join(versions_strings)))
+
 	f = open(os.path.join(webdir, config+".html"), "w")
 	f.write(template_config.substitute(pageitems))
 	f.flush()
 	f.close()
+
+
+def generate_index_pages(templdir, webdir):
+    f = open(os.path.join(templdir, "template-index.html"), "r")
+    template_index = string.Template(f.read())
+    f.close()
+    year = time.strftime("%Y", time.gmtime())
+    indices = config_pages.keys()
+    indices.sort()
+    count = dict(zip(indices, [0]*len(indices)))
+    for subindex, config in config_pages.iteritems():
+	count[subindex] += 1
+    for idx in indices + [""]:   # add also the main index page
+	page = ""
+	for idx2 in indices:
+            if idx != idx2:
+                page += ('<li><a href="index_' +idx2+ '.html">'
+                          +idx2+ ' index</a> (with ' +str(count[idx2])+ ' items)</li>\n')
+            else:
+                page += ('<li><b>' +idx2+ '</b>(with ' +str(count*[idx2])+ ' items)<ul>\n')
+                for conf, ver_str in index[idx2]:
+                    if ver_str:
+                        ver_str = ' (' + ver_str + ')'
+                    page += ('<li><a href="' +conf+ '.html"> CONFIG_'
+                          +conf+ '</a>'+ver_str+'</li>\n')
+                page += '</ul></li>\n'
+
+	pageitems = {
+	    'year': year,
+	    'page': page,
+	    'key': idx,
+        }
+
+	if idx == "":
+	    fn = os.path.join(webdir, "index.html")
+	else:
+	    fn = os.path.join(webdir, "index_" + idx + ".html")
+        f = open(fn, "w")
+        f.write(template_index.substitute(pageitems))
+        f.flush()
+        f.close()
+
 
 # some utility formating functions
 
@@ -373,7 +496,8 @@ def make(options, templdir, webdir):
     lkddb.log.phase("assemble config page data")
     assemble_config_data(storage)
     lkddb.log.phase("assemble page data")
-    generate_pages(templdir, webdir)
+    generate_config_pages(templdir, webdir)
+    generate_index_pages(templdir, webdir)
     lkddb.log.phase("END [gen-web-lkddb.py]")
 
 #

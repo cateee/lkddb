@@ -33,6 +33,7 @@ ids.data: pci.ids usb.ids eisa.ids zorro.ids
 clean:
 	find . -name '*.pyc' -delete
 	-rm -f Manifest *.ids *.list *.data *.log
+	-rm -f web-out/*.html
 
 tests:
 	python lkddb/log.py

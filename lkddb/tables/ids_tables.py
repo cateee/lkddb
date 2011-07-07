@@ -70,8 +70,8 @@ class eisa_ids_table(lkddb.table):
 
     kind = ("ids", "ids")
 
-    cols = ((1, 'id', fmt.str, "TEXT"),
-           (0, 'name', fmt.str, "TEXT"),
+    cols = ((1, 'id', fmt.dqstr, "TEXT"),
+           (0, 'name', fmt.dqstr, "TEXT"),
            (-99, 'version', None, "$kver"))
 
 
