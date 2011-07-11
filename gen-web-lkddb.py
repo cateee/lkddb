@@ -63,14 +63,13 @@ def generate_config_pages(templdir, webdir):
 	    continue
 	assert config[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789es"
 	subindex = config[0].upper()
+        if subindex.isdigit():
+            subindex = "0-9"
 	pageitems = {
 	    'config': config,
 	    'subindex': subindex,
 	    'year': year
 	}
-	if not config_pages.has_key(subindex):
-	    config_pages[subindex] = []
-	config_pages[subindex].append(config_full)
 
         #-------
         # module
@@ -78,8 +77,9 @@ def generate_config_pages(templdir, webdir):
 	if table.has_key('module'):
             rows = table['module']
 	    for key1, key2, values, versions in rows:
-		lines.append('<code>' + key1[0] + '</code> ("<i>' + values[0] + '</i>")')
+		lines.append('<code>' + key1[0] + '</code>')
 	if lines:
+	    lines.sort()
 	    modules = "<li>modules built: " +", ".join(lines)+ "</li>\n"
 	else:
 	    modules = ""
@@ -91,6 +91,7 @@ def generate_config_pages(templdir, webdir):
 	versions_strings = []  # used for index pages
 	if table.has_key('kconf'):
 	    rows = table['kconf']
+	    text2 = []
 	    if len(rows) > 1:
 	        text = "<p>The Linux kernel configuration item <code>" +config_full+ "</code> has multiple definitions:\n"
 	    else:
@@ -99,8 +100,9 @@ def generate_config_pages(templdir, webdir):
 	        c, filename = key2
 	        typ, descr, depends, helptext = values
 	        descr = descr.strip()
+		txt = ""
 	        if len(rows) > 1:
-		    text += ("\n<h2><emph>" +descr+ "</emph> found in <code>" +filename+ "</code></h2>\n"+
+		    txt += ("\n<h2><emph>" +descr+ "</emph> found in <code>" +filename+ "</code></h2>\n"+
 			     "<p>The configuration item " +config_full+ ":</p>\n<ul>")
 		    if filename.startswith("arch/x86/"):
 		        favorite_prompt = descr
@@ -112,34 +114,35 @@ def generate_config_pages(templdir, webdir):
 		    favorite_prompt = descr
 		ver = ver_str(versions)
 		versions_strings.append(ver)
-	        text += (" <li>prompt: " +descr+ "</li>\n" +
+	        txt += (" <li>prompt: " +descr+ "</li>\n" +
                          " <li>type: "   +typ+ "</li>\n" +
                          " <li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
                          " <li>defined in " + url_filename(filename) + "</li>\n" +
                          " <li>found in Linux kernels: " +ver+ "</li>\n" +
 			 modules + "</ul>\n")
 	        if len(rows) > 1:
-		    text += "\n<h3>Help text</h3>\n<p>"
+		    txt += "\n<h3>Help text</h3>\n<p>"
 	        else:
-		    text += "\n<h2>Help text</h2>\n<p>"
-	        text += prepare_help(helptext) + "</p>\n"
+		    txt += "\n<h2>Help text</h2>\n<p>"
+	        text2.append(txt + prepare_help(helptext) + "</p>\n")
 	
-	    pageitems['general'] = text + "\n"
+	    text2.sort()
+	    pageitems['general'] = text + "".join(text2)
 	    if favorite_prompt:
-	        pageitems['prompt'] = config_full+ ": " +favorite_prompt
+	        pageitems['title'] = config_full+ ": " + favorite_prompt
 	    else:
 	        v = 0
 	        for descr, vals in saved.iteritems():
 	            if vals > v:
 		        favorite_prompt = descr
 		if favorite_prompt:
-	            pageitems['prompt'] = config_full+ ": " +favorite_prompt
+	            pageitems['title'] = config_full+ ": " + favorite_prompt
 		else:
-		    pageitems['prompt'] = config_full
+		    pageitems['title'] = config_full
 	else:
 	    pageitems['general'] = ("<p>The Linux kernel configuration item <code>" +config_full+ "</code>: \n"+
 				    "<br />error: definition not found!</p>\n\n")
-	    pageitems['prompt'] = config_full
+	    pageitems['title'] = config_full
 
 	#------
 	# start of systems and sources
@@ -260,7 +263,7 @@ def generate_config_pages(templdir, webdir):
             if lines:
                 lines.sort()
                 systems.append(('USB', '<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>', lines))
-                #sources.append('The <a href="http://www.linux-usb.org/usb-ids.html">Linux USB ID Repository</a>.')
+                sources.append('The <a href="http://www.linux-usb.org/usb-ids.html">Linux USB ID Repository</a>.')
 
         #------
         # EISA
@@ -279,7 +282,7 @@ def generate_config_pages(templdir, webdir):
             if lines:
                 lines.sort()
                 systems.append(('EISA', '<p>Numeric ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>', lines))
-                sources.append('The <a href="http://www.kernel.org/">Linux Kernel</a> (eisa.ids)</a>.')
+                sources.append('The <a href="http://www.kernel.org/">Linux Kernel</a> (eisa.ids).')
 
         #------
         # ZORRO
@@ -291,12 +294,12 @@ def generate_config_pages(templdir, webdir):
                 manufacter, product = key1
                 line = ""
                 if manufacter != "....":
-                    line += "vendor: <code>" + manufacter + "</code>"
+                    line += "manufacter: <code>" + manufacter + "</code>"
                     name = sub_ids.get((manufacter, "...."), None)
                     if name:
                          line += ' ("<i>' + escape(name) + '</i>")'
                     if product != "....":
-                        line += ", device: <code>" + product + "</code>"
+                        line += ", product: <code>" + product + "</code>"
                         name = sub_ids.get((manufacter, product), None)
                         if name:
                             line += ' ("<i>' + escape(name) + '</i>")'
@@ -322,25 +325,29 @@ def generate_config_pages(templdir, webdir):
 	
         lines = []
 	for tname, t in table.iteritems():
+	    if tname == "kconf":
+		continue
 	    line_templ = tables[tname].line_templ
-            for key1, key2, values, versions in rows:
-		row = key1 + key2 + values
-		lines.append(line_templ % row)
+            for key1, key2, values, versions in table[tname]:
+		row = key1 + (url_config(key2[0]), url_filename(key2[1])) + values
+		lines.append("lkddb " + line_templ % row)
 	lines.sort()
-	lkddb = ( '<h3>LKDDb</h3>\n<ul class="dblist">\n<li>'
+	if not lines:
+	    lines.append("(none)")
+	lkddb = ( '<h3>LKDDb</h3>\n<p>Raw data from LKDDb:</p>\n<ul class="dblist">\n<li>'
                    + "</li>\n<li>".join(lines)
                    + '</li>\n</ul>\n')
 	pageitems['lkddb'] = lkddb
 
 	if sources:
 	    # Note: in template we set already few sources
-	    pageitems['sources'] =  "</li>\n<li>".join(sources)
+	    pageitems['sources'] = "</li>\n<li>".join(sources)
 	else:
 	    pageitems['sources'] = ""
 
         if not config_pages.has_key(subindex):
             config_pages[subindex] = []
-        config_pages[subindex].append((config_full, ", ".join(versions_strings)))
+        config_pages[subindex].append([config_full, ", ".join(versions_strings)])
 
 	f = open(os.path.join(webdir, config+".html"), "w")
 	f.write(template_config.substitute(pageitems))
@@ -365,12 +372,12 @@ def generate_index_pages(templdir, webdir):
                 page += ('<li><a href="index_' +idx2+ '.html">'
                           +idx2+ ' index</a> (with ' +str(count[idx2])+ ' items)</li>\n')
             else:
-                page += ('<li><b>' +idx2+ '</b>(with ' +str(count*[idx2])+ ' items)<ul>\n')
-                for conf, ver_str in index[idx2]:
+                page += ('<li><b>' +idx2+ '</b>(with ' +str(count[idx2])+ ' items)<ul>\n')
+		print idx2, "---", config_pages[idx2]
+                for conf, ver_str in config_pages[idx2]:
                     if ver_str:
-                        ver_str = ' (' + ver_str + ')'
-                    page += ('<li><a href="' +conf+ '.html"> CONFIG_'
-                          +conf+ '</a>'+ver_str+'</li>\n')
+                        ver = ' (' + ver_str + ')'
+                    page += ('<li><a href="' +conf+ '.html">CONFIG_' +conf+ '</a>'+ver+'</li>\n')
                 page += '</ul></li>\n'
 
 	pageitems = {
@@ -413,8 +420,8 @@ help_remote_re = re.compile(r"<(http:[^>]*)>")
 
 def prepare_help(helptext):
     helptext = helptext.replace("&", "&amp;")
-    helptext = config_re.sub(r'&&lt; a href="\1.html"&&gt;\1&&lt;/a&&gt;', helptext)
-    helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/linux/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    helptext = config_re.sub(r'&&lt;a href="\1.html"&&gt;\1&&lt;/a&&gt;', helptext)
+    helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = help_remote_re.sub(r'&&lt;a href="\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = helptext.replace("<", "&lt;").replace(">", "&gt;")
     helptext = helptext.replace("&&lt;", "<").replace("&&gt;", ">")
@@ -422,9 +429,15 @@ def prepare_help(helptext):
     return helptext
 
 def url_config(config):
-    return '<a href="' +config+ '.html">CONFIG_' +config+ '</a>'
+    cc = config.split()
+    cc.sort()
+    ret = []
+    for c in cc:
+        ret.append('<a href="' +c[7:]+ '.html">' +c+ '</a>')
+    return " ".join(ret)
+
 def url_filename(filename):
-    return  '<a href="http://lxr.linux.no/linux/' +filename+ '">' +filename+ '</a>'
+    return  '<a href="http://lxr.linux.no/source/' +filename+ '">' +filename+ '</a>'
 
 def prepare_depends(depends):
     if not depends:

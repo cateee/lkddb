@@ -354,7 +354,7 @@ class table(object):
 	self.indices = tuple(indices)
 	self.indices_inv = tuple(indices_inv)
 	if line_fmt:
-	    self.line_templ = name + ( " %s" * self.key1_len + " : %s" * self.values_len + " : %s" * self.key2_len +'\n')
+	    self.line_templ = name + ( " %s" * self.key1_len + " %s" * self.values_len + " : %s" * self.key2_len +'\n')
 	
     def add_fullrow(self, row):
 	# format data
