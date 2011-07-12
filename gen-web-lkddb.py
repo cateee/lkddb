@@ -362,9 +362,9 @@ def generate_index_pages(templdir, webdir):
     year = time.strftime("%Y", time.gmtime())
     indices = config_pages.keys()
     indices.sort()
-    count = dict(zip(indices, [0]*len(indices)))
+    count = {}
     for subindex, config in config_pages.iteritems():
-	count[subindex] += 1
+	count[subindex] = len(config)
     for idx in indices + [""]:   # add also the main index page
 	page = ""
 	for idx2 in indices:
