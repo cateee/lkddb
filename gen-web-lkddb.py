@@ -97,8 +97,9 @@ def generate_config_pages(templdir, webdir):
 	    else:
 	        text = "<p>The Linux kernel configuration item <code>" +config_full+ "</code>:</p>\n<ul>" 
 	    for key1, key2, values, versions in rows:
+		typ, descr = key1
 	        c, filename = key2
-	        typ, descr, depends, helptext = values
+	        depends, helptext = values
 	        descr = descr.strip()
 		txt = ""
 	        if len(rows) > 1:
@@ -208,7 +209,7 @@ def generate_config_pages(templdir, webdir):
             sub_class_ids = ids.get('usb_class_ids', {})
             lines = []
             for key1, key2, values, versions in rows:
-		vendor, product, dev_class, dev_subclass, dev_protocol, if_class, if_subclass, if_protocol = key1
+		vendor, product, dev_class, dev_subclass, dev_protocol, if_class, if_subclass, if_protocol, bcdlow, bcdhi = key1
                 line = ""
                 if vendor != "....":
                     line += "vendor: <code>" +  vendor + "</code>"
@@ -257,7 +258,12 @@ def generate_config_pages(templdir, webdir):
                             name = sub_class_ids.get((if_class, if_subclass, if_protocol), None)
                             if name:
                                 line += ' ("<i>' + escape(name) + '</i>")'
-
+		# USB: bcd
+                if bcdlow != "0000" and bcdhi != "ffff":
+                    if line != "":
+                        line += ", "
+                    line += "bcd min: " +bcdlow+ " (hex), bcd max:" +bcdhi + " (hex)"
+		# USB end
                 if line:
                     lines.append(line)
             if lines:
@@ -373,7 +379,6 @@ def generate_index_pages(templdir, webdir):
                           +idx2+ ' index</a> (with ' +str(count[idx2])+ ' items)</li>\n')
             else:
                 page += ('<li><b>' +idx2+ '</b>(with ' +str(count[idx2])+ ' items)<ul>\n')
-		print idx2, "---", config_pages[idx2]
                 for conf, ver_str in config_pages[idx2]:
                     if ver_str:
                         ver = ' (' + ver_str + ')'

@@ -81,22 +81,18 @@ class ids_file_browser(lkddb.browser):
                      name = " ".join(s[2:])
 		     self.pci_ids_table.add_row((v0, v1, a1, a2, name))
             elif part == "C":
-		print line
                 if line[0] != "\t":
 		    v0 = int(s[1], 0x10)
                     name = " ".join(s[2:])
 		    self.pci_class_ids_table.add_row((v0, -1, -1, name))
-		    print "-->", (v0, -1, -1, name)
                 elif line[1] != "\t":
                     v1 = int(s[0], 0x10)
                     name = " ".join(s[1:])
 		    self.pci_class_ids_table.add_row((v0, v1, -1, name))
-		    print "-->", (v0, v1, -1, name)
                 else:
                     v2 = int(s[0], 0x10)
                     name = " ".join(s[1:])
 		    self.pci_class_ids_table.add_row((v0, v1, v2, name))
-		    print "-->", (v0, v1, v2, name)
 	    else:
 		assert False, "Parser error in pci.ids, with 'part=%s'" % part
 	f.close()

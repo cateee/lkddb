@@ -30,8 +30,8 @@ class kconf_table(lkddb.table):
 
     kind = ("linux-kernel", "special")
 
-    cols = ((0, 'type', fmt.str, "TEXT"),
-           (0, 'descr', fmt.str, "TEXT"),
+    cols = ((1, 'type', fmt.str, "TEXT"),
+           (2, 'descr', fmt.str, "TEXT"),
            (0, 'depends', fmt.str, "TEXT"),
            (0, 'help', fmt.str, "TEXT"),
 	   (-1, 'config', fmt.str, "TEXT"),
