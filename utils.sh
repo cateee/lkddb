@@ -1,7 +1,10 @@
 #!/bin/bash
-
-# few developement utilities:
+#: utils.sh : few utilities for developers
 #
+#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 (or later) for details
+
+
 # 'clean': remove some working files
 # 'tar': create a tar archive ready to be distributed
 # 'print': search for active "print" statements (should be used only for debugging)

@@ -185,7 +185,7 @@ class vio_table(lkddb.table):
     kind = ("linux-kernel", "device")
 
     cols = ((1, 'type', fmt.qstr, "TEXT"),
-           (0, 'compat', fmt.qstr, "TEXT"),
+           (2, 'compat', fmt.qstr, "TEXT"),
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
            (-99, 'version', None, "$kver"))
@@ -223,15 +223,15 @@ class input_table(lkddb.table):
            (2, 'vendor', fmt.m16x, "INTEGER"),
            (3, 'product', fmt.m16x, "INTEGER"),
            (4, 'version', fmt.m16x, "INTEGER"),
-           (0, 'evbit', fmt.m32x, "INTEGER"),    # 0x1f
-           (0, 'keybit', fmt.m32x, "INTEGER"),   # 0x71
-           (0, 'relbit', fmt.m32x, "INTEGER"),   # 0x2ff
-           (0, 'absbit', fmt.m16x, "INTEGER"),   # 0x0f
-           (0, 'mscbit', fmt.m32x, "INTEGER"),   # 0x3f
-           (0, 'ledbit', fmt.m16x, "INTEGER"),   # 0x0f
-           (0, 'sndbit', fmt.m8x, "INTEGER"),    # 0x07
-           (0, 'ffbit', fmt.m32x, "INTEGER"),    # 0x7f
-           (0, 'swbit', fmt.m16x, "INTEGER"),    # 0x0f
+           (5, 'evbit', fmt.m32x, "INTEGER"),    # 0x1f
+           (6, 'keybit', fmt.m32x, "INTEGER"),   # 0x71
+           (7, 'relbit', fmt.m32x, "INTEGER"),   # 0x2ff
+           (8, 'absbit', fmt.m16x, "INTEGER"),   # 0x0f
+           (9, 'mscbit', fmt.m32x, "INTEGER"),   # 0x3f
+           (10, 'ledbit', fmt.m16x, "INTEGER"),   # 0x0f
+           (11, 'sndbit', fmt.m8x, "INTEGER"),    # 0x07
+           (12, 'ffbit', fmt.m32x, "INTEGER"),    # 0x7f
+           (13, 'swbit', fmt.m16x, "INTEGER"),    # 0x0f
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),
            (-99, 'version', None, "$kver"))

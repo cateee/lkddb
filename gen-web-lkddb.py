@@ -333,16 +333,16 @@ def generate_config_pages(templdir, webdir):
 	for tname, t in table.iteritems():
 	    if tname == "kconf":
 		continue
-	    line_templ = tables[tname].line_templ
+	    line_templ = tables[tname].line_templ.rstrip()
             for key1, key2, values, versions in table[tname]:
 		row = key1 + (url_config(key2[0]), url_filename(key2[1])) + values
 		lines.append("lkddb " + line_templ % row)
 	lines.sort()
 	if not lines:
 	    lines.append("(none)")
-	lkddb = ( '<h3>LKDDb</h3>\n<p>Raw data from LKDDb:</p>\n<ul class="dblist">\n<li>'
-                   + "</li>\n<li>".join(lines)
-                   + '</li>\n</ul>\n')
+	lkddb = ( '<h3>LKDDb</h3>\n<p>Raw data from LKDDb:</p>\n<ul class="dblist">\n<li><code>'
+                   + "</code></li>\n<li><code>".join(lines)
+                   + '</code></li>\n</ul>\n')
 	pageitems['lkddb'] = lkddb
 
 	if sources:
@@ -379,7 +379,9 @@ def generate_index_pages(templdir, webdir):
                           +idx2+ ' index</a> (with ' +str(count[idx2])+ ' items)</li>\n')
             else:
                 page += ('<li><b>' +idx2+ '</b>(with ' +str(count[idx2])+ ' items)<ul>\n')
-                for conf, ver_str in config_pages[idx2]:
+		pages_in_idx2 = config_pages[idx2]
+		pages_in_idx2.sort()
+                for conf, ver_str in pages_in_idx2::
                     if ver_str:
                         ver = ' (' + ver_str + ')'
                     page += ('<li><a href="' +conf+ '.html">CONFIG_' +conf+ '</a>'+ver+'</li>\n')

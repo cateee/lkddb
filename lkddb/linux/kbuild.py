@@ -35,7 +35,7 @@ class kver(lkddb.browser):
 kbuild_normalize = re.compile(
 	r"(#.*$|\\\n)", re.MULTILINE)
 kbuild_includes = re.compile(
-	r"^-?include\s+\$[\(\{]srctree[\)\}]/(.*)$")
+	r"^-?include\s+\$[\(\{]srctree[\)\}]/(.*)$", re.MULTILINE)
 kbuild_rules = re.compile(
 	r"^([A-Za-z0-9-_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
 
@@ -69,6 +69,8 @@ class makefiles(lkddb.browser):
                     for arch in os.listdir("arch/"):
                         mk2 = os.path.join("arch/", arch)
                         self.__parse_kbuild(mk2, set(()), 1)
+		elif subdir.startswith("arch/") and subdir.count("/") == 1:
+		    self.__parse_kbuild(subdir, set(()), 1)
                 else:
                     self.__parse_kbuild(subdir, set(()), 0)
         finally:
@@ -101,29 +103,22 @@ class makefiles(lkddb.browser):
             lkddb.log.log("No Makefile/Kbuild in %s" % subdir)
             return
 
-#	if mk in self.makefiles:
-#	    return
-#	self.makefiles.add(mk)
-#        f = open(mk)
-#        src = kbuild_normalize.sub(" ", f.read())
-#        f.close()
-
 	# includes
 	while(True):
-	    m = kbuild_includes.match(src)
+	    m = kbuild_includes.search(src)
 	    if not m:
 		break
-	    mk2 = s.path.join(subdir, m.group(1))
+	    mk2 = m.group(1)
             if not os.path.isfile(mk2):
 	        lkddb.log.log("parse_kbuild: could not find included file (from %s): %s" %
                                 (subdir, mk2))
-		src[m.start:m.end] = ""
+		src = src[:m.start()] + "\n" + src[m.end():]
 		continue
 	    f = open(mk2)
 	    #print "--open-inc", mk2
-	    src2 = build_normalize.sub(" ", f.read())
+	    src2 = kbuild_normalize.sub(" ", f.read())
 	    f.close()
-	    src[m.start:m.end] = src2
+	    src = src[:m.start()] + "\n" + src2 + "\n" + src[m.end():]
 
         if main == 1:
             base_subdir = ""
@@ -397,7 +392,7 @@ class kconfigs(lkddb.browser):
         config = "CONFIG_" + config
         if depends:
             if len(depends) > 1:
-                depends = '(' +   ")  &&  (".join(depends)  + ')'
+                depends = "(" +   ")  &&  (".join(depends)  + ")"
             else:
                 depends = depends[0]
         else:

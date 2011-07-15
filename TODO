@@ -1,3 +1,11 @@
+#!/bin/vi
+#: TODO : TO DO list
+#
+#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 (or later) for details
+#  or distributable with any GNU Documentation Public License 
+
+
 handle OR
   core-$(CONFIG_IA64_DIG)         += arch/ia64/dig/
   core-$(CONFIG_IA64_DIG_VTD)     += arch/ia64/dig/
@@ -16,4 +24,7 @@ handle old [pre 2.6] kbuild (both make and config]
 check the version code: filter unneded series (<0) on consolidating 
 
 check header of our files and check license (v2 or later), copyright
+
+check of:
+    e.g. drivers/net/fec_mpc52xx.c  two structures (one matchtable)
 
