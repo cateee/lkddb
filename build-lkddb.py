@@ -1,21 +1,15 @@
 #!/usr/bin/python
 #: build-lkddb.py : hardware database generator from linux kernel sources
 #
-#  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import sys
 import optparse
-import os
 import os.path
-import subprocess
-import fnmatch
-import glob
 
 import lkddb
 import lkddb.log
 import lkddb.linux
-import lkddb.tables
 
 
 def make(options, kerneldir, dirs):
@@ -67,7 +61,7 @@ if __name__ == "__main__":
                       help="FILE to put log messages (default to stderr)", metavar="FILE")
     parser.add_option("-k", "--versioned",   dest="versioned",
                       action="store_const", const=True,
-                      help="use versioned files (log and db)")
+                      help="append version to filenames (log and db)")
     (options, args) = parser.parse_args()
 
     if len(args) < 1:

@@ -14,28 +14,59 @@
 
 set -e
 
+function copy_to_dist() {
+    dest="dist/lkddb-$1"
+    ! [ -d dist.old ] || rm -fR dist.old
+    ! [ -d dist ] || mv dist dist.old
+    mkdir dist "$dest"
+
+    for dir in lkddb lkddb/tables lkddb/linux lkddb/ids ; do
+        mkdir  "$dest/$dir"
+        cp -p "$dir"/*py "$dest/$dir/"
+    done
+    cp -p lkddb/DESIGN "$dest/lkddb/"
+
+    mkdir "$dest/templates"
+    cp -p templates/*.html "$dest/templates/"
+
+    cp *.py *.sh Makefile Manifest TODO "$dest/"
+
+    mkdir "$dest/web-out"
+
+    find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'lkddb-*' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name '*.tmp' -print \) > dist/ls.orig
+    cd dist/lkddb-20* ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log'  \! -name '*.tmp' -print \) > ../../dist/ls.dist ; cd ../..
+    if diff --unified=0 dist/ls.orig dist/ls.dist ; then
+        true
+    else
+        exit 1
+    fi
+}
+
+
+function copy_to_dist-web() {
+    mkdir dist/web
+    cp -p web-out/*.html dist/web/
+}
+
+
 case "$1" in
 
     'clean' )   find . -name '*.pyc' -delete
 		rm -Rf a b d
     ;;
 
-    'tar' )     $0 clean
-		(cd .. ;
-		 tar cf lkddb-`date --rfc-3339=date`.tar --exclude-vcs --exclude='*.list' --exclude='*.data' --exclude='*.log' --exclude="*.ids" --exclude="web-out" lkddb ;
-		 gzip -9 lkddb-`date --rfc-3339=date`.tar)
+    'tar' )     date="$(date --rfc-3339=date)"
+		copy_to_dist "$date"
+		cd dist
+		tar cf ../../lkddb-"$date".tar lkddb-"$date"
+		gzip -9 ../../lkddb-"$date".tar
+		cd ..
     ;;
 
     'print' )   find . -name '*.py' | xargs grep '[^#.]print'
     ;;
 
     'todo' )	find . -name '*.py' | xargs grep -Er '([#?!]{3,}|[^.]print)' *.py
-    ;;
-
-    'diff' )
-cat "$2" | cut --complement -f 1 | sed 's/::/ /g' | tr '\t' ' ' | sed 's/   */ /g' | sed 's/i2c_snd/i2c-snd/' | sed 's/^\(usb .... ....\) \(..\)\(..\)\(..\) \(..\)\(..\)\(..\) \(.*\)$/\1 \2 \3 \4 \5 \6 \7 \8/p' | sed 's/^\(input .*\)ff ff ff ff\(.*\)$/\1.. .. .. ..\2/g' | sed 's/^\(input .*\)ffff\(.*\)$/\1....\2/g' | sed 's/^\(input .*\)ff\(.*\)$/\1..\2/g' | sed 's/^\(input .*\)ff\(.*\)$/\1..\2/g' | sed 's/^\(input .*\)ff\(.*\)$/\1..\2/g' | sed 's/^sbb /ssb /' | sed 's/^\(pnp "[^"]*"\) \(.*\)$/\1 "" "" "" "" "" "" "" "" \2/' | sed 's/^pnp_card /pnp /' | sort | uniq > a
-cat "$3" | sed 's/   */ /g' | sort | uniq > b
-diff -u a b > d
     ;;
 
 esac
