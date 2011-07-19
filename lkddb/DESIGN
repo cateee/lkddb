@@ -1,3 +1,10 @@
+#!/bin/vi
+#: DESIGN : Documentation of internal data structure and flow
+#
+#  Copyright (c) 2010-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 (or later) for details
+#  or distributable with any GNU Documentation Public License 
+
 The idea of data flow:
 
 'tree -> browser -> scanner [-> subscanner] -> table'

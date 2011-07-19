@@ -1,7 +1,8 @@
+#!/usr/bin/python
 #: lkddb/linux/__init__.py : scanners for Linux kernels
 #
 #  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  This is free software, see GNU General Public License v2 (or later) for details
 
 import os
 import subprocess

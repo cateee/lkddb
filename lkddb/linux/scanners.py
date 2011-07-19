@@ -1,11 +1,8 @@
-#: lkddb/parser.py : hardware This modules vaguely simulate a C preprocessor
-#
-# It is not a good preprocessor, but it is enough for the
-# most uses: Usually preprocessors hacks are done for code
-# and not data.
+#!/usr/bin/python
+#: lkddb/linux/scanners.py : scanners for Linux kernel
 #
 # Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
-# This is free software, distributed with the GPL version 2
+# This is free software, see GNU General Public License v2 (or later) for details
 
 import re
 

@@ -1,8 +1,8 @@
 #!/usr/bin/python
-#:  devicetables.py : device tables template for source scanning and reporting
+#: lkddb/tables/linux_others.py : tables for miscelaneous Linux kernel structures
 #
-#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  This is free software, see GNU General Public License v2 (or later) for details
 
 import lkddb
 from lkddb import fmt

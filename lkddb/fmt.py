@@ -1,8 +1,8 @@
 #!/usr/bin/python
-#:  devicetables.py : device tables template for source scanning and reporting
+#: fmt.py : utilities to format string and masks
 #
 #  Copyright (c) 2009  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  This is free software, see GNU General Public License v2 (or later) for details
 
 
 target = ('text', 'web', 'database') 

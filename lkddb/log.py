@@ -1,8 +1,8 @@
 #!/usr/bin/python
-#:  lkddb/log.py : log utilities for lkddb
+#: lkddb/log.py : log utilities for lkddb
 #
 #  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  This is free software, see GNU General Public License v2 (or later) for details
 
 import sys
 import traceback

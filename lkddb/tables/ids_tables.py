@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#:  devicetables.py : device tables template for source scanning and reporting
+#: lkddb/tables/ids_tables.py : tables for ids files
 #
 #  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details

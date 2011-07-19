@@ -23,8 +23,9 @@ all: Manifest lkddb web-out/index.html
 
 # --- generic definitions ---
 
-datafiles = lkddb-[23].[0-9].[0-9].data lkddb-[23].[1-9][0-9].[0-9].data lkddb-[23].[1-9][0-9].[0-9][0-9].data
-sources = *.py */*.py */*/*.py templates/*.html *.sh Makefile TODO lkddb/DESIGN
+datafiles ?= lkddb-[23].*.data
+my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html *.sh Makefile TODO lkddb/DESIGN
+all_sources = ${my_sources} GPL-2 GPL-3
 
 
 # --- clean targets ---
@@ -76,9 +77,12 @@ ids.data: pci.ids usb.ids eisa.ids zorro.ids
 tar: Manifest
 	./utils.sh tar
 
-Manifest: ${sources} Makefile utils.sh
-	echo Manifest : "Manifest file" > Manifest ; \
-	for f in `find -name '*.py'` Makefile utils.sh ; do \
+Manifest: ${all_sources}
+	: > Manifest ; \
+	echo "GPL-2 : GNU General Public License, version 2" >> Manifest ; \
+	echo "GPL-3 : GNU General Public License, version 3" >> Manifest ; \
+	echo "Manifest : Manifest file" >> Manifest ; \
+	for f in ${sort ${wildcard ${my_sources}}} ; do \
 	    echo $$f :  `head -3 $$f | sed -ne 's/^#:[^:]*:[ ]*\(.*\)$$/\1/p' -` >> Manifest ; \
 	done ; \
 	echo 

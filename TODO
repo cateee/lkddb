@@ -28,3 +28,6 @@ check header of our files and check license (v2 or later), copyright
 check of:
     e.g. drivers/net/fec_mpc52xx.c  two structures (one matchtable)
 
+add tests in various modules
+
+finish distribution procedure

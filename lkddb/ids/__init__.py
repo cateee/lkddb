@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #: lkddb/ids/__init__.py : scanners for ids files
 #
 #  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>

@@ -1,7 +1,8 @@
-#: lkddb/linux/version.py : sources reader for Linux kernels
+#!/usr/bin/python
+#: lkddb/tables/__init__.py : register all tables
 #
 #  Copyright (c) 2009  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 for details
+#  This is free software, see GNU General Public License v2 (or later) for details
 
 
 def register_linux_tables(tree):

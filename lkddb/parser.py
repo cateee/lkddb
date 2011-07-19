@@ -1,11 +1,13 @@
-#: lkddb/parser.py : hardware This modules vaguely simulate a C preprocessor
+#!/usr/bin/python
+#: lkddb/parser.py : this modules vaguely simulate a C preprocessor
 #
+# Copyright (c) 2007 by Giacomo A. Catenazzi <cate@cateee.net>
+# This is free software, see GNU General Public License v2 (or later) for details
+#
+
 # It is not a good preprocessor, but it is enough for the
 # most uses: Usually preprocessors hacks are done for code
 # and not data.
-#
-# Copyright (c) 2007 by Giacomo A. Catenazzi <cate@cateee.net>
-# This is free software, distributed with the GPL version 2
 
 
 # the file is divided in:

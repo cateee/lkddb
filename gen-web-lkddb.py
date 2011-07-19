@@ -4,9 +4,7 @@
 #  Copyright (c) 2007,2008,2010,2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import sys
 import optparse
-import os
 import os.path
 import re
 import string
