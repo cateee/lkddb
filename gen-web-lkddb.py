@@ -365,29 +365,33 @@ def generate_index_pages(templdir, webdir):
     count = {}
     for subindex, config in config_pages.iteritems():
 	count[subindex] = len(config)
-    for idx in indices + [""]:   # add also the main index page
+    for idx in indices + ["main"]:   # add also the main index page
 	page = ""
 	for idx2 in indices:
             if idx != idx2:
                 page += ('<li><a href="index_' +idx2+ '.html">'
-                          +idx2+ ' index</a> (with ' +str(count[idx2])+ ' items)</li>\n')
+                          +idx2+ ' index</a> (with ' +str(count[idx2])+ ' configuration items)</li>\n')
             else:
-                page += ('<li><b>' +idx2+ '</b>(with ' +str(count[idx2])+ ' items)<ul>\n')
+                page += ('<li><b>' +idx2+ '</b> (with ' +str(count[idx2])+ ' configuration items)<ul>\n')
 		pages_in_idx2 = config_pages[idx2]
 		pages_in_idx2.sort()
                 for conf, ver_str in pages_in_idx2:
                     if ver_str:
-                        ver = ' (' + ver_str + ')'
+                        ver = ' (<small>' + sort_ver_str(ver_str) + '</small>)'
                     page += ('<li><a href="' +conf+ '.html">CONFIG_' +conf+ '</a>'+ver+'</li>\n')
                 page += '</ul></li>\n'
 
+        if idx == "main":
+            key = idx
+        else:
+            key = "'" + idx + "'"
 	pageitems = {
 	    'year': year,
 	    'page': page,
-	    'key': idx,
+	    'key': key,
         }
 
-	if idx == "":
+	if idx == "main":
 	    fn = os.path.join(webdir, "index.html")
 	else:
 	    fn = os.path.join(webdir, "index_" + idx + ".html")
@@ -489,9 +493,44 @@ def kernel_interval(min_ver, max_ver):
     return ret, ret2
 
 def ver_str(versions):
+    versions = list(versions)
+    versions.sort()
     vers = map(lambda v: v[2], versions)
-    vers.sort()
     return ", ".join(vers)
+
+def sort_ver_str(versions):
+    vers = tuple(set(versions.split(", ")))
+    vs = map(lambda v: tuple(map(int, v.split("."))), vers)
+    vs.sort()
+    prev = (0,0,0)
+    start = None
+    ret = []
+    for v in vs + [(-1,-1,-1)]:
+        if ( (v[0] < 3 and  v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
+             (v[0] >= 3 and  v[0] == prev[0] and v[1] == prev[1]+1) ):
+            if start == None:
+                # prev is the first of the current serie
+                start = prev
+        else:
+            if start != None:
+                # start to prev are a serie
+                ret.append(".".join(map(str, start)) + "&ndash;" + ".".join(map(str, prev)))
+                start = None
+            else:
+                ret.append(".".join(map(str, prev)))
+        prev = v
+    return ", ".join(ret[1:])
+
+assert sort_ver_str("2.6.0") == "2.6.0"
+assert sort_ver_str("2.6.0, 2.6.1") == "2.6.0&ndash;2.6.1"
+assert sort_ver_str("2.6.0, 2.6.2") == "2.6.0, 2.6.2"
+assert sort_ver_str("2.6.0, 2.6.2, 2.6.3, 2.6.11") == "2.6.0, 2.6.2&ndash;2.6.3, 2.6.11"
+assert sort_ver_str("2.6.0, 2.6.2, 2.6.3, 2.6.11, 2.6.12") == "2.6.0, 2.6.2&ndash;2.6.3, 2.6.11&ndash;2.6.12"
+assert sort_ver_str("3.0") == "3.0"
+assert sort_ver_str("3.0, 3.1, 3.2") == "3.0&ndash;3.2"
+assert sort_ver_str("2.6.0, 3.2") == "2.6.0, 3.2"
+assert sort_ver_str("2.6.0, 2.6.2, 2.6.3, 2.6.11, 2.6.12, 3.0, 3.1") == "2.6.0, 2.6.2&ndash;2.6.3, 2.6.11&ndash;2.6.12, 3.0&ndash;3.1"
+
 
 
 def make(options, templdir, webdir):

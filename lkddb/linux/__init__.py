@@ -134,8 +134,8 @@ class linux_kernel(lkddb.tree):
 	else:
 	    assert False, "Unknow structure of EXTRAVERSION (%s) in kernel version" % version_dict["EXTRAVERSION"]
 
-	if os.path.exists("scripts/setlocalversion"):
-	    f = open("scripts/setlocalversion")
+	if os.path.exists(os.path.join(self.kerneldir, "scripts/setlocalversion")):
+	    f = open(os.path.join(self.kerneldir, "scripts/setlocalversion"))
 	    bang = f.readline()
 	    if bang.startswith("#!"):
 		bang = bang[2:].strip()

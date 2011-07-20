@@ -31,7 +31,7 @@ all_sources = ${my_sources} GPL-2 GPL-3
 # --- clean targets ---
 
 clean:
-	find . -name '*.pyc' -delete
+	-find . -name '*.pyc' -delete
 	-rm -f Manifest *.ids *.ids.bz2 *.list *.data *.log
 	-rm -f web-out/*.html
 
@@ -42,12 +42,12 @@ lkddb:
 	time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux-2.6/
 
 merge: lkddb-all.data
-lkddb-all.data: ids.data ${datafiles}
+lkddb-all.data: ids.data ${datafiles} merge.py
 	[ ! -f lkddb-all.data ] || mv lkddb-all.data lkddb-all.data.tmp
 	time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp ${datafiles} ids.data
 
 web: web-out/index.html
-web-out/index.html: lkddb-all.data templates/*.html
+web-out/index.html: lkddb-all.data templates/*.html gen-web-lkddb.py
 	time python ./gen-web-lkddb.py -v -l web.log -f lkddb-all.data templates/ web-out/
 
 
@@ -67,7 +67,7 @@ check-zorro.ids: ${kdir}/drivers/zorro/zorro.ids
 check-ids: check-pci.ids check-usb.ids check-eisa.ids check-zorro.ids
 
 ids.data: pci.ids usb.ids eisa.ids zorro.ids
-	if ! [ -f pci.ids -a -f usb.ids -a -f eisa.ids -a -f zorro.ids ] ; then \
+	@if ! [ -f pci.ids -a -f usb.ids -a -f eisa.ids -a -f zorro.ids ] ; then \
 	    echo "Missing one ids file."; echo "Run 'make check-ids' to download the needed files"; exit 1; \
 	fi
 	time python ./ids_importer.py -v -b ids -l ids.log  pci.ids usb.ids eisa.ids zorro.ids
@@ -79,7 +79,7 @@ tar: Manifest
 	./utils/utils.sh tar
 
 Manifest: ${all_sources}
-	: > Manifest ; \
+	@: > Manifest ; \
 	echo "GPL-2 : GNU General Public License, version 2" >> Manifest ; \
 	echo "GPL-3 : GNU General Public License, version 3" >> Manifest ; \
 	echo "Manifest : Manifest file" >> Manifest ; \

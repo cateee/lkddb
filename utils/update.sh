@@ -1,5 +1,5 @@
 #!/bin/bash
-#: update.sh : update kernel and data
+#: utils/update.sh : update kernel and data
 #
 #  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
@@ -10,51 +10,32 @@ set -e
 
 kdir=/home/cate/kernel/linux-2.6/
 
-datadir="$HOME/lkddb"
-DESTDIR="$HOME/cateee.net"
-
-changeddir="$datadir/changes/changed"
-diffdir="$datadir/changes/diff"
-newdir="$datadir/changes/new"
-
-destsrc="$HOME/sources"
-destweb="$HOME/cateee.net/lkddb/web-lkddb"
-
-
-# copy_changed filename orig dest
-copy_changed() {
-    if [ -f "$3/$1" ] ; then
-        if ! cmp -s "$2/$1" "$3/$1" ; then
-            cp -p "$3/$1" "$changeddir"
-            diff -u "$3/$1" "$2/$1" > "$diffdir/$1.diff"
-            cp -p "$2/$1" "$3/" ;  echo -n "$1 "
-        fi
-    else
-        cp -p "$2/$1" "$newdir"
-        cp -p "$2/$1" "$3/" ;  echo -n "!$1 "
-    fi
-}
-
 
 # --- update sources
 
-( cd "$kdir" ; git pull --ff-only --no-progress ; git checkout )
+(   cd "$kdir"
+    git pull --ff-only --no-progress
+    git checkout
+    [ -d include/config/ ] || mkdir include/config/
+    [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
+)
 make check-ids
 
 changed=""
 
-
 # --- update data files (when necesary)
 
-new=`check-kernel-version.py "$kdir" .`
-if $? ; then
+new=`python utils/check-kernel-version.py "$kdir" . || true`
+if [ -n "$new" ] ; then
+    echo "=== generating new datafile $new."
     time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux-2.6/
     changed="$changed $new"
 fi
 
-cp -p ids.data ids.data.tmp
+[ ! -f ids.data ] || cp -p ids.data ids.data.tmp
 make ids.data
 if ! cmp -s ids.data ids.data.tmp ; then
+    echo "=== a new ids.data was just generated."
     changed="$changed ids.data"
 fi
 
@@ -62,27 +43,16 @@ fi
 # --- merge and build web pages (when necesary)
 
 if [[ "$changed" =~ "data" ]] ; then
+    echo "=== merging lkddb-all.data with: $changed"
+    if [ ! -f lkddb-all.data ]; then
+	echo "$0 requires an existing lkddb-all.data!" >&2
+	echo "please merge some data files before to call $0."
+	echo $PWD
+	exit 0
+    fi
     mv lkddb-all.data lkddb-all.data.tmp
-    time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp ${new} ids.data
-
-    time python ./gen-web-lkddb.py -v -l web.log -f lkddb-all.data templates/ web-out/
-
-
-# --- distribute the files
-    ( cd web-lkddb
-      for f in *.html ; do
-          copy_changed "$f" "$datadir/web-out" "$destweb"
-      done
-      echo	
-    )
+    time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp $changed ids.data
 fi
 
-
-# --- sources
-cd dist ;
-f=`echo lkddb-20??-??-??.tar.gz`
-cd ..
-copy_changed "$f" "dist" "$destsrc
-
-( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
+sh utils/rebuild-web.sh
 
