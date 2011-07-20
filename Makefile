@@ -43,7 +43,7 @@ lkddb:
 
 merge: lkddb-all.data
 lkddb-all.data: ids.data ${datafiles}
-	mv lkddb-all.data lkddb-all.data.tmp
+	[ ! -f lkddb-all.data ] || mv lkddb-all.data lkddb-all.data.tmp
 	time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp ${datafiles} ids.data
 
 web: web-out/index.html

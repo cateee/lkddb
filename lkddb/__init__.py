@@ -363,8 +363,8 @@ class table(object):
             for f, v in zip(self.line_fmt, self.pre_row_fmt(row)):
                 r.append(f(v))
         except AssertionError:
-            lkddb.log.log("assertion in table %s in fmt %s vith value %s [row:%s]" %
-                (self.name, f, v, row) )
+            lkddb.log.log("assertion in table %s in row %s" %
+                (self.name, row) )
 	    return
 	# order data
 	rr = tuple(map(lambda i: r[self.indices_inv[i]], range(self.line_len)))

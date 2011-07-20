@@ -15,11 +15,10 @@ DESTDIR="$HOME/cateee.net"
 
 changeddir="$datadir/changes/changed"
 diffdir="$datadir/changes/diff"
-newdir="datadir/changes/new"
+newdir="$datadir/changes/new"
 
-DESTSRC="$DESTDIR/sources"
+destsrc="$HOME/sources"
 destweb="$HOME/cateee.net/lkddb/web-lkddb"
-
 
 
 # copy_changed filename orig dest
@@ -68,6 +67,7 @@ if [[ "$changed" =~ "data" ]] ; then
 
     time python ./gen-web-lkddb.py -v -l web.log -f lkddb-all.data templates/ web-out/
 
+
 # --- distribute the files
     ( cd web-lkddb
       for f in *.html ; do
@@ -75,7 +75,14 @@ if [[ "$changed" =~ "data" ]] ; then
       done
       echo	
     )
-
-    ( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
 fi
+
+
+# --- sources
+cd dist ;
+f=`echo lkddb-20??-??-??.tar.gz`
+cd ..
+copy_changed "$f" "dist" "$destsrc
+
+( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-#: utils.sh : few utilities for developers
+#: utils/utils.sh : few utilities for developers
 #
 #  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
@@ -52,7 +52,7 @@ case "$1" in
     		mkdir dist
 		copy_to_dist "$date"
 		if [ -d dist.old/lkddb-20??-??-?? ] ; then
-		    cd dist.old ; prev=`ls -d lkddb-20??-??-??` ; cd ..
+		    cd dist.old ; prev=`echo lkddb-20??-??-??` ; cd ..
 		else
 		    prev="lkddb-0000-00-00"
 		fi
@@ -62,18 +62,18 @@ case "$1" in
 		    mv dist.old dist
 		else
 		    cd dist
-		    tar cf ../../lkddb-"$date".tar lkddb-"$date"
-		    gzip -9 ../../lkddb-"$date".tar
+		    tar cf lkddb-"$date".tar lkddb-"$date"
+		    gzip -9 lkddb-"$date".tar
 		    cd ..
 		fi
     ;;
     'web' )	copy_to_dist-web
     ;;
 
-    'print' )   find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o -name '*.py' | xargs grep '[^#.]print'
+    'print' )   find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o -name '*.py' -print | xargs grep '[^#.]print'
     ;;
 
-    'todo' )	find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o  -name '*.py' | xargs grep -Er '([#?!]{3,}|[^.]print)' *.py
+    'todo' )	find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o -name '*.py' -print | xargs grep -Er '([#?!]{3,}|[^.]print)' *.py
     ;;
 
 esac

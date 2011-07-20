@@ -1,10 +1,11 @@
 #!/usr/bin/python
 #: lkddb/linux/__init__.py : scanners for Linux kernels
 #
-#  Copyright (c) 2000,2001,2007-2010  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import os
+import os.path
 import subprocess
 
 import lkddb
@@ -80,7 +81,6 @@ class linux_kernel(lkddb.tree):
             self.retrive_version()
 	lkddb.tables.register_linux_tables(self)
 	if task == lkddb.TASK_BUILD:
-	    self.retrive_version()
 	    register_linux_browsers(self)
 
     def retrive_version(self):
@@ -134,9 +134,16 @@ class linux_kernel(lkddb.tree):
 	else:
 	    assert False, "Unknow structure of EXTRAVERSION (%s) in kernel version" % version_dict["EXTRAVERSION"]
 
-        version_dict['local_ver'] = subprocess.Popen("/bin/sh scripts/setlocalversion",
-                shell=True, cwd=self.kerneldir,
-                stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
+	if os.path.exists("scripts/setlocalversion"):
+	    f = open("scripts/setlocalversion")
+	    bang = f.readline()
+	    if bang.startswith("#!"):
+		bang = bang[2:].strip()
+		version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion",
+                    shell=True, cwd=self.kerneldir,
+                    stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
+	else:
+	    version_dict['local_ver'] = ""
 	if not version_dict['local_ver']:
 	    version_dict['numeric3'] = 0
 	elif version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and version_dict['local_ver'][1:6].isdigit():

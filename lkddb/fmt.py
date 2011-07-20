@@ -4,6 +4,7 @@
 #  Copyright (c) 2009  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
+import lkddb.log
 
 target = ('text', 'web', 'database') 
 
@@ -55,8 +56,8 @@ def mask_24m(v, m):
         elif m[i] == "f" or m[i] == ".":
             ret += v[i]
         else:
-            print "Unknow mask", v, m, len
-            raise "KACerror"
+            lkddb.log.log("Unknow mask: v:%s, m:%s, len:%s" % (v, m, len))
+            assert False, "Unknow mask: %s, %s, %s" % (v, m, len)
     return ret
 
 # simple

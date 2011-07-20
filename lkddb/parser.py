@@ -67,7 +67,6 @@ strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]
 
 def parse_header(src, filename, discard_source):
     "parse a single header file for #define, without recurse into other includes"
-    #print "parsing....", filename
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
     dir, ignore = filename.rsplit("/", 1)
@@ -229,8 +228,6 @@ def expand_token(block, start, end, filename):
             elif c == ","  and  level == 1:
                 args.append(block[pstart:i].strip())
                 pstart = i+1
-           #else:
-               #print "unkow"
         if pstart:
             return (pend, expand_macro(tok, df, args, filename) + " ")
     df = search_define(tok, filename, defines_pln)
@@ -254,8 +251,8 @@ def expand_macro(tok, def_fnc, args, filename):
     def_args = def_args.split(",")
     if len(def_args) != len(args):
         # I don't hope to parse debugging or "..." macros
-        print "Wrong lenghts", len(def_args), len(args), def_args, args, tok, def_fnc
-        raise "WrongLen"
+        lkddb.log.log("Wrong lenghts: %s!=%s, %s, %s, %s, %s" % (len(def_args), len(args), def_args, args, tok, def_fnc))
+        assert "WrongLen"
     
     for i in range(len(args)):
         da = def_args[i].strip()

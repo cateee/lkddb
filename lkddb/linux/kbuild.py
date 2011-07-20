@@ -82,7 +82,6 @@ class makefiles(lkddb.browser):
 	# main = 0: normal case -> path relatives
         # main = 1: arch/xxx/Makefile -> path from root
         # main = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
-	#print "----", subdir
         try:
             files = os.listdir(subdir)
         except OSError:
@@ -90,14 +89,12 @@ class makefiles(lkddb.browser):
             return
         if main != 1  and  "Kbuild" in files:
 	    f = open(os.path.join(subdir, 'Kbuild'))
-	    #print "--open", os.path.join(subdir, 'Kbuild')
 	    src = kbuild_normalize.sub(" ", f.read())
 	    f.close()
 	else:
 	    src = ""
         if main != 2  and  "Makefile" in files:
             f = open(os.path.join(subdir, 'Makefile'))
-	    #print "--open", os.path.join(subdir, 'Makefile')
             src += '\n' + kbuild_normalize.sub(" ", f.read())
             f.close()
         if not src:
@@ -116,7 +113,6 @@ class makefiles(lkddb.browser):
 		src = src[:m.start()] + "\n" + src[m.end():]
 		continue
 	    f = open(mk2)
-	    #print "--open-inc", mk2
 	    src2 = kbuild_normalize.sub(" ", f.read())
 	    f.close()
 	    src = src[:m.start()] + "\n" + src2 + "\n" + src[m.end():]
@@ -133,7 +129,6 @@ class makefiles(lkddb.browser):
 
 		
     def __parse_kbuild_alias(self, subdir, rule, dep, files):
-	#print "__parse_kbuild_alias", subdir, rule, dep, ":", files
         for f in files.split():
             fn = os.path.normpath(os.path.join(subdir, f))
             if f[-2:] == ".o":
@@ -147,7 +142,6 @@ class makefiles(lkddb.browser):
 
 
     def __parse_kbuild_lines(self, subdir, deps, src):
-	#print "__parse_kbuild_lines", subdir, deps, src
 
 	# rule-$(dep): files
         for (rule, dep, files) in kbuild_rules.findall(src):
@@ -189,7 +183,6 @@ class makefiles(lkddb.browser):
 		fn = os.path.join(subdir, f)
                 if f[-1] == "/":
 		    fn = os.path.join(subdir, f[:-1])
-		    #print "====", fn, d, "=", rule, dep, files
                     self.__parse_kbuild(fn, d, 0)
                 elif f[-2:] == ".o":
                     fc = fn[:-2]+".c"
@@ -402,16 +395,11 @@ class kconfigs(lkddb.browser):
 
         if type == "tristate"  or  type == "def_tristate":
 	    mod = self.makefiles.modules.get(config, None)
-            #if config == "CONFIG_3C359": ############################
-                #print "CONFIG_3C359", type, config, mod
-
             if mod:
 		if mod.find(" ") > -1:
 		    lkddb.log.log("warning: multiple modules in '%s': '%s" %
 				(config, mod))
                 for name in mod.split():
-		    #if config == "CONFIG_3C359": ############################
-			#print "CONFIG_3C359 name", name
                     if not name.endswith(".o"):
                         if name[-1] == "/":
                             lkddb.log.log(
@@ -421,5 +409,4 @@ class kconfigs(lkddb.browser):
 		    self.module_table.add_row((name[:-2], descr, config, filename))
             else:
                 lkddb.log.log("kconfig: could not find the module obj of %s from %s" % (config, filename))
-
 

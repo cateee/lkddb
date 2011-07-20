@@ -22,7 +22,6 @@ config_pages = {}  # 'A' -> [ ('CONFIG_ATM', '2.6.25, 2.6.26'), ('CONFIG_ABC', .
 
 def assemble_config_data(storage):
     for tname, textra in storage.available_tables.iteritems():
-#	print "doing ", tname, textra[1].name, "in", textra[0]
 	treename = textra[0]
 	t = textra[1]
 	tables[tname] = t
@@ -30,7 +29,6 @@ def assemble_config_data(storage):
             t.kind == ("linux-kernel", "special") and t.name == "kconf"):
 	    for key1, values1 in t.crows.iteritems():
 	        for key2, values2 in values1.iteritems():
-#	   	    print t.name, ">>>", key1, ">>", key2 , "---", values2
 	   	    for config in key2[0].split():
                         if not config.startswith("CONFIG_") or config == "CONFIG_":
                             lkddb.log.log("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
@@ -45,7 +43,6 @@ def assemble_config_data(storage):
 	    ids[t.name] = {}
 	    for key1, values1 in t.crows.iteritems():
 		for key2, values2 in values1.iteritems():
-#		    print t.name, ">>>", key1, ">>", key2 , "---", values2
 		    ids[t.name][key1] = values2[0][0]
 
 
@@ -55,7 +52,6 @@ def generate_config_pages(templdir, webdir):
     f.close()
     year = time.strftime("%Y", time.gmtime())
     for config_full, table in configs.iteritems():
-	# print config_full ####
 	config = config_full[7:]
 	if config == "_UNKNOW__":
 	    continue
@@ -379,7 +375,7 @@ def generate_index_pages(templdir, webdir):
                 page += ('<li><b>' +idx2+ '</b>(with ' +str(count[idx2])+ ' items)<ul>\n')
 		pages_in_idx2 = config_pages[idx2]
 		pages_in_idx2.sort()
-                for conf, ver_str in pages_in_idx2::
+                for conf, ver_str in pages_in_idx2:
                     if ver_str:
                         ver = ' (' + ver_str + ')'
                     page += ('<li><a href="' +conf+ '.html">CONFIG_' +conf+ '</a>'+ver+'</li>\n')
@@ -475,8 +471,6 @@ def str_kern_ver(ver):
 
 def kernel_interval(min_ver, max_ver):
     if min_ver == -1:
-        #print min_ver, max_ver
-        #assert max_ver == -1
         return ("found only in <code>HEAD</code> (i.e. after release %s)" % str_kern_ver(db_max_ver), "HEAD")
     if db_min_ver == min_ver:
         ret = "before %s version" % str_kern_ver(db_min_ver)

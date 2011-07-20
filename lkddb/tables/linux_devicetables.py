@@ -223,14 +223,14 @@ class input_table(lkddb.table):
            (2, 'vendor', fmt.m16x, "INTEGER"),
            (3, 'product', fmt.m16x, "INTEGER"),
            (4, 'version', fmt.m16x, "INTEGER"),
-           (5, 'evbit', fmt.m32x, "INTEGER"),    # 0x1f
-           (6, 'keybit', fmt.m32x, "INTEGER"),   # 0x71
-           (7, 'relbit', fmt.m32x, "INTEGER"),   # 0x2ff
-           (8, 'absbit', fmt.m16x, "INTEGER"),   # 0x0f
-           (9, 'mscbit', fmt.m32x, "INTEGER"),   # 0x3f
+           (5, 'evbit', fmt.m32x, "INTEGER"),     # 0x1f
+           (6, 'keybit', fmt.m32x, "INTEGER"),    # 0x2ff - 0x71
+           (7, 'relbit', fmt.m16x, "INTEGER"),    # 0x0f
+           (8, 'absbit', fmt.m64x, "INTEGER"),    # 0x3f
+           (9, 'mscbit', fmt.m8x, "INTEGER"),    # 0x07
            (10, 'ledbit', fmt.m16x, "INTEGER"),   # 0x0f
            (11, 'sndbit', fmt.m8x, "INTEGER"),    # 0x07
-           (12, 'ffbit', fmt.m32x, "INTEGER"),    # 0x7f
+           (12, 'ffbit', fmt.m64x, "INTEGER"),    # 0x7f
            (13, 'swbit', fmt.m16x, "INTEGER"),    # 0x0f
            (-1, 'deps', fmt.deps, "$deps"),
            (-2, 'filename', fmt.filename, "$filename"),

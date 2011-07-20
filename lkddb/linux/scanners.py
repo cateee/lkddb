@@ -27,6 +27,8 @@ class struct_subscanner(object):
     def finalize(self):
 	self.data = []
         for data, filename, deps in self.raw:
+	    # we store also filename, to have usefull error messages
+	    data['__filename'] = filename
             try:
                 row = self.store(data)
             except:
@@ -130,9 +132,8 @@ def value_expand_tri(val):
               else:
                 res = f
             except:
-                print "val:", val
-                print "match:", cond, "---", t, "----", f
-                raise
+		lkddb.log.log("error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f))
+                assert False, "error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f)
             val = val[:m.start()] + res + val[m.end():]
             m = r.search(val)
     return eval(val)
@@ -153,17 +154,15 @@ def extract_value(field, dictionary):
                 lkddb.log.log("Hmmmm, %s in '%s'" % (field, dictionary))
                 return eval(val[val.find("=")+1:])
             else:
-                print "value():", field, dictionary
-                print "'%s'" % val
-                raise
+		lkddb.log.log("error in extract_value: %s, %s --- '%s'" % (field, dictionary, val))
+                assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
         except NameError:
-            lkddb.log.log("value error: expected number in field %s from %s"
+            lkddb.log.log("error in extract_value: expected number in field %s from %s"
 			% (field, dictionary))
             return -1
         except:
-            print "eval error", field, val, dictionary
-            raise
-
+	    lkddb.log.log("error in extract_value, 2: %s, %s --- '%s'" % (field, dictionary, val))
+	    assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
         try:
             return int(ret)
         except ValueError:
@@ -172,12 +171,12 @@ def extract_value(field, dictionary):
                 return ord(ret)
             else:
                 lkddb.log.log("str_value(): Numeric value of '%s'" % ret)
-                raise
+                assert False, "str_value(): Numeric value of '%s'" % ret
     else:
         return 0
 
 
-char_cast_re = re.compile(r"\(\s*char\s*\*\s*\)\s*", re.DOTALL)
+char_cast_re = re.compile(r"\(\s*(const\s+)?char\s*\*\s*\)\s*", re.DOTALL)
 null_pointer_re = re.compile(r"\(\s*void\s*\*\)\s*0", re.DOTALL)
 field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
 subfield_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)(\.[A-Za-z_0-9]*\s*=\s*.*)$", re.DOTALL)

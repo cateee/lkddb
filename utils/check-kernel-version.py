@@ -43,14 +43,21 @@ def getversion(kerneldir):
         assert(version_dict.has_key("PATCHLEVEL"))
         assert(version_dict.has_key("SUBLEVEL"))
         assert(version_dict.has_key("EXTRAVERSION"))
-        version_dict['local_ver'] = subprocess.Popen("/bin/sh scripts/setlocalversion",
-                shell=True, cwd=self.kerneldir,
-                stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
+        if os.path.exists("scripts/setlocalversion"):
+            f = open("scripts/setlocalversion")
+            bang = f.readline()
+            if bang.startswith("#!"):
+                bang = bang[2:].strip()
+                version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion",
+                    shell=True, cwd=self.kerneldir,
+                    stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
+        else:
+            version_dict['local_ver'] = ""
         fullversion = ( version_dict["VERSION"] + "." + version_dict["PATCHLEVEL"] + "." +
                         version_dict["SUBLEVEL"] +  version_dict["EXTRAVERSION"] + 
                         version_dict['local_ver'] )
         print "Actual kernel has version %s" % fullversion
-
+	return fullversion
 
 
 if __name__ == "__main__":
