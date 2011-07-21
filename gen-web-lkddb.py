@@ -495,19 +495,65 @@ def kernel_interval(min_ver, max_ver):
 def ver_str(versions):
     versions = list(versions)
     versions.sort()
-    vers = map(lambda v: v[2], versions)
-    return ", ".join(vers)
+    if versions[-1][3] < 0:
+        name, ver, verstr, serie = versions[-1]
+        if ((ver[0] & 0xff) > 0) or ver[0] < 0x030000:
+            basestr = str((ver[0] >> 16) & 0xff) + "." + str((ver[0] >> 8) & 0xff) + "." + str(ver[0] & 0xff)
+            if ver[1] < 0:
+                head = [basestr + "-rc+HEAD"]
+            else:
+                head = [basestr + "+HEAD"]
+        else:
+            basestr = str((ver[0] >> 16) & 0xff) + "." + str((ver[0] >> 8) & 0xff)
+            if ver[1] < 0:
+                head = [basestr + "-rc+HEAD"]
+            else:
+                head = [basestr + "+HEAD"]
+    else:
+        head = []
+    vers = map(lambda v: v[2], filter(lambda vv: vv[3]>=0, versions))
+        
+    return ", ".join(vers + head)
+
+assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1)])) == "2.6.5"
+assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                    ("", (0x020606,0,0), "2.6.6", 1)])) == "2.6.5, 2.6.6"
+assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                    ("", (0x020605,0,123), "2.6.5", -1)])) == "2.6.5, 2.6.5+HEAD"
+assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                    ("", (0x020606,-20,123), "2.6.3-rc12-2323", -1)])) == "2.6.5, 2.6.6-rc+HEAD"
+assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                    ("", (0x020606,0,0), "2.6.6", 1),
+                    ("", (0x020606,0,2), "2.6.6+1234", -1),
+                    ("", (0x020607,0,0), "2.6.7", 1),
+                    ("", (0x020608,-10,0), "2.6.8-rc1", -1)
+                   ])) == "2.6.5, 2.6.6, 2.6.7, 2.6.8-rc+HEAD"
+assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                    ("", (0x030000,0,0), "3.0", 1),
+                    ("", (0x030001,0,0), "3.0.1", 1),
+                    ("", (0x030200,0,234), "3.2", -1),
+                   ])) == "2.6.5, 3.0, 3.0.1, 3.2+HEAD"
+
 
 def sort_ver_str(versions):
     vers = tuple(set(versions.split(", ")))
-    vs = map(lambda v: tuple(map(int, v.split("."))), vers)
+    vs1 = map(lambda v: v.split("."), vers)
+    vs = []
+    for v in vs1:
+        ff = []
+        for f in v:
+            if f.isdigit():
+                ff.append(int(f))
+            else:
+                ff.append(f)
+        vs.append(ff)
     vs.sort()
     prev = (0,0,0)
     start = None
     ret = []
     for v in vs + [(-1,-1,-1)]:
-        if ( (v[0] < 3 and  v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
-             (v[0] >= 3 and  v[0] == prev[0] and v[1] == prev[1]+1) ):
+        if ( (v[0] < 3  and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
+             (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1]+1) ):
             if start == None:
                 # prev is the first of the current serie
                 start = prev

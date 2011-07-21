@@ -31,8 +31,40 @@ def make(options, paths):
     else:
         sql = None
     tree.write(data_filename = options.dbfile + ".data",
-                list_filename = options.dbfile + ".list",
-                sql_filename = sql)
+               list_filename = options.dbfile + ".list",
+               sql_filename = sql)
+
+    build_single_ids(options.dbfile + ".list")
+
+
+def build_single_ids(filename):
+    f = open(filename)
+    lists = {'eisa_ids': [], 'pci_class_ids': [], 'pci_ids': [],
+            'usb_class_ids': [], 'usb_ids': [], 'zorro_ids': [] }
+    for line in f:
+        system, data = line.split(None, 1)
+        lists[system].append(line)
+    f.close()
+
+    out = open('eisa.list', 'w')
+    out.writelines(lists['eisa_ids'])
+    out.flush()
+    out.close()
+
+    out = open('pci.list', 'w')
+    out.writelines(lists['pci_ids'] + lists['pci_class_ids'])
+    out.flush()
+    out.close()
+
+    out = open('usb.list', 'w')
+    out.writelines(lists['usb_ids'] + lists['usb_class_ids'])
+    out.flush()
+    out.close()
+
+    out = open('zorro.list', 'w')
+    out.writelines(lists['zorro_ids'])
+    out.flush()
+    out.close()
 
 #
 # main

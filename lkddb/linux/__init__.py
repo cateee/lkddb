@@ -153,12 +153,10 @@ class linux_kernel(lkddb.tree):
 
 	if version_dict['numeric3'] == 0  and  version_dict['extra'] >= 0:
 	    # a x.y.z or x.y.z.w relase
-	    version_dict['isrelease'] = True
             version_dict['serie'] = 1
 	else:
             # not a x.y.z or x.y.z.w release
             version_dict['str'] += version_dict['local_ver']
-	    version_dict['isrelease'] = False
 	    version_dict['serie'] = -1
 	self.version_dict = version_dict
 	self.version = (self.name, (version_dict['numeric'], version_dict['numeric2'], version_dict['numeric3']),

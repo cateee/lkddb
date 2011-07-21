@@ -32,9 +32,12 @@ all_sources = ${my_sources} GPL-2 GPL-3
 
 clean:
 	-find . -name '*.pyc' -delete
-	-rm -f Manifest *.ids *.ids.bz2 *.list *.data *.log
+	-rm -f Manifest *.ids *.ids.bz2 *.list *.data *.log *.tmp
 	-rm -f web-out/*.html
 
+mrproper: clean
+	-rm -f web-out/*
+	-rm -Rf dist dist.old changes
 
 # --- building lists ---
 

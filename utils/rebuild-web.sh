@@ -39,6 +39,13 @@ copy_changed() {
     fi
 }
 
+# copy_and_zip file dest-dir
+copy_and_zip() {
+   cp -p "$1" "$2/$1"
+   bzip2 -kf -9 "$2/$1"
+   gzip -cf -9 "$2/$1" > "$2/$1.gz"
+}
+
 
 # --- build web pages
 
@@ -64,28 +71,32 @@ cd ..
 copy_changed "$f" "dist" "$destsrc/lkddb-sources"
 echo
 
-echo "=== distribute lists ."
+echo "=== distribute lists."
 lastlist="`ls *.list | tail -1`"
+echo "last is $lastlist"
 cat "$lastlist" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > dist/counts
 echo >> dist/counts
 echo "TOTAL: `wc -l < "$lastlist"`" >> dist/counts
 
-cp -p ids.list dist/ids.list
-bzip2 -kf -9 dist/ids.list
-gzip -cf -9 dist/ids.list > dist/ids.list.gz
-
-cp -p "$lastlist" dist/lkddb.list
-bzip2 -kf -9 dist/lkddb.list
-gzip -cf -9 dist/lkddb.list > dist/lkddb.list.gz
+copy_and_zip ids.list dist
+cp "$lastlist" lkddb.list
+copy_and_zip lkddb.list dist
+copy_and_zip eisa.list dist
+copy_and_zip pci.list dist
+copy_and_zip usb.list dist
+copy_and_zip zorro.list dist
 
 cd dist
-for f in ids.list ids.list.bz2 ids.list.gz lkddb.list lkddb.list.bz2 lkddb.list.gz counts ; do
+for f in *.list *.list.bz2 *.list.gz counts "$lastlist"; do
     copy_changed "$f" "." "$destsrc/lkddb"
 done
 echo
 cd ..
+
+echo "=== updating web."
 ( cd ~/cateee.net/lkddb ; make )
 
 echo "sitemap notify disabled until stable web version"
-#( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
+##( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
+( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap ) ##--notify )
 
