@@ -82,7 +82,7 @@ def generate_config_pages(templdir, webdir):
 	# kconf
 	saved = {}
 	favorite_prompt = None
-	versions_strings = []  # used for index pages
+	all_versions = set([])
 	if table.has_key('kconf'):
 	    rows = table['kconf']
 	    text2 = []
@@ -107,18 +107,20 @@ def generate_config_pages(templdir, webdir):
 		        saved[descr] = 1
 	        else:
 		    favorite_prompt = descr
-		ver = ver_str(versions)
-		versions_strings.append(ver)
 	        txt += (" <li>prompt: " +descr+ "</li>\n" +
                          " <li>type: "   +typ+ "</li>\n" +
                          " <li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
                          " <li>defined in " + url_filename(filename) + "</li>\n" +
-                         " <li>found in Linux kernels: " +ver+ "</li>\n" +
+                         " <li>found in Linux kernels: " +
+                            ver_list_str(versions, compress=False)+ "</li>\n" +
 			 modules + "</ul>\n")
+                all_versions.update(versions)
 	        if len(rows) > 1:
 		    txt += "\n<h3>Help text</h3>\n<p>"
 	        else:
 		    txt += "\n<h2>Help text</h2>\n<p>"
+                if not helptext:
+                    helptext = "(none)"
 	        text2.append(txt + prepare_help(helptext) + "</p>\n")
 	
 	    text2.sort()
@@ -347,7 +349,7 @@ def generate_config_pages(templdir, webdir):
 
         if not config_pages.has_key(subindex):
             config_pages[subindex] = []
-        config_pages[subindex].append([config_full, ", ".join(versions_strings)])
+        config_pages[subindex].append((config, all_versions))
 
 	f = open(os.path.join(webdir, config+".html"), "w")
 	f.write(template_config.substitute(pageitems))
@@ -375,9 +377,9 @@ def generate_index_pages(templdir, webdir):
                 page += ('<li><b>' +idx2+ '</b> (with ' +str(count[idx2])+ ' configuration items)<ul>\n')
 		pages_in_idx2 = config_pages[idx2]
 		pages_in_idx2.sort()
-                for conf, ver_str in pages_in_idx2:
-                    if ver_str:
-                        ver = ' (<small>' + sort_ver_str(ver_str) + '</small>)'
+                for conf, all_ver in pages_in_idx2:
+                    if all_ver:
+                        ver = ' (<small>' + ver_list_str(all_ver, compress=True) + '</small>)'
                     page += ('<li><a href="' +conf+ '.html">CONFIG_' +conf+ '</a>'+ver+'</li>\n')
                 page += '</ul></li>\n'
 
@@ -468,115 +470,111 @@ def prepare_depends(depends):
     return " ".join(toks).replace("&", "&amp;")
 
 def str_kern_ver(ver):
-    x = (ver >> 16) & 0xff
-    y = (ver >> 8 ) & 0xff
-    z =  ver        & 0xff
-    return "%i.%i.%i" %(x,y,z)
-
-def kernel_interval(min_ver, max_ver):
-    if min_ver == -1:
-        return ("found only in <code>HEAD</code> (i.e. after release %s)" % str_kern_ver(db_max_ver), "HEAD")
-    if db_min_ver == min_ver:
-        ret = "before %s version" % str_kern_ver(db_min_ver)
-        ret2 = ""
+    v1 = (ver >> 16) & 0xff
+    v2 = (ver >> 8 ) & 0xff
+    v3 =  ver        & 0xff
+    if v1 < 3 or v3 != 0:
+        return "%i.%i.%i" %(v1, v2, v3)
     else:
-        ret = "from %s release" % str_kern_ver(min_ver)
-        ret2 = "from release %s" % str_kern_ver(min_ver)
-    if db_max_ver == max_ver:
-        ret += " still available on %s release" % str_kern_ver(db_max_ver)
-    else:
-        ret += " to %s release, thus this is an <b>obsolete</b> configuration" % str_kern_ver(max_ver)
-        if ret2:
-            ret2 = "obsolete, available from %s until %s" % (str_kern_ver(min_ver), str_kern_ver(max_ver))
-        else:
-            ret2 = "obsolete, available until %s" % str_kern_ver(max_ver)
-    return ret, ret2
+        return "%i.%i" %(v1, v2)
 
-def ver_str(versions):
+def ver_list_str(versions, compress=False):
     versions = list(versions)
     versions.sort()
+    # check if last string is a non-release version
     if versions[-1][3] < 0:
         name, ver, verstr, serie = versions[-1]
-        if ((ver[0] & 0xff) > 0) or ver[0] < 0x030000:
-            basestr = str((ver[0] >> 16) & 0xff) + "." + str((ver[0] >> 8) & 0xff) + "." + str(ver[0] & 0xff)
-            if ver[1] < 0:
-                head = [basestr + "-rc+HEAD"]
-            else:
-                head = [basestr + "+HEAD"]
+        basestr = str_kern_ver(ver[0])
+        if ver[1] < 0:
+            head = [basestr + "-rc+HEAD"]
         else:
-            basestr = str((ver[0] >> 16) & 0xff) + "." + str((ver[0] >> 8) & 0xff)
-            if ver[1] < 0:
-                head = [basestr + "-rc+HEAD"]
-            else:
-                head = [basestr + "+HEAD"]
+            head = [basestr + "+HEAD"]
     else:
         head = []
-    vers = map(lambda v: v[2], filter(lambda vv: vv[3]>=0, versions))
-        
-    return ", ".join(vers + head)
-
-assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1)])) == "2.6.5"
-assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                    ("", (0x020606,0,0), "2.6.6", 1)])) == "2.6.5, 2.6.6"
-assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                    ("", (0x020605,0,123), "2.6.5", -1)])) == "2.6.5, 2.6.5+HEAD"
-assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                    ("", (0x020606,-20,123), "2.6.3-rc12-2323", -1)])) == "2.6.5, 2.6.6-rc+HEAD"
-assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                    ("", (0x020606,0,0), "2.6.6", 1),
-                    ("", (0x020606,0,2), "2.6.6+1234", -1),
-                    ("", (0x020607,0,0), "2.6.7", 1),
-                    ("", (0x020608,-10,0), "2.6.8-rc1", -1)
-                   ])) == "2.6.5, 2.6.6, 2.6.7, 2.6.8-rc+HEAD"
-assert ver_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                    ("", (0x030000,0,0), "3.0", 1),
-                    ("", (0x030001,0,0), "3.0.1", 1),
-                    ("", (0x030200,0,234), "3.2", -1),
-                   ])) == "2.6.5, 3.0, 3.0.1, 3.2+HEAD"
-
-
-def sort_ver_str(versions):
-    vers = tuple(set(versions.split(", ")))
-    vs1 = map(lambda v: v.split("."), vers)
-    vs = []
-    for v in vs1:
-        ff = []
-        for f in v:
-            if f.isdigit():
-                ff.append(int(f))
+    versions = filter(lambda v: v[3]>=0, versions)
+    if not compress:
+        ret = map(lambda v: v[2], versions)
+        return ", ".join(ret + head)
+    else:
+        prev = (0,0,0)
+        prev_str = "0.0.0"
+        start = None
+        start_str = None
+        ret = []
+        for name, ver, v_str, serie in versions + [('', (-1,-1,-1), "-1,-1,-1", -1)]:
+            v = ((ver[0] >> 16) & 0xff, (ver[0] >> 8 ) & 0xff, ver[0] & 0xff)
+            if ( (v[0] < 3  and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
+                 (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1]+1) ):
+                if start == None:
+                    # prev is the first of the current serie
+                    start = prev
+                    start_str = prev_str
             else:
-                ff.append(f)
-        vs.append(ff)
-    vs.sort()
-    prev = (0,0,0)
-    start = None
-    ret = []
-    for v in vs + [(-1,-1,-1)]:
-        if ( (v[0] < 3  and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
-             (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1]+1) ):
-            if start == None:
-                # prev is the first of the current serie
-                start = prev
-        else:
-            if start != None:
-                # start to prev are a serie
-                ret.append(".".join(map(str, start)) + "&ndash;" + ".".join(map(str, prev)))
-                start = None
-            else:
-                ret.append(".".join(map(str, prev)))
-        prev = v
-    return ", ".join(ret[1:])
+                if start != None:
+                    # start to prev are a serie
+                    ret.append(start_str + "&ndash;" + prev_str)
+                    start = None
+                else:
+                    ret.append(prev_str)
+            prev = v
+            prev_str = v_str
+        return ", ".join(ret[1:] + head)
 
-assert sort_ver_str("2.6.0") == "2.6.0"
-assert sort_ver_str("2.6.0, 2.6.1") == "2.6.0&ndash;2.6.1"
-assert sort_ver_str("2.6.0, 2.6.2") == "2.6.0, 2.6.2"
-assert sort_ver_str("2.6.0, 2.6.2, 2.6.3, 2.6.11") == "2.6.0, 2.6.2&ndash;2.6.3, 2.6.11"
-assert sort_ver_str("2.6.0, 2.6.2, 2.6.3, 2.6.11, 2.6.12") == "2.6.0, 2.6.2&ndash;2.6.3, 2.6.11&ndash;2.6.12"
-assert sort_ver_str("3.0") == "3.0"
-assert sort_ver_str("3.0, 3.1, 3.2") == "3.0&ndash;3.2"
-assert sort_ver_str("2.6.0, 3.2") == "2.6.0, 3.2"
-assert sort_ver_str("2.6.0, 2.6.2, 2.6.3, 2.6.11, 2.6.12, 3.0, 3.1") == "2.6.0, 2.6.2&ndash;2.6.3, 2.6.11&ndash;2.6.12, 3.0&ndash;3.1"
 
+# compress=False
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1)
+                    ]), False) == "2.6.5"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020606,0,0), "2.6.6", 1)
+                    ]), False) == "2.6.5, 2.6.6"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020605,0,123), "2.6.5", -1)
+                    ]), False) == "2.6.5, 2.6.5+HEAD"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020606,-20,123), "2.6.3-rc12-2323", -1)
+                    ]), False) == "2.6.5, 2.6.6-rc+HEAD"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020606,0,0), "2.6.6", 1),
+                         ("", (0x020606,0,2), "2.6.6+1234", -1),
+                         ("", (0x020607,0,0), "2.6.7", 1),
+                         ("", (0x020608,-10,0), "2.6.8-rc1", -1)
+                    ]), False) == "2.6.5, 2.6.6, 2.6.7, 2.6.8-rc+HEAD"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x030000,0,0), "3.0", 1),
+                         ("", (0x030001,0,0), "3.0.1", 1),
+                         ("", (0x030200,0,234), "3.2", -1),
+                    ]), False) == "2.6.5, 3.0, 3.0.1, 3.2+HEAD"
+
+# compress=True
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1)
+                    ]), True) == "2.6.5"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020606,0,0), "2.6.6", 1)
+                    ]), True) == "2.6.5&ndash;2.6.6"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020607,0,0), "2.6.7", 1)
+                    ]), True) == "2.6.5, 2.6.7"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x020606,0,0), "2.6.6", 1),
+                         ("", (0x020607,0,0), "2.6.7", 1),
+                         ("", (0x020611,0,0), "2.6.11", 1),
+                    ]), True) == "2.6.5&ndash;2.6.7, 2.6.11"
+assert ver_list_str(set([("", (0x020600,0,0), "2.6.0", 1),
+                         ("", (0x020606,0,0), "2.6.6", 1),
+                         ("", (0x020607,0,0), "2.6.7", 1),
+                         ("", (0x020608,0,0), "2.6.8", 1),
+                         ("", (0x020611,0,0), "2.6.11", 1),
+                         ("", (0x030100,0,0), "3.1", 1),
+                         ("", (0x030200,0,0), "3.2", 1),
+                    ]), True) == "2.6.0, 2.6.6&ndash;2.6.8, 2.6.11, 3.1&ndash;3.2"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x030100,0,0), "3.1", 1),
+                         ("", (0x030100,-20,200), "3.1-rc+HEAD", -11),
+                    ]), True) == "2.6.5, 3.1"
+assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
+                         ("", (0x030000,0,0), "3.0", 1),
+                         ("", (0x030100,-20,200), "3.1-rc+HEAD", -11),
+                    ]), True) == "2.6.5, 3.0, 3.1-rc+HEAD"
 
 
 def make(options, templdir, webdir):

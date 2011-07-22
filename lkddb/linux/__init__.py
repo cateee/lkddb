@@ -132,7 +132,7 @@ class linux_kernel(lkddb.tree):
         elif version_dict['extra'].startswith("pre") and version_dict['extra'][3:].isdigit():
             version_dict['numeric2'] = -0x200 + int(version_dict['extra'][3:])
 	else:
-	    assert False, "Unknow structure of EXTRAVERSION (%s) in kernel version" % version_dict["EXTRAVERSION"]
+	    assert False, "Unknow structure of EXTRAVERSION (%s) in kernel version" % version_dict["extra"]
 
 	if os.path.exists(os.path.join(self.kerneldir, "scripts/setlocalversion")):
 	    f = open(os.path.join(self.kerneldir, "scripts/setlocalversion"))
@@ -152,10 +152,10 @@ class linux_kernel(lkddb.tree):
 	    assert False, "Unknow structure of scripts/setlocalversion (%s) in kernel version" % version_dict["local_ver"]
 
 	if version_dict['numeric3'] == 0  and  version_dict['extra'] >= 0:
-	    # a x.y.z or x.y.z.w relase
+	    # a x.y or x.y.z or x.y.z.w relase
             version_dict['serie'] = 1
 	else:
-            # not a x.y.z or x.y.z.w release
+            # not a x.y, x.y.z or x.y.z.w release
             version_dict['str'] += version_dict['local_ver']
 	    version_dict['serie'] = -1
 	self.version_dict = version_dict

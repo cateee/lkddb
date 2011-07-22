@@ -396,10 +396,6 @@ class table(object):
 	lkddb.log.phase("consolidating lines in " + self.name)
 	if not hasattr(self, 'crows'):
 	    self.crows = {}
-#	# removing (old) HEAD
-#	for key, crow in self.crows.iteritems():
-#	    #### do it only once!
-#	    crow[1].discard(-1)
 
 	# consolitating    
 	if consolidated:
