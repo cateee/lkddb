@@ -139,7 +139,7 @@ class linux_kernel(lkddb.tree):
 	    bang = f.readline()
 	    if bang.startswith("#!"):
 		bang = bang[2:].strip()
-		version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion",
+		version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion .",
                     shell=True, cwd=self.kerneldir,
                     stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
 	else:
@@ -148,6 +148,8 @@ class linux_kernel(lkddb.tree):
 	    version_dict['numeric3'] = 0
 	elif version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and version_dict['local_ver'][1:6].isdigit():
 	    version_dict['numeric3'] = int(version_dict['local_ver'][1:6])
+        elif version_dict['numeric'] <= (0x020600 + 15):
+            version_dict['numeric3'] = 0
 	else:
 	    assert False, "Unknow structure of scripts/setlocalversion (%s) in kernel version" % version_dict["local_ver"]
 

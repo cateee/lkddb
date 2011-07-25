@@ -40,7 +40,7 @@ do_tar_kernel() {
 }
 
 
-#if false ; then
+if false ; then
 
 do_tar_kernel '2.6.0'
 do_tar_kernel '2.6.1'
@@ -83,8 +83,9 @@ do_git_kernel 'v2.6.36'
 do_git_kernel 'v2.6.37'
 do_git_kernel 'v2.6.38'
 do_git_kernel 'v2.6.39'
+fi
 
-# do_git_kernel 'v3.0.0'
+do_git_kernel 'v3.0'
 
 #HEAD
 do_git_kernel 'master'

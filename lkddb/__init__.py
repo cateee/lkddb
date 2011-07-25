@@ -111,10 +111,6 @@ class tree(object):
 	self.version = None
 	self.consolidated_versions = set(())
 
-    def get_version(self):
-        if self.version == None:
-            self.retrive_version()
-        return self.version[1]
     def get_strversion(self):
         if self.version == None:
             self.retrive_version()

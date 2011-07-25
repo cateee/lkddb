@@ -11,9 +11,9 @@ set -e
 datadir="$HOME/lkddb"
 DESTDIR="$HOME/cateee.net"
 
-changeddir="$datadir/changes/changed"
-diffdir="$datadir/changes/diff"
-newdir="$datadir/changes/new"
+changeddir="$datadir/changes/changed$DRYRUN"
+diffdir="$datadir/changes/diff$DRYRUN"
+newdir="$datadir/changes/new$DRYRUN"
 
 destsrc="$HOME/cateee.net/sources"
 destweb="$HOME/cateee.net/lkddb/web-lkddb"
@@ -31,11 +31,13 @@ copy_changed() {
         if ! cmp -s "$2/$1" "$3/$1" ; then
             cp -p "$3/$1" "$changeddir"
             diff -u "$3/$1" "$2/$1" > "$diffdir/$1.diff" || true
-            cp -p "$2/$1" "$3/" ;  echo -n "$1 "
+            [ -z "$DRYRUN" ] || cp -p "$2/$1" "$3/"
+	    echo -n "$1 "
         fi
     else
         cp -p "$2/$1" "$newdir"
-        cp -p "$2/$1" "$3/" ;  echo -n "!$1 "
+        [ -z "$DRYRUN" ] || cp -p "$2/$1" "$3/"
+	echo -n "!$1 "
     fi
 }
 
