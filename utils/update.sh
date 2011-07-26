@@ -54,5 +54,5 @@ if [[ "$changed" =~ "data" ]] ; then
     time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp $changed ids.data
 fi
 
-sh utils/rebuild-web.sh
+bash utils/rebuild-web.sh
 

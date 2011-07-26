@@ -11,9 +11,9 @@ set -e
 datadir="$HOME/lkddb"
 DESTDIR="$HOME/cateee.net"
 
-changeddir="$datadir/changes/changed$DRYRUN"
-diffdir="$datadir/changes/diff$DRYRUN"
-newdir="$datadir/changes/new$DRYRUN"
+changeddir="$datadir/changes/changed"
+diffdir="$datadir/changes/diff"
+newdir="$datadir/changes/new"
 
 destsrc="$HOME/cateee.net/sources"
 destweb="$HOME/cateee.net/lkddb/web-lkddb"
@@ -31,12 +31,12 @@ copy_changed() {
         if ! cmp -s "$2/$1" "$3/$1" ; then
             cp -p "$3/$1" "$changeddir"
             diff -u "$3/$1" "$2/$1" > "$diffdir/$1.diff" || true
-            [ -z "$DRYRUN" ] || cp -p "$2/$1" "$3/"
+            cp -p "$2/$1" "$3/"
 	    echo -n "$1 "
         fi
     else
         cp -p "$2/$1" "$newdir"
-        [ -z "$DRYRUN" ] || cp -p "$2/$1" "$3/"
+        cp -p "$2/$1" "$3/"
 	echo -n "!$1 "
     fi
 }
@@ -74,7 +74,7 @@ copy_changed "$f" "dist" "$destsrc/lkddb-sources"
 echo
 
 echo "=== distribute lists."
-lastlist="`ls *.list | tail -1`"
+lastlist="`ls -t lkddb-3*.list | head -1`"
 echo "last is $lastlist"
 cat "$lastlist" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > dist/counts
 echo >> dist/counts
@@ -89,7 +89,7 @@ copy_and_zip usb.list dist
 copy_and_zip zorro.list dist
 
 cd dist
-for f in *.list *.list.bz2 *.list.gz counts "$lastlist"; do
+for f in *.list *.list.bz2 *.list.gz counts "../$lastlist"; do
     copy_changed "$f" "." "$destsrc/lkddb"
 done
 echo
