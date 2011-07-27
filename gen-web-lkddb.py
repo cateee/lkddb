@@ -112,7 +112,7 @@ def generate_config_pages(templdir, webdir):
                          " <li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
                          " <li>defined in " + url_filename(filename) + "</li>\n" +
                          " <li>found in Linux kernels: " +
-                            ver_list_str(versions, compress=False)+ "</li>\n" +
+                            ver_list_str(versions, compress=True)+ "</li>\n" +
 			 modules + "</ul>\n")
                 all_versions.update(versions)
 	        if len(rows) > 1:

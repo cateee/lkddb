@@ -1,5 +1,5 @@
 #!/bin/bash
-#: utils/rebuild-web.sh : rebuild web pages and distribute them
+#: utils/rebuild-web.sh : check and copy to webserver the modified pages
 #
 #  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
