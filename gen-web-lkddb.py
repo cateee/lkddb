@@ -107,11 +107,11 @@ def generate_config_pages(templdir, webdir):
 		        saved[descr] = 1
 	        else:
 		    favorite_prompt = descr
-	        txt += (" <li>prompt: " +descr+ "</li>\n" +
-                         " <li>type: "   +typ+ "</li>\n" +
-                         " <li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
-                         " <li>defined in " + url_filename(filename) + "</li>\n" +
-                         " <li>found in Linux kernels: " +
+	        txt += ("<li>prompt: " +descr+ "</li>\n" +
+                         "<li>type: "   +typ+ "</li>\n" +
+                         "<li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
+                         "<li>defined in " + url_filename(filename) + "</li>\n" +
+                         "<li>found in Linux kernels: " +
                             ver_list_str(versions, compress=True)+ "</li>\n" +
 			 modules + "</ul>\n")
                 all_versions.update(versions)
@@ -343,7 +343,7 @@ def generate_config_pages(templdir, webdir):
 
 	if sources:
 	    # Note: in template we set already few sources
-	    pageitems['sources'] = "</li>\n<li>".join(sources)
+	    pageitems['sources'] = "<li>" + "</li>\n<li>".join(sources) + "</li>"
 	else:
 	    pageitems['sources'] = ""
 
