@@ -370,6 +370,7 @@ class table(object):
     def add_row(self, row):
 	self.rows.append(row)
     def restore(self):
+        self.fullrows = []
 	pass
     def fmt(self):
 	if not self.line_fmt:

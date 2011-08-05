@@ -20,14 +20,10 @@ do_git_kernel() {
     ( cd "$kdir/linux-2.6"
       git checkout "$1"
       git clean -d -f -f
-      # chmod a+x scripts/setlocalversion || true
       [ -d include/config/ ] || mkdir include/config/
       [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
     )
     build_lkddb "$kdir/linux-2.6/"
-    #( cd "$kdir/linux-2.6"
-    #  git checkout -- scripts/setlocalversion || true
-    #)
 }
 
 do_tar_kernel() {
@@ -40,7 +36,7 @@ do_tar_kernel() {
 }
 
 
-if false ; then
+#if false ; then
 
 do_tar_kernel '2.6.0'
 do_tar_kernel '2.6.1'
@@ -83,7 +79,7 @@ do_git_kernel 'v2.6.36'
 do_git_kernel 'v2.6.37'
 do_git_kernel 'v2.6.38'
 do_git_kernel 'v2.6.39'
-fi
+#fi
 
 do_git_kernel 'v3.0'
 

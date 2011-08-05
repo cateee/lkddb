@@ -322,7 +322,9 @@ class kconfigs(lkddb.browser):
                 context = C_HELP
                 ident = -1
                 continue
-            if tok in frozenset(("bool", "tristate", "string", "hex", "int")):
+            if tok in frozenset(("bool", "boolean", "tristate", "string", "hex", "int")):
+                if tok == "boolean":
+                    tok = "bool"
                 type = tok
                 if not args:
                     descr = ""

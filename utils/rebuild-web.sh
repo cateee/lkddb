@@ -87,9 +87,14 @@ copy_and_zip eisa.list dist
 copy_and_zip pci.list dist
 copy_and_zip usb.list dist
 copy_and_zip zorro.list dist
+copy_and_zip eisa.ids dist
+copy_and_zip pci.ids dist
+copy_and_zip usb.ids dist
+copy_and_zip zorro.ids dist
+
 
 cd dist
-for f in *.list *.list.bz2 *.list.gz counts "../$lastlist"; do
+for f in *.ids *.ids.gz *.ids.bz2 *.list *.list.gz *.list.bz2 counts "../$lastlist"; do
     copy_changed "$f" "." "$destsrc/lkddb"
 done
 echo
