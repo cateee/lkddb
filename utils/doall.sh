@@ -36,7 +36,7 @@ do_tar_kernel() {
 }
 
 
-#if false ; then
+if false ; then
 
 do_tar_kernel '2.6.0'
 do_tar_kernel '2.6.1'
@@ -67,6 +67,7 @@ do_git_kernel 'v2.6.24'
 do_git_kernel 'v2.6.25'
 do_git_kernel 'v2.6.26'
 do_git_kernel 'v2.6.27'
+fi
 do_git_kernel 'v2.6.28'
 do_git_kernel 'v2.6.29'
 do_git_kernel 'v2.6.30'

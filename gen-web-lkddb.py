@@ -577,6 +577,7 @@ assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
                     ]), True) == "2.6.5, 3.0, 3.1-rc+HEAD"
 
 
+
 def make(options, templdir, webdir):
     lkddb.init(options)
 

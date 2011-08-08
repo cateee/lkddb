@@ -292,6 +292,8 @@ class kconfigs(lkddb.browser):
                 tok,args = line.split(None, 1)
             except:
                 tok = line ; args = ""
+            if "#" in args:
+                args = args.split("#", 1)[0]
             if tok in frozenset(("menu", "endmenu", "source", "if", "endif", "endchoice", "mainmenu")):
                 if context == C_CONF:
                     self.__kconf_save(config, dict, type, descr, depends, help, filename)
@@ -303,10 +305,6 @@ class kconfigs(lkddb.browser):
                 else:
                     context = C_CONF
                 config = args
-		if " " in args or "#" in args:
-		    lkddb.log.log("kconfig: error: invalid syntax in %s: '''%s %s'''" %
-					(filename, tok, args))
-		    config = args.split()[0]
                 help = ""
                 dict = {}
                 type = None

@@ -153,7 +153,7 @@ class linux_kernel(lkddb.tree):
 	else:
 	    assert False, "Unknow structure of scripts/setlocalversion (%s) in kernel version" % version_dict["local_ver"]
 
-	if version_dict['numeric3'] == 0  and  version_dict['extra'] >= 0:
+	if version_dict['numeric3'] == 0  and  version_dict['numeric2'] == 0:
 	    # a x.y or x.y.z or x.y.z.w relase
             version_dict['serie'] = 1
 	else:
