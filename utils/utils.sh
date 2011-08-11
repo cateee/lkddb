@@ -15,7 +15,7 @@
 set -e
 
 function copy_to_dist() {
-    dest="dist/lkddb-$1"
+    dest="dist/lkddb-sources-$1"
     mkdir "$dest"
 
     for dir in `sed -ne 's#^\(.*\)/[^/]*$#\1#p' Manifest | sort -u` ; do
@@ -29,7 +29,7 @@ function copy_to_dist() {
     mkdir "$dest/web-out"
 
     find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name '*.pyc' \! -name '*.tmp' -print \) > dist/ls.orig
-    cd dist/lkddb-20??-??-?? ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log'  \! -name '*.tmp' -print \) > ../../dist/ls.dist ; cd ../..
+    cd dist/lkddb-sources-20??-??-?? ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log'  \! -name '*.tmp' -print \) > ../../dist/ls.dist ; cd ../..
     if diff --unified=0 dist/ls.orig dist/ls.dist ; then
         true
     else
@@ -51,19 +51,19 @@ case "$1" in
     		! [ -d dist ] || mv dist dist.old
     		mkdir dist
 		copy_to_dist "$date"
-		if [ -d dist.old/lkddb-20??-??-?? ] ; then
-		    cd dist.old ; prev=`echo lkddb-20??-??-??` ; cd ..
+		if [ -d dist.old/lkddb-sources-20??-??-?? ] ; then
+		    cd dist.old ; prev=`echo lkddb-sources-20??-??-??` ; cd ..
 		else
-		    prev="lkddb-0000-00-00"
+		    prev="lkddb-sources-0000-00-00"
 		fi
-		if diff -ur "dist.old/$prev" $"dist/lkddb-$date" > "dist/$prev--$date.diff" ; then
+		if diff -ur "dist.old/$prev" $"dist/lkddb-sources-$date" > "dist/$prev--$date.diff" ; then
 		    echo "No differences since $prev"
 		    rm -Rf dist
 		    mv dist.old dist
 		else
 		    cd dist
-		    tar cf lkddb-"$date".tar lkddb-"$date"
-		    gzip -9 lkddb-"$date".tar
+		    tar cf lkddb-sources-"$date".tar lkddb-sources-"$date"
+		    gzip -9 lkddb-sources-"$date".tar
 		    cd ..
 		fi
     ;;

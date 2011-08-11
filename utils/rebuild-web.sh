@@ -68,7 +68,7 @@ echo "=== distribution web pages."
 echo "=== distribute sources."
 make tar
 cd dist ;
-f=`echo lkddb-20??-??-??.tar.gz`
+f=`echo lkddb-sources-20??-??-??.tar.gz`
 cd ..
 copy_changed "$f" "dist" "$destsrc/lkddb-sources"
 echo
