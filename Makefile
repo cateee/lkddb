@@ -12,7 +12,7 @@
 #  $ make all kdir=/pub/linux-3.0/linux-3.0.0
 
 # kernel directory
-kdir ?= ~/kernel/linux-2.6/
+kdir ?= ~/kernel/linux/
 
 
 # --- generic rules ---
@@ -42,7 +42,7 @@ mrproper: clean
 # --- building lists ---
 
 lkddb:
-	time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux-2.6/
+	time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ${KDIR}
 
 merge: lkddb-all.data
 lkddb-all.data: ids.data ${datafiles} merge.py

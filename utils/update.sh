@@ -8,7 +8,7 @@
 
 set -e
 
-kdir=/home/cate/kernel/linux-2.6/
+kdir=/home/cate/kernel/linux/
 
 
 # --- update sources
