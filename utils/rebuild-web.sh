@@ -26,18 +26,37 @@ destweb="$HOME/cateee.net/lkddb/web-lkddb"
 
 
 # copy_changed filename orig dest
-copy_changed() {
+check_copy_changed() {
     if [ -f "$3/$1" ] ; then
         if ! cmp -s "$2/$1" "$3/$1" ; then
             cp -p "$3/$1" "$changeddir"
             diff -u "$3/$1" "$2/$1" > "$diffdir/$1.diff" || true
             cp -p "$2/$1" "$3/"
 	    echo -n "$1 "
+	    return 0
+	else
+	    return 1
         fi
     else
         cp -p "$2/$1" "$newdir"
         cp -p "$2/$1" "$3/"
 	echo -n "!$1 "
+	return 0
+    fi
+}
+copy_changed() {
+    check_copy_changed "$1" "$2" "$3" || true
+}
+
+
+# copy_zip_changed filename dest1 webdest
+copy_zip_changed() {
+    cp -p "$1" "$2/$1"
+    if check_copy_changed "$1" "$2" "$3" ; then
+        bzip2 -kf -9 "$2/$1"
+        gzip -cf -9 "$2/$1" > "$2/$1.gz"
+	copy_changed "$1.bz2" "$2" "$3"
+	copy_changed "$1.gz" "$2" "$3"
     fi
 }
 
@@ -80,23 +99,21 @@ cat "$lastlist" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > di
 echo >> dist/counts
 echo "TOTAL: `wc -l < "$lastlist"`" >> dist/counts
 
-copy_and_zip ids.list dist
+copy_zip_changed ids.list dist "$destsrc/lkddb"
 cp "$lastlist" lkddb.list
-copy_and_zip lkddb.list dist
-copy_and_zip eisa.list dist
-copy_and_zip pci.list dist
-copy_and_zip usb.list dist
-copy_and_zip zorro.list dist
-copy_and_zip eisa.ids dist
-copy_and_zip pci.ids dist
-copy_and_zip usb.ids dist
-copy_and_zip zorro.ids dist
+copy_zip_changed lkddb.list dist "$destsrc/lkddb"
+copy_zip_changed eisa.list dist "$destsrc/lkddb"
+copy_zip_changed pci.list dist "$destsrc/lkddb"
+copy_zip_changed usb.list dist "$destsrc/lkddb"
+copy_zip_changed zorro.list dist "$destsrc/lkddb"
+copy_zip_changed eisa.ids dist "$destsrc/lkddb"
+copy_zip_changed pci.ids dist "$destsrc/lkddb"
+copy_zip_changed usb.ids dist "$destsrc/lkddb"
+copy_zip_changed zorro.ids dist "$destsrc/lkddb"
 
+copy_changed counts dist "$destsrc/lkddb"
+copy_changed "$lastlist" "." "$destsrc/lkddb"
 
-cd dist
-for f in *.ids *.ids.gz *.ids.bz2 *.list *.list.gz *.list.bz2 counts "../$lastlist"; do
-    copy_changed "$f" "." "$destsrc/lkddb"
-done
 echo
 cd ..
 
