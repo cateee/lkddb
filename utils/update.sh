@@ -14,8 +14,9 @@ kdir=/home/cate/kernel/linux/
 # --- update sources
 
 (   cd "$kdir"
-    git pull --ff-only --no-progress
-    git checkout
+    echo "automatic pull disabled"
+    #git pull --ff-only --no-progress
+    #git checkout
     [ -d include/config/ ] || mkdir include/config/
     [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
 )
