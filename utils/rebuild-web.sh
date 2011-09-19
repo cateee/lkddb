@@ -118,9 +118,8 @@ echo
 cd ..
 
 echo "=== updating web."
-( cd ~/cateee.net/lkddb ; make )
 
-echo "sitemap notify disabled until stable web version"
-##( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
-( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap ) ##--notify )
+[ -f ~/cateee.net/lkddb/Makefile ] && ( cd ~/cateee.net/lkddb ; make )
+
+[ -x /home/cate/cateee.net/tools/gen-sitemap-0.9/gen-sitemap ] && ( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
 
