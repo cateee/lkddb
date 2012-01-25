@@ -132,7 +132,7 @@ class ids_file_browser(lkddb.browser):
                     name = " ".join(s[1:])
 		    self.usb_ids_table.add_row((v0, v1, name))
                 else:
-		    assert False, "Not defined"
+                    lkddb.log.log("importing usb interface fields on usb.id is not yet implemented")
             elif part == "C":
                 if line[0] != "\t":
                     v0 = int(s[1], 0x10)
