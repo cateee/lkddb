@@ -48,6 +48,8 @@ includes_direct["drivers/media/video/gspca/m5602/m5602_core.c"] = (
                  set(["include/linux/usb.h"]))
 includes_unwind["drivers/media/video/gspca/m5602/m5602_core.c"] = set([])
 
+includes_unwind["include/linux/compiler.h"] = set([])
+
 
 
 # Comments and join lines
@@ -250,7 +252,7 @@ def expand_macro(tok, def_fnc, args, filename):
     defs = defs[:]
     def_args = def_args.split(",")
     if len(def_args) != len(args):
-        # I don't hope to parse debugging or "..." macros
+        # I don't think I'll ever parse debugging or "..." macros
         lkddb.log.log("Wrong lenghts: %s!=%s, %s, %s, %s, %s" % (len(def_args), len(args), def_args, args, tok, def_fnc))
         assert "WrongLen"
     

@@ -47,8 +47,8 @@ function copy_to_dist-web() {
 case "$1" in
 
     'tar' )     date="$(date --rfc-3339=date)"
-	    	! [ -d dist.old ] || rm -Rf dist.old
-    		! [ -d dist ] || mv dist dist.old
+	    	[ -d dist.old ] && rm -Rf dist.old
+    		[ -d dist ] && mv dist dist.old
     		mkdir dist
 		copy_to_dist "$date"
 		if [ -d dist.old/lkddb-sources-20??-??-?? ] ; then

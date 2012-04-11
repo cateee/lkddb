@@ -22,7 +22,9 @@ skeleton_files = frozenset(("drivers/video/skeletonfb.c", "drivers/net/isa-skele
         "drivers/net/pci-skeleton.c", "drivers/pci/hotplug/pcihp_skeleton.c",
         "drivers/usb/usb-skeleton.c",
    # these are #included in other files:
-        "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c"
+        "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c",
+   # discard these files
+        "include/linux/compiler.h", "drivers/mmc/host/omap_hsmmc.c"
 ))
 
 
@@ -98,6 +100,8 @@ class linux_sources(lkddb.browser):
     def __read_includes(self, files, dir, dir_i):
         for source in files:
             filename_i = os.path.join(dir_i, source)
+            if filename_i in skeleton_files:
+                continue
             f = open(os.path.join(dir, source))
             src = f.read()
             f.close()

@@ -12,6 +12,7 @@ _verbose = 0
 _logfile = None
 _phase = "(init)"
 _start_time = 0
+_timed_logs = False
 
 
 def _get_versioned_name(log_filename, version):
@@ -38,8 +39,9 @@ def _get_versioned_name(log_filename, version):
 
 
 def init(options):
-    global _verbose, _logfile, _start_time
+    global _verbose, _timed_logs, _logfile, _start_time
     _verbose = options.verbose
+    _timed_logs = options.timed_logs
     log_filename = options.log_filename
     if log_filename == None  or  log_filename == "-":
         _logfile = sys.stdout
@@ -64,12 +66,18 @@ def elapsed_time():
 
 def log(message):
     if _verbose:
-        _logfile.write("*%3.1f: %s\n" % (elapsed_time(),  message))
+        if _timed_logs:
+            _logfile.write("*%3.1f: %s\n" % (elapsed_time(),  message))
+        else:
+            _logfile.write("* %s\n" % message)
 	_logfile.flush()
 
 def log_extra(message):
     if _verbose > 1:
-	_logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
+        if _timed_logs:
+	    _logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
+        else:
+            _logfile.write(". %s\n" % message)
 	_logfile.flush()
 
 def die(message, errorcode=1):
