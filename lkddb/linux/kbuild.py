@@ -42,7 +42,7 @@ kbuild_rules = re.compile(
 
 ignore_rules_set = frozenset(
 #    ("init", "drivers", "net", "libs", "core", "obj", "lib",
-    ("cflags", "cpuflags"))
+    ("ccflags", "cflags", "cpuflags"))
 
 #build = frozenset('init', 'drivers', 'net', 'libs', 'core')
 
