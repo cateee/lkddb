@@ -253,13 +253,21 @@ def expand_macro(tok, def_fnc, args, filename):
     def_args = def_args.split(",")
     if len(def_args) != len(args):
         # I don't think I'll ever parse debugging or "..." macros
-        lkddb.log.log("Wrong lenghts: %s!=%s, %s, %s, %s, %s" % (len(def_args), len(args), def_args, args, tok, def_fnc))
-        assert "WrongLen"
-    
-    for i in range(len(args)):
-        da = def_args[i].strip()
-        defs = re.sub(r"[^#]#" +da+ r"\b", '"'+args[i]+'"', defs)
-        defs = re.sub(r"\b"    +da+ r"\b",     args[i],     defs)
+        if def_args[-1].endswith("..."):
+            # TODO: handle macro with args...
+            pass
+        else:
+            lkddb.log.log("Wrong argument number in macro: %s!=%s, %s, %s, %s, %s in %s" % (len(def_args), len(args), def_args, args, tok, def_fnc, filename))
+    else:
+        for i in range(len(args)):
+            # !!!!!! ????????????
+            try:
+                da = def_args[i].strip()
+            except:
+                lkddb.log.log("FATAL ERROR: %s!=%s, %s, %s, %s, %s" % (len(def_args), len(args), def_args, args, tok, def_fnc))
+                raise
+            defs = re.sub(r"[^#]#" +da+ r"\b", '"'+args[i]+'"', defs)
+            defs = re.sub(r"\b"    +da+ r"\b",     args[i],     defs)
     defs = concatenate_re.sub("", defs) + " "
     return expand_block(defs, filename)
 

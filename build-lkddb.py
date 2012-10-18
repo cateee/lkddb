@@ -49,7 +49,7 @@ if __name__ == "__main__":
                       help="inhibit messages")
     parser.add_option("-v", "--verbose", dest="verbose",
                       action="count",
-                      help="increments verbosity")
+                      help="increase verbosity")
     parser.add_option("-b", "--base",	dest="dbfile",
                       action="store",	type="string",
                       help="base FILE name to read and write data", metavar="FILE")
