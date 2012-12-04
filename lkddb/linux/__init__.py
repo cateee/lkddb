@@ -141,10 +141,10 @@ class linux_kernel(lkddb.tree):
 		bang = bang[2:].strip()
 		version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion .",
                     shell=True, cwd=self.kerneldir,
-                    stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
+                    stdout=subprocess.PIPE).communicate()[0].strip().replace("-dirty", "")
 	else:
 	    version_dict['local_ver'] = ""
-	if not version_dict['local_ver']:
+	if not version_dict['local_ver'] or version_dict['local_ver'] == '-dirty':
 	    version_dict['numeric3'] = 0
 	elif version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and version_dict['local_ver'][1:6].isdigit():
 	    version_dict['numeric3'] = int(version_dict['local_ver'][1:6])

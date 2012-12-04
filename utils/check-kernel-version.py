@@ -50,7 +50,7 @@ def getversion(kerneldir):
             bang = bang[2:].strip()
             version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion",
                     shell=True, cwd=kerneldir,
-                    stdout=subprocess.PIPE).communicate()[0].strip() # .replace("-dirty", "")
+                    stdout=subprocess.PIPE).communicate()[0].strip().replace("-dirty", "")
     else:
         version_dict['local_ver'] = ""
     v1 = version_dict["VERSION"]
