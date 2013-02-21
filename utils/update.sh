@@ -29,6 +29,7 @@ new=`python utils/check-kernel-version.py "$kdir" . || true`
 if [ -n "$new" ] ; then
     echo "=== generating new datafile $new."
     time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux-2.6/
+    echo build-lkddb.py: DONE
     changed="$changed $new"
 fi
 
