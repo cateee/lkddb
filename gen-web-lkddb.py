@@ -68,9 +68,8 @@ def generate_config_pages(templdir, webdir):
         #-------
         # module
 	lines = []
-	if table.has_key('module'):
-            rows = table['module']
-	    for key1, key2, values, versions in rows:
+	if 'module' in table:
+	    for key1, key2, values, versions in table['module']:
 		lines.append('<code>' + key1[0] + '</code>')
 	if lines:
 	    lines.sort()
@@ -83,7 +82,7 @@ def generate_config_pages(templdir, webdir):
 	saved = {}
 	favorite_prompt = None
 	all_versions = set([])
-	if table.has_key('kconf'):
+	if 'kconf' in  table:
 	    rows = table['kconf']
 	    text2 = []
 	    if len(rows) > 1:
@@ -101,7 +100,7 @@ def generate_config_pages(templdir, webdir):
 			     "<p>The configuration item " +config_full+ ":</p>\n<ul>")
 		    if filename.startswith("arch/x86/"):
 		        favorite_prompt = descr
-		    if saved.has_key(descr):
+		    if descr in saved:
 		        saved[descr] += 1
 		    else:
 		        saved[descr] = 1
@@ -149,7 +148,7 @@ def generate_config_pages(templdir, webdir):
 		
 	#------
 	# PCI
-        if table.has_key('pci'):
+        if 'pci' in table:
             rows = table['pci']
 	    sub_ids = ids.get('pci_ids', {})
 	    sub_class_ids = ids.get('pci_class_ids', {})
@@ -199,7 +198,7 @@ def generate_config_pages(templdir, webdir):
 
         #------
         # USB
-        if table.has_key('usb'):
+        if 'usb' in table:
             rows = table['usb']
             sub_ids = ids.get('usb_ids', {})
             sub_class_ids = ids.get('usb_class_ids', {})
@@ -269,7 +268,7 @@ def generate_config_pages(templdir, webdir):
 
         #------
         # EISA
-        if table.has_key('eisa'):
+        if 'eisa' in table:
             rows = table['eisa']
             sub_ids = ids.get('eisa_ids', {})
             lines = []
@@ -288,7 +287,7 @@ def generate_config_pages(templdir, webdir):
 
         #------
         # ZORRO
-        if table.has_key('zorro'):
+        if 'zorro' in table:
             rows = table['zorro']
             sub_ids = ids.get('zorro_ids', {})
             lines = []
@@ -347,7 +346,7 @@ def generate_config_pages(templdir, webdir):
 	else:
 	    pageitems['sources'] = ""
 
-        if not config_pages.has_key(subindex):
+        if subindex not in config_pages:
             config_pages[subindex] = []
         config_pages[subindex].append((config, all_versions))
 

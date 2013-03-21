@@ -72,7 +72,7 @@ def parse_header(src, filename, discard_source):
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
     dir, ignore = filename.rsplit("/", 1)
-    if not includes_direct.has_key(filename):
+    if filename not in includes_direct:
         includes_direct[filename] = set()
         includes_unwind[filename] = set([filename])
     for incl in include_re.findall(src):
@@ -113,7 +113,7 @@ def parse_header(src, filename, discard_source):
 
 def unwind_include_rec(filename, known):
     incls = set([filename])
-    if includes_direct.has_key(filename):
+    if filename in includes_direct:
         incls.update(includes_direct[filename])
         known.update(includes_unwind[filename])
     for incl in incls.difference(known):
@@ -132,7 +132,7 @@ def unwind_include_all():
 
 
 def search_define(token, filename, defines):
-    if not defines.has_key(token):
+    if token not in defines:
         return None
     defs = defines[token]
     for header in defs.iterkeys():

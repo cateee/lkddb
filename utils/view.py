@@ -15,7 +15,7 @@ def main_view(options, args):
     filename = args[0]
     assert os.path.isfile(filename), "Could not find data file %s" % filename
     data = shelve.open(filename)
-    if data.has_key('_consolidated'):
+    if '_consolidated' in data:
         print("data file '%s' is consolidated" % filename)
     else:
         print("data file '%s' is not consolidated" % filename)

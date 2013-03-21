@@ -2,62 +2,34 @@ GPL-2 : GNU General Public License, version 2
 GPL-3 : GNU General Public License, version 3
 Manifest : Manifest file
 Makefile : rules to make, distribute and test lkddb
-ids_importer.py : import ids
 TODO : TO DO list
 build-lkddb.py : hardware database generator from linux kernel sources
-lkddb/DESIGN : Documentation of internal data structure and flow
 gen-web-lkddb.py : generate the static html pages for web-lkddb
 ids_importer.py : import ids
 lkddb/DESIGN : Documentation of internal data structure and flow
 lkddb/__init__.py : generic definitions (and classes) for lkddb
-lkddb/__init__.py : generic definitions (and classes) for lkddb
-lkddb/fmt.py : utilities to format string and masks
 lkddb/fmt.py : utilities to format string and masks
 lkddb/ids/__init__.py : scanners for ids files
-lkddb/ids/__init__.py : scanners for ids files
-lkddb/linux/__init__.py : scanners for Linux kernels
 lkddb/linux/__init__.py : scanners for Linux kernels
 lkddb/linux/browse_sources.py : sources reader for Linux kernels
-lkddb/linux/browse_sources.py : sources reader for Linux kernels
-lkddb/linux/kbuild.py : scanners for kernel build infrastructure
 lkddb/linux/kbuild.py : scanners for kernel build infrastructure
 lkddb/linux/parse_devicetables.py : device tables template for source scanning and reporting
-lkddb/linux/parse_devicetables.py : device tables template for source scanning and reporting
-lkddb/linux/parse_others.py : parse other linux kernel tables
 lkddb/linux/parse_others.py : parse other linux kernel tables
 lkddb/linux/scanners.py : scanners for Linux kernel
-lkddb/linux/scanners.py : scanners for Linux kernel
-lkddb/log.py : log utilities for lkddb
 lkddb/log.py : log utilities for lkddb
 lkddb/parser.py : this modules vaguely simulate a C preprocessor
-lkddb/parser.py : this modules vaguely simulate a C preprocessor
-lkddb/tables/__init__.py : register all tables
 lkddb/tables/__init__.py : register all tables
 lkddb/tables/ids_tables.py : tables for ids files
-lkddb/tables/ids_tables.py : tables for ids files
-lkddb/tables/linux_devicetables.py : device tables for Linux kernel
 lkddb/tables/linux_devicetables.py : device tables for Linux kernel
 lkddb/tables/linux_kbuild.py : tables for Linux kernel build infrastructure
-lkddb/tables/linux_kbuild.py : tables for Linux kernel build infrastructure
-lkddb/tables/linux_others.py : tables for miscelaneous Linux kernel structures
 lkddb/tables/linux_others.py : tables for miscelaneous Linux kernel structures
 merge.py : merge data from different version into a big database
-merge.py : merge data from different version into a big database
-templates/template-config.html :
 templates/template-config.html :
 templates/template-index.html :
-templates/template-index.html :
-utils/check-kernel-version.py : update kernel and data
 utils/check-kernel-version.py : update kernel and data
 utils/doall.sh : redo "all" released kernel
-utils/doall.sh : redo "all" released kernel
-utils/hot-cache.sh : ask to the webserver the pages (to build the cache)
 utils/hot-cache.sh : ask to the webserver the pages (to build the cache)
 utils/rebuild-web.sh : check and copy to webserver the modified pages
-utils/rebuild-web.sh : check and copy to webserver the modified pages
-utils/update.sh : update kernel and data
 utils/update.sh : update kernel and data
 utils/utils.sh : few utilities for developers
-utils/utils.sh : few utilities for developers
-utils/view.py : view contents of lkddb data files
 utils/view.py : view contents of lkddb data files

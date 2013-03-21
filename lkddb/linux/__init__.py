@@ -97,10 +97,10 @@ class linux_kernel(lkddb.tree):
                 continue
             version_dict[label.strip()] = value.strip()
         f.close()
-        assert(version_dict.has_key("VERSION"))
-        assert(version_dict.has_key("PATCHLEVEL"))
-        assert(version_dict.has_key("SUBLEVEL"))
-        assert(version_dict.has_key("EXTRAVERSION"))
+        assert("VERSION" in version_dict)
+        assert("PATCHLEVEL" in version_dict)
+        assert("SUBLEVEL" in version_dict)
+        assert("EXTRAVERSION" in version_dict)
 
 	version_dict['version'] = int(version_dict["VERSION"])
 	version_dict['patchlevel'] = int(version_dict["PATCHLEVEL"])

@@ -642,7 +642,7 @@ class i2c(list_of_structs_scanner):
           )
 
     def store(self, dict):
-        if not dict.has_key("driver"):
+        if "driver" not in dict:
             return None
         block = dict["driver"]
         line = split_structs(block)[0]

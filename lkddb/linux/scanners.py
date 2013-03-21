@@ -139,7 +139,7 @@ def value_expand_tri(val):
     return eval(val)
     
 def extract_value(field, dictionary):
-    if dictionary.has_key(field):
+    if field in dictionary:
         val = dictionary[field]
         if val[0] == "{"  and  val[-1] == "}":
             val = val[1:-1].strip()
@@ -205,7 +205,7 @@ def extract_string_rec(v, default=""):
 
 
 def extract_string(field, dictionary, default=""):
-    if dictionary.has_key(field):
+    if field in dictionary:
         v = dictionary[field]
 	return extract_string_rec(v, default)
     else:
@@ -213,7 +213,7 @@ def extract_string(field, dictionary, default=""):
 
 
 def extract_struct(field, dictionary, default=""):
-    if dictionary.has_key(field):
+    if field in dictionary:
         v = dictionary[field]
         if v[0] == '{' and  v[-1] == '}':
 	    return v[1:-1].strip()

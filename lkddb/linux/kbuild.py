@@ -134,7 +134,7 @@ class makefiles(lkddb.browser):
             if f[-2:] == ".o":
                 fc = fn[:-2]+".c"
                 virt = [ os.path.join(subdir, rule+".c") ]
-                if self.dep_aliases.has_key(fc):
+                if fc in self.dep_aliases:
                     virt.extend(self.dep_aliases[fc])
                 self.dep_aliases[fc] = virt
             elif f[-1] == "/":
@@ -187,7 +187,7 @@ class makefiles(lkddb.browser):
                 elif f[-2:] == ".o":
                     fc = fn[:-2]+".c"
                     v = d.copy()
-                    if self.dependencies.has_key(fc):
+                    if fc in self.dependencies:
                         v.update(self.dependencies[fc])
                     self.dependencies[fc] = v
                 else:

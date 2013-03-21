@@ -82,7 +82,7 @@ class storage(object):
             tables.extend(new_tables)
             versions.update(new_persistent['_versions'])
 	    for t in new_tables:
-		if persistent_data.has_key(t):
+		if t in persistent_data:
 		    lkddb.log.die("two different trees share the table name '%s'" % t)
 		persistent_data[t] = new_persistent[t]
 	persistent_data['_trees'] = trees
@@ -195,7 +195,7 @@ class tree(object):
                 self.version = persistent_data['_version']
 	    except KeyError:
                 lkddb.log.die("invalid data in file '%s'" % filename)
-	    if not trees.has_key(self.name):
+	    if self.name not in trees:
 		lkddb.log.die("file '%s' is not a valid data file for tree %s" % (filename, self.name))
             for t in self.tables.itervalues():
                 if t.name not in tables:
