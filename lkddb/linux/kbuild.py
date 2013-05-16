@@ -292,8 +292,8 @@ class kconfigs(lkddb.browser):
                 tok,args = line.split(None, 1)
             except:
                 tok = line ; args = ""
-            if "#" in args:
-                args = args.split("#", 1)[0]
+            #if "#" in args:
+            #    args = args.split("#", 1)[0]
             if tok in frozenset(("menu", "endmenu", "source", "if", "endif", "endchoice", "mainmenu")):
                 if context == C_CONF:
                     self.__kconf_save(config, dict, type, descr, depends, help, filename)
@@ -324,7 +324,7 @@ class kconfigs(lkddb.browser):
                 if tok == "boolean":
                     tok = "bool"
                 type = tok
-                if not args:
+                if not args or args[0] == "#":
                     descr = ""
                 else:
                     div = args[0]
@@ -335,19 +335,26 @@ class kconfigs(lkddb.browser):
                     else:
                         if div == '"':
                             args = args.replace('\\"', "'").replace("\\'", "'")
-                            s =  args.split(div)
+                            s = args.split(div)
                             descr = s[1]
                         else:
                             args = args.replace('\\"', '"').replace("\\'", '"')
                             s = args.split(div)
                             descr = s[1].replace('"', "'")
-                        d = s[2].split()
-                        if len(d) > 1  and  d[0] == "if":
-                            depends.append(" ".join(d[1:]))
+                        if len(s) < 3:
+                            lkddb.log.log("kconfig: bad line in %s %s: '%s': args=<%s>, s=%s" %
+                                                                (filename, config, line, args, s))
+                            assert False
+                        else:
+                            d = s[2].split()
+                            if len(d) > 1  and  d[0] == "if":
+                                depends.append(" ".join(d[1:]))
             if tok in frozenset(("default", "def_bool", "def_tristate")):
                 if tok[3] == "_":
                     type = tok[4:]
                     descr = ""
+                if "#" in args:
+                    args = args.split("#", 1)[0]
                 s = args.split('if')
                 if len(s) > 1:
                     d = s[1].split()
@@ -367,6 +374,8 @@ class kconfigs(lkddb.browser):
                 if len(d) > 1  and  d[0] == "if":
                     depends.append(" ".join(d[1:]))
             if tok == "depends":
+               if "#" in args:
+                    args = args.split("#", 1)[0]
                d = args.split()
                if len(d) > 1  and  d[0] == "on":
                     depends.append(" ".join(d[1:]))

@@ -83,6 +83,7 @@ class linux_sources(lkddb.browser):
                         filename = os.path.join(dir, source)
                         if filename in skeleton_files:
                             continue
+                        lkddb.log.log_extra("reading file " + filename)
                         f = open(filename)
                         src = f.read()
                         f.close()
@@ -102,6 +103,7 @@ class linux_sources(lkddb.browser):
             filename_i = os.path.join(dir_i, source)
             if filename_i in skeleton_files:
                 continue
+            lkddb.log.log_extra("reading include " + filename_i)
             f = open(os.path.join(dir, source))
             src = f.read()
             f.close()
