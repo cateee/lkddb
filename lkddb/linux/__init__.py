@@ -139,9 +139,12 @@ class linux_kernel(lkddb.tree):
 	    bang = f.readline()
 	    if bang.startswith("#!"):
 		bang = bang[2:].strip()
-		version_dict['local_ver'] = subprocess.Popen(bang + " scripts/setlocalversion .",
+                script = subprocess.Popen(bang + " scripts/setlocalversion .",
                     shell=True, cwd=self.kerneldir,
-                    stdout=subprocess.PIPE).communicate()[0].strip().replace("-dirty", "")
+                    stdout=subprocess.PIPE)
+		version_dict['local_ver'] = script.communicate()[0].strip().replace("-dirty", "")
+                if script.returncode > 0:
+                    version_dict['local_ver'] = ""
 	else:
 	    version_dict['local_ver'] = ""
 	if not version_dict['local_ver'] or version_dict['local_ver'] == '-dirty':
