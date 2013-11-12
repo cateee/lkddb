@@ -17,13 +17,13 @@ build_lkddb() {
 
 do_git_kernel() {
     echo "------ doing $1 --------"
-    ( cd "$kdir/linux-2.6"
+    ( cd "$kdir/linux"
       git checkout "$1"
       git clean -d -f -f
       [ -d include/config/ ] || mkdir include/config/
       [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
     )
-    build_lkddb "$kdir/linux-2.6/"
+    build_lkddb "$kdir/linux/"
 }
 
 do_tar_kernel() {
