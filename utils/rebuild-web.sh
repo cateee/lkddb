@@ -29,17 +29,17 @@ destweb="$HOME/cateee.net/lkddb/web-lkddb"
 check_copy_changed() {
     if [ -f "$3/$1" ] ; then
         if ! cmp -s "$2/$1" "$3/$1" ; then
-            cp -p "$3/$1" "$changeddir"
+            cp -plf "$3/$1" "$changeddir"
             diff -u "$3/$1" "$2/$1" > "$diffdir/$1.diff" || true
-            cp -p "$2/$1" "$3/"
+            cp -plf "$2/$1" "$3/"
 	    echo -n "$1 "
 	    return 0
 	else
 	    return 1
         fi
     else
-        cp -p "$2/$1" "$newdir"
-        cp -p "$2/$1" "$3/"
+        cp -plf "$2/$1" "$newdir"
+        cp -plf "$2/$1" "$3/"
 	echo -n "!$1 "
 	return 0
     fi
