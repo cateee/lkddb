@@ -23,7 +23,7 @@ all: Manifest lkddb web-out/index.html
 
 # --- generic definitions ---
 
-datafiles ?= lkddb-[23].*.data
+datafiles ?= lkddb-2.6.?.data lkddb-2.6.??.data lkddb-3.?.data lkddb-3.??.data
 my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html utils/*.py utils/*.sh Makefile TODO lkddb/DESIGN
 all_sources = ${my_sources} GPL-2 GPL-3
 
