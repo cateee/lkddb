@@ -46,11 +46,20 @@ def assemble_config_data(storage):
 		    ids[t.name][key1] = values2[0][0]
 
 
-def generate_config_pages(templdir, webdir):
+def generate_config_pages(templdir, webdir, consolidated_versions):
     f = open(os.path.join(templdir, "template-config.html"), "r")
     template_config = string.Template(f.read())
     f.close()
     year = time.strftime("%Y", time.gmtime())
+
+    # check last available version 
+    last_ver = ("", (0,0,0), "0.0.0", 1)
+    for ver in consolidated_versions:
+	if ver[-1] != 1 or ver[0] != "linux-kernel":
+	    continue
+	if ver[1][0] > last_ver[1][0]:
+	    last_ver = ver
+
     for config_full, table in configs.iteritems():
 	config = config_full[7:]
 	if config == "_UNKNOW__":
@@ -330,8 +339,9 @@ def generate_config_pages(templdir, webdir):
 		continue
 	    line_templ = tables[tname].line_templ.rstrip()
             for key1, key2, values, versions in table[tname]:
+		versions = ver_list_str(versions, compress=True)
 		row = key1 + (url_config(key2[0]), url_filename(key2[1])) + values
-		lines.append("lkddb " + line_templ % row)
+		lines.append("lkddb " + line_templ % row + " # in " + versions)
 	lines.sort()
 	if not lines:
 	    lines.append("(none)")
@@ -427,7 +437,8 @@ help_remote_re = re.compile(r"<(http:[^>]*)>")
 def prepare_help(helptext):
     helptext = helptext.replace("&", "&amp;")
     helptext = config_re.sub(r'&&lt;a href="\1.html"&&gt;\1&&lt;/a&&gt;', helptext)
-    helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    # helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    helptext = help_local_re.sub(r'&&lt;a href="http//lxr.free-electrons.com/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = help_remote_re.sub(r'&&lt;a href="\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = helptext.replace("<", "&lt;").replace(">", "&gt;")
     helptext = helptext.replace("&&lt;", "<").replace("&&gt;", ">")
@@ -443,7 +454,8 @@ def url_config(config):
     return " ".join(ret)
 
 def url_filename(filename):
-    return  '<a href="http://lxr.linux.no/source/' +filename+ '">' +filename+ '</a>'
+    #return  '<a href="http://lxr.linux.no/source/' +filename+ '">' +filename+ '</a>'
+    return  '<a href="http://lxr.free-electrons.com/source/' +filename+ '">' +filename+ '</a>'
 
 def prepare_depends(depends):
     if not depends:
@@ -588,11 +600,15 @@ def make(options, templdir, webdir):
 
     lkddb.log.phase("read consolidated file")
     storage.read_consolidate(options.consolidated)
+    consolidated_versions = storage.readed_trees['linux-kernel'].consolidated_versions 
+
     lkddb.log.phase("assemble config page data")
     assemble_config_data(storage)
+
     lkddb.log.phase("assemble page data")
-    generate_config_pages(templdir, webdir)
+    generate_config_pages(templdir, webdir, consolidated_versions)
     generate_index_pages(templdir, webdir)
+
     lkddb.log.phase("END [gen-web-lkddb.py]")
 
 #

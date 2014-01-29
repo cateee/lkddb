@@ -42,7 +42,7 @@ mrproper: clean
 # --- building lists ---
 
 lkddb:
-	time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ${KDIR}
+	time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ${kdir}
 
 merge: lkddb-all.data
 lkddb-all.data: ids.data ${datafiles} merge.py
