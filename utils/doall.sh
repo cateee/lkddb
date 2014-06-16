@@ -8,10 +8,11 @@
 
 set -e
 
-kdir="/home/cate/kernel/"
+kdir="$HOME/kernel/"
 
 build_lkddb() {
     time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k "$1"
+    time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux/
 }
 
 

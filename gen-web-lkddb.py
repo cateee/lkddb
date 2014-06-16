@@ -437,8 +437,8 @@ help_remote_re = re.compile(r"<(http:[^>]*)>")
 def prepare_help(helptext):
     helptext = helptext.replace("&", "&amp;")
     helptext = config_re.sub(r'&&lt;a href="\1.html"&&gt;\1&&lt;/a&&gt;', helptext)
-    # helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
-    helptext = help_local_re.sub(r'&&lt;a href="http//lxr.free-electrons.com/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    # helptext = help_local_re.sub(r'&&lt;a href="http//lxr.free-electrons.com/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = help_remote_re.sub(r'&&lt;a href="\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = helptext.replace("<", "&lt;").replace(">", "&gt;")
     helptext = helptext.replace("&&lt;", "<").replace("&&gt;", ">")
@@ -454,8 +454,8 @@ def url_config(config):
     return " ".join(ret)
 
 def url_filename(filename):
-    #return  '<a href="http://lxr.linux.no/source/' +filename+ '">' +filename+ '</a>'
-    return  '<a href="http://lxr.free-electrons.com/source/' +filename+ '">' +filename+ '</a>'
+    return  '<a href="http://lxr.linux.no/source/' +filename+ '">' +filename+ '</a>'
+    # return  '<a href="http://lxr.free-electrons.com/source/' +filename+ '">' +filename+ '</a>'
 
 def prepare_depends(depends):
     if not depends:

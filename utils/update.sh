@@ -15,7 +15,7 @@ kdir=/home/cate/kernel/linux/
 
 (   cd "$kdir"
     git pull --ff-only --no-progress
-    git checkout
+    git checkout master
     [ -d include/config/ ] || mkdir include/config/
     [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
 )

@@ -24,7 +24,7 @@ skeleton_files = frozenset(("drivers/video/skeletonfb.c", "drivers/net/isa-skele
    # these are #included in other files:
         "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c",
    # discard these files
-        "include/linux/compiler.h", "drivers/mmc/host/omap_hsmmc.c"
+        "include/linux/compiler.h", "include/linux/mutex.h", "drivers/mmc/host/omap_hsmmc.c"
 ))
 
 

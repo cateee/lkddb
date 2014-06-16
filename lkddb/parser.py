@@ -19,10 +19,6 @@ import re
 import os.path
 import lkddb
 import lkddb.log
-#import lkddb.linux.kbuild
-
-#
-#import lkddb_utils, kbuildparser, scanners
 
 
 # global dictionaries
@@ -48,8 +44,9 @@ includes_direct["drivers/media/video/gspca/m5602/m5602_core.c"] = (
                  set(["include/linux/usb.h"]))
 includes_unwind["drivers/media/video/gspca/m5602/m5602_core.c"] = set([])
 
+# see also lkddb/linux/browse_sources.py
 includes_unwind["include/linux/compiler.h"] = set([])
-
+includes_unwind["include/linux/mutex.h"] = set([])
 
 
 # Comments and join lines
