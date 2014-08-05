@@ -13,6 +13,7 @@ kdir=/home/cate/kernel/linux/
 
 # --- update sources
 
+if [ "$1" != "--skip-update" ] ; then
 (   cd "$kdir"
     git pull --ff-only --no-progress
     git checkout master
@@ -20,6 +21,7 @@ kdir=/home/cate/kernel/linux/
     [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
 )
 make check-ids
+fi
 
 changed=""
 
