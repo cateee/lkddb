@@ -58,7 +58,7 @@ web-out/index.html: lkddb-all.data templates/*.html gen-web-lkddb.py
 # We download files only with explicit user agreement (e.g. "make check-ids")
 
 check-pci.ids:
-	wget -N http://pciids.sourceforge.net/v2.2/pci.ids.bz2
+	wget -N https://pci-ids.ucw.cz/v2.2/pci.ids.bz2
 	bzip2 -kfd pci.ids.bz2
 check-usb.ids:
 	wget -N http://www.linux-usb.org/usb.ids.bz2
