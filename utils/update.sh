@@ -14,6 +14,16 @@ kdir=/home/cate/kernel/linux/
 # --- update sources
 
 if [ "$1" != "--skip-update" ] ; then
+    true
+elif [ -n "$1" ] ; then
+(   cd "$kdir"
+    git pull --ff-only --no-progress
+    git checkout master
+    git checkout "$1"
+    [ -d include/config/ ] || mkdir include/config/
+    [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
+)
+else
 (   cd "$kdir"
     git pull --ff-only --no-progress
     git checkout master
