@@ -13,19 +13,21 @@ kdir=/home/cate/kernel/linux/
 
 # --- update sources
 
-if [ "$1" != "--skip-update" ] ; then
+if [ "$1" = "--skip-update" ] ; then
     true
 elif [ -n "$1" ] ; then
+    echo "Doing non master branche/tag: '$1'"
 (   cd "$kdir"
-    git pull --ff-only --no-progress
-    git checkout master
     git checkout "$1"
     [ -d include/config/ ] || mkdir include/config/
     [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
 )
 else
 (   cd "$kdir"
-    git pull --ff-only --no-progress
+    git checkout master || true
+    git reset --hard
+    git pull --ff-only --no-progress || true
+    git clean -d -x -f
     git checkout master
     [ -d include/config/ ] || mkdir include/config/
     [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
