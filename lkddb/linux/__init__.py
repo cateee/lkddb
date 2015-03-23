@@ -115,7 +115,7 @@ class linux_kernel(lkddb.tree):
             version_dict['extra'] = ""
 	else:
 	   version_dict["name"] = version_dict.get("NAME", "")
-	if version_dict["VERSION"] == "3" and version_dict["SUBLEVEL"] == "0":
+	if version_dict["VERSION"] >= "3" and version_dict["SUBLEVEL"] == "0":
 	    # 3.x versions
 	    version_dict['str'] = version_dict["VERSION"] +"."+ version_dict["PATCHLEVEL"] + version_dict['extra']
 	else:
