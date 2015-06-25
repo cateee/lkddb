@@ -81,6 +81,9 @@ def parse_header(src, filename, discard_source):
                     lkddb.log.log("preprocessor: parse_header(): unknow c-include in %s: %s" % (
                         filename, incl))
                     continue
+                if os.path.samefile(filename, fn):
+                    # kernel/locking/qspinlock.c includes himself
+                    continue
                 f = open(fn)
                 src2 = f.read()
                 f.close()
