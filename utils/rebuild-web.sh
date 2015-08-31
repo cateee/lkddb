@@ -93,7 +93,7 @@ copy_changed "$f" "dist" "$destsrc/lkddb-sources"
 echo
 
 echo "=== distribute lists."
-lastlist="`ls -t lkddb-3*.list | head -1`"
+lastlist="`ls -t lkddb-4*.list | head -1`"
 echo "last is $lastlist"
 cat "$lastlist" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > dist/counts
 echo >> dist/counts
