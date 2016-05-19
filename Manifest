@@ -28,6 +28,7 @@ templates/template-config.html :
 templates/template-index.html :
 utils/check-kernel-version.py : update kernel and data
 utils/doall.sh : redo "all" released kernel
+utils/doone.sh : redo "all" released kernel
 utils/hot-cache.sh : ask to the webserver the pages (to build the cache)
 utils/rebuild-web.sh : check and copy to webserver the modified pages
 utils/update.sh : update kernel and data
