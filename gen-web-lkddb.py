@@ -203,7 +203,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
 	    if lines:
 	        lines.sort()
 	        systems.append(('PCI', '<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>', lines))
-		sources.append('The <a href="http://pciids.sourceforge.net/">Linux PCI ID Repository</a>.')
+		sources.append('The <a href="https://pci-ids.ucw.cz/">Linux PCI ID Repository</a>.')
 
         #------
         # USB
@@ -292,7 +292,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
             if lines:
                 lines.sort()
                 systems.append(('EISA', '<p>Numeric ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>', lines))
-                sources.append('The <a href="http://www.kernel.org/">Linux Kernel</a> (eisa.ids).')
+                sources.append('The <a href="https://www.kernel.org/">Linux Kernel</a> (eisa.ids).')
 
         #------
         # ZORRO
@@ -318,7 +318,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
             if lines:
                 lines.sort()
                 systems.append(('ZORRO', '<p>Numeric ID (from LKDDb) and names (from zorro.ids) of recognized devices:</p>', lines))
-                sources.append('The <a href="http://www.kernel.org/">Linux Kernel</a> (zorro.ids)')
+                sources.append('The <a href="https://www.kernel.org/">Linux Kernel</a> (zorro.ids)')
 
         #------
         # Assemble hardware and sources
@@ -430,15 +430,14 @@ def escape(src):
 
 config_re = re.compile(r"CONFIG_([^_]\w*)")
 
-help_local_re = re.compile(r"<file:([^>]*)>")
-help_remote_re = re.compile(r"<(http:[^>]*)>")
+help_local_re = re.compile(r"<file:/?([^>]*)>")
+help_remote_re = re.compile(r"<(https?:[^>]*)>")
 
 
 def prepare_help(helptext):
     helptext = helptext.replace("&", "&amp;")
     helptext = config_re.sub(r'&&lt;a href="\1.html"&&gt;\1&&lt;/a&&gt;', helptext)
-    helptext = help_local_re.sub(r'&&lt;a href="http://lxr.linux.no/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
-    # helptext = help_local_re.sub(r'&&lt;a href="http//lxr.free-electrons.com/source/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    helptext = help_local_re.sub(r'&&lt;a href="https://github.com/torvalds/linux/tree/master/\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = help_remote_re.sub(r'&&lt;a href="\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = helptext.replace("<", "&lt;").replace(">", "&gt;")
     helptext = helptext.replace("&&lt;", "<").replace("&&gt;", ">")
@@ -454,8 +453,7 @@ def url_config(config):
     return " ".join(ret)
 
 def url_filename(filename):
-    return  '<a href="http://lxr.linux.no/source/' +filename+ '">' +filename+ '</a>'
-    # return  '<a href="http://lxr.free-electrons.com/source/' +filename+ '">' +filename+ '</a>'
+    return  '<a href="https://github.com/torvalds/linux/tree/master/' +filename+ '">' +filename+ '</a>'
 
 def prepare_depends(depends):
     if not depends:
