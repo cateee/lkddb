@@ -1,18 +1,32 @@
 #!/usr/bin/python
-#: check-kernel-version.py : check if there is a new kernel version to parse
+#: utils/check-kernel-version.py : update kernel and data
 #
 #  Copyright (c) 2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import sys
 import os
+import os.path
 import subprocess
 import optparse
 import fnmatch
 import glob
 
 
+
 def make(options, kerneldir, datadir):
+    ver = getversion(kerneldir)
+    filename = "lkddb-" + ver + ".data"
+    if os.path.exists(os.path.join(datadir, filename)):
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+        sys.exit(1)
+    sys.stdout.write(filename + '\n')
+    sys.stdout.flush()
+    sys.exit(0)
+    
+
+def getversion(kerneldir):
     version_dict = {}
     f = open(os.path.join(self.kerneldir, "Makefile"))
     for i in range(10):
@@ -36,6 +50,7 @@ def make(options, kerneldir, datadir):
                         version_dict["SUBLEVEL"] +  version_dict["EXTRAVERSION"] + 
                         version_dict['local_ver'] )
         print "Actual kernel has version %s" % fullversion
+
 
 
 if __name__ == "__main__":

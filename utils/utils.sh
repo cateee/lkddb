@@ -28,7 +28,7 @@ function copy_to_dist() {
 
     mkdir "$dest/web-out"
 
-    find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'lkddb-*' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name '*.pyc' \! -name '*.tmp' -print \) > dist/ls.orig
+    find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name '*.pyc' \! -name '*.tmp' -print \) > dist/ls.orig
     cd dist/lkddb-20??-??-?? ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log'  \! -name '*.tmp' -print \) > ../../dist/ls.dist ; cd ../..
     if diff --unified=0 dist/ls.orig dist/ls.dist ; then
         true
@@ -70,10 +70,10 @@ case "$1" in
     'web' )	copy_to_dist-web
     ;;
 
-    'print' )   find . -name '*.py' | xargs grep '[^#.]print'
+    'print' )   find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o -name '*.py' | xargs grep '[^#.]print'
     ;;
 
-    'todo' )	find . -name '*.py' | xargs grep -Er '([#?!]{3,}|[^.]print)' *.py
+    'todo' )	find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o  -name '*.py' | xargs grep -Er '([#?!]{3,}|[^.]print)' *.py
     ;;
 
 esac

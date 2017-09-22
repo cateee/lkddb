@@ -24,7 +24,7 @@ all: Manifest lkddb web-out/index.html
 # --- generic definitions ---
 
 datafiles ?= lkddb-[23].*.data
-my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html *.sh Makefile TODO lkddb/DESIGN
+my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html utils/*.py utils/*.sh Makefile TODO lkddb/DESIGN
 all_sources = ${my_sources} GPL-2 GPL-3
 
 
@@ -43,7 +43,8 @@ lkddb:
 
 merge: lkddb-all.data
 lkddb-all.data: ids.data ${datafiles}
-	time python ./merge.py -v -l merge.log -o lkddb-all.data ${datafiles} ids.data
+	mv lkddb-all.data lkddb-all.data.tmp
+	time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp ${datafiles} ids.data
 
 web: web-out/index.html
 web-out/index.html: lkddb-all.data templates/*.html
@@ -75,7 +76,7 @@ ids.data: pci.ids usb.ids eisa.ids zorro.ids
 # --- distributing ---
 
 tar: Manifest
-	./utils.sh tar
+	./utils/utils.sh tar
 
 Manifest: ${all_sources}
 	: > Manifest ; \
