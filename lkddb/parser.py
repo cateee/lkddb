@@ -35,7 +35,7 @@ defines_fnc = {}
 defines_str = {}
 
 # special cases:
-print "with special includes"
+print("with special includes.  Check them from time to time.")
 includes_direct["drivers/char/synclink_gt.c"] = (
                 set(["include/linux/synclink.h"]))
 includes_unwind["drivers/char/synclink_gt.c"] = set([])
@@ -78,7 +78,7 @@ def parse_header(src, filename, discard_source):
             if not incl.endswith('.h"')  and not incl.endswith(".agh"):
                 fn = os.path.join(dir, incl[1:-1])
                 if not os.path.isfile(fn):
-                    lkddb.log.log("preprocessor: parse_header(): unknow c-include in %s: %s" % (
+                    lkddb.log.log("preprocessor: parse_header(): unknown c-include in %s: %s" % (
                         filename, incl))
                     continue
                 if os.path.samefile(filename, fn):
@@ -94,7 +94,7 @@ def parse_header(src, filename, discard_source):
         elif incl[0] == '<'  and  incl[-1] == '>':
             includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
         elif incl[0] == '$'  and  incl[-1] == '$':
-            # it is a non .h recursive include (set called, from above
+            # it is a non .h recursive include (set called, from above)
             continue
         else:
             lkddb.log.log("preprocessor: parse_header(): unknow include in %s: '%s'" % (

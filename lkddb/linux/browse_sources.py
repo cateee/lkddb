@@ -18,13 +18,16 @@ from lkddb.parser import unwind_include
 
 
 
-skeleton_files = frozenset(("drivers/video/skeletonfb.c", "drivers/net/isa-skeleton.c",
+skeleton_files = frozenset((
+    # skeleton and example files are not useful (and not compiled/used)
+        "drivers/video/skeletonfb.c", "drivers/net/isa-skeleton.c",
         "drivers/net/pci-skeleton.c", "drivers/pci/hotplug/pcihp_skeleton.c",
         "drivers/usb/usb-skeleton.c",
-   # these are #included in other files:
+    # these are #included in other files:
         "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c",
-   # discard these files
-        "include/linux/compiler.h", "include/linux/mutex.h", "drivers/mmc/host/omap_hsmmc.c"
+    # discard these files
+        "include/linux/compiler.h", "include/linux/mutex.h",
+        "drivers/net/ethernet/chelsio/cxgb4/cxgb4_main.c"
 ))
 
 
