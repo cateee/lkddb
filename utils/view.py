@@ -34,7 +34,7 @@ def recursive_view(options, data, args, name):
         final_view(options, data[v1], name+now)
     else:
         final_view(options, data[now], name+"['"+now+"']")
-        
+
 
 def final_view(options, data, name):
     if type(data) == type({}):

@@ -23,7 +23,7 @@ def make(options, args):
     lkddb.log.phase("read files to consolidate")
 
     for f in args:
-	storage.read_consolidate(f)
+        storage.read_consolidate(f)
 
     lkddb.log.phase("write consolidate main file")
     storage.write_consolidate(filename=options.consolidated)
@@ -33,7 +33,7 @@ def make(options, args):
 #
 
 if __name__ == "__main__":
-    
+
     usage = "Usage: %prog [options] file-to-consolidate..."
     parser = optparse.OptionParser(usage=usage)
     parser.set_defaults(verbose=1, consolidated="lkddb-all.data", timed_logs=False)

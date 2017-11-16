@@ -70,15 +70,15 @@ def log(message):
             _logfile.write("*%3.1f: %s\n" % (elapsed_time(),  message))
         else:
             _logfile.write("* %s\n" % message)
-	_logfile.flush()
+        _logfile.flush()
 
 def log_extra(message):
     if _verbose > 1:
         if _timed_logs:
-	    _logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
+            _logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
         else:
             _logfile.write(". %s\n" % message)
-	_logfile.flush()
+        _logfile.flush()
 
 def die(message, errorcode=1):
     sys.stdout.flush()
@@ -98,10 +98,10 @@ def exception(msg=None):
     sys.stdout.flush()
     sys.stderr.flush()
     _logfile.write("=" * 50 + "\nEXCEPTION in %s (after %.1f seconds)\n" %
-			(_phase, elapsed_time()) )
+                        (_phase, elapsed_time()) )
     if msg:
         _logfile.write(msg + "\n")
-	_logfile.write("-" * 10)
+        _logfile.write("-" * 10)
     traceback.print_exc(file=_logfile)
     _logfile.write("-" * 50 + "\n")
     _logfile.flush()

@@ -6,7 +6,7 @@
 
 import lkddb.log
 
-target = ('text', 'web', 'database') 
+target = ('text', 'web', 'database')
 
 def get_row_fmt(fmt):
     ret = filter(None, map(lambda v: v[1], fmt))
@@ -17,7 +17,7 @@ def get_row_fmt(fmt):
 def m8x(value):
     assert(value > -2  and  value < 2**(8))
     if value == -1:
-	return ".."
+        return ".."
     return "%02x" % value
 
 def m16x(value):
@@ -52,7 +52,7 @@ def mask_24m(v, m):
     for i in range(24/4):
         if m[i] == "0":
             ret += "."
-	# '~0' means 0xfffff for mask
+        # '~0' means 0xfffff for mask
         elif m[i] == "f" or m[i] == ".":
             ret += v[i]
         else:
@@ -73,9 +73,9 @@ def qstr(value):
 
 def dqstr(value):
     if value[0] == value[-1]  and  ( value[0] == "'" or value[1] == '"'):
-	return value[1:-1]
+        return value[1:-1]
     else:
-	return value
+        return value
 
 def int(value):
     return "%d" % value

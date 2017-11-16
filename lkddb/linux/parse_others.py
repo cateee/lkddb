@@ -47,11 +47,11 @@ class platform(struct_scanner):
           parent_scanner = parent_scanner,
           struct_name = "platform_driver",
           struct_fields = ("probe", "remove", "shutdown", "suspend_late", "resume_early",
-			   "suspend", "resume", "driver")
+                           "suspend", "resume", "driver")
           )
 
     def store(self, dict):
-	block = dict.get("driver", None)
+        block = dict.get("driver", None)
         if not block:
             return None
         line = split_structs(block)[0]
@@ -67,16 +67,16 @@ class fs(struct_scanner):
     def __init__(self, parent_scanner, tree):
       struct_scanner.__init__(self,
           name = 'fs',
-	  tree = tree,
+          tree = tree,
           table_name = 'fs',
           parent_scanner = parent_scanner,
           struct_name = "file_system_type",
           struct_fields = ("name", "fs_flags", "get_sb", "kill_sb", "owner",
-		"next", "fs_supers", "s_lock_key", "s_umount_key", "i_lock_key", "i_mutex_key",
-		"i_mutex_dir_key", "i_alloc_sem_key")
+                "next", "fs_supers", "s_lock_key", "s_umount_key", "i_lock_key", "i_mutex_key",
+                "i_mutex_dir_key", "i_alloc_sem_key")
           )
 
     def store(self, dict):
-	v0 = extract_string("name", dict)
+        v0 = extract_string("name", dict)
         return (v0,)
 

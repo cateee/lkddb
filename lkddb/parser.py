@@ -87,7 +87,7 @@ def parse_header(src, filename, discard_source):
                 f = open(fn)
                 src2 = f.read()
                 f.close()
-                src2 = src.replace(incl, "$"+incl[1:-1]+"$\n"+src2) 
+                src2 = src.replace(incl, "$"+incl[1:-1]+"$\n"+src2)
                 return parse_header(src2, filename, discard_source)
             else:
                 includes_direct[filename].add(os.path.normpath(os.path.join(dir, incl[1:-1])))
@@ -142,7 +142,7 @@ def search_define(token, filename, defines):
             return defs[header]
     return None
 
-    
+
 # ---------------
 
 
@@ -165,7 +165,7 @@ def expand_block(block, filename):
                 i += 1
             else:
                 ret += c
-            continue 
+            continue
         if c.isalnum()  or  c == "_":
             if start_token < 0:
                 start_token = i
@@ -200,7 +200,7 @@ def expand_token(block, start, end, filename):
         instr = False
         args = []
         i = end-1
-        while(i<pend):  
+        while(i<pend):
             i += 1              # end should be at last chat of token
             c = block[i]
             if c.isspace():

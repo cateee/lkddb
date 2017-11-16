@@ -22,25 +22,25 @@ def make(options, kerneldir, dirs):
     try:
         lkddb.log.phase("scan")
         tree.scan_sources()
-	lkddb.log.phase("finalize")
+        lkddb.log.phase("finalize")
         tree.finalize_sources()
     except:
         lkddb.log.exception("unknow error in main loop")
         assert False, "unknow error in main loop"
     lkddb.log.phase("write")
     if options.sql:
-	sql = options.dbfile + ".db"
+        sql = options.dbfile + ".db"
     else:
-	sql = None
+        sql = None
     tree.write(data_filename = options.dbfile + ".data",
-		list_filename = options.dbfile + ".list",
-		sql_filename = sql)
+                list_filename = options.dbfile + ".list",
+                sql_filename = sql)
 #
 # main
 #
 
 if __name__ == "__main__":
-    
+
     usage = "Usage: %prog [options] kerneldir [subdirs...]"
     parser = optparse.OptionParser(usage=usage)
     parser.set_defaults(verbose=1, dbfile="lkddb", sql=False, versioned=False, timed_logs=False)

@@ -12,7 +12,7 @@ def register_linux_tables(tree):
     tree.register_table('kconf', linux_kbuild.kconf_table())
     tree.register_table('module', linux_kbuild.module_table())
     tree.register_table('firmware', linux_kbuild.firmware_table())
-    
+
     linux_devicetables.register(tree)
     linux_others.register(tree)
 

@@ -24,7 +24,7 @@ def make(options, kerneldir, datadir):
     sys.stdout.write(filename)
     sys.stdout.flush()
     sys.exit(0)
-    
+
 
 def getversion(kerneldir):
     version_dict = {}

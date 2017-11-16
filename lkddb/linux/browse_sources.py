@@ -40,22 +40,22 @@ class linux_sources(lkddb.browser):
         lkddb.browser.__init__(self, "linux_sources")
         self.kerneldir = kerneldir
         self.dirs = dirs
-	# devices:
-	self.scanners = []
+        # devices:
+        self.scanners = []
 
     def register(self, scanner):
-	self.scanners.append(scanner)
+        self.scanners.append(scanner)
 
     def scan(self):
-	lkddb.browser.scan(self)
+        lkddb.browser.scan(self)
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
             lkddb.log.phase("headers")
             for dir, d_, files in os.walk("include"):
                 p = dir.split("/")
-	        if len(p) < 2 or p[1] == "asm"  or  p[1] == "asm-um"  or  p[1] == "config":
-	            continue
+                if len(p) < 2 or p[1] == "asm"  or  p[1] == "asm-um"  or  p[1] == "config":
+                    continue
                 if p[1].startswith("asm-")  and  p[1] != "asm-generic":
                     if len(p) == 2:
                         dir_i = "include/asm"
@@ -65,21 +65,21 @@ class linux_sources(lkddb.browser):
                         dir_i = "include/asm/" + "/".join(p[2:])
                 else:
                     dir_i = dir
-  	        self.__read_includes(files, dir, dir_i)
+                self.__read_includes(files, dir, dir_i)
             for arch_incl in glob.glob("arch/*/include"):
                 for dir, d_, files in os.walk(arch_incl):
                     p = dir.split("/")
-		    if len(p) < 3  or  p[2] != "include":
-				  continue
-	            dir_i = "include/" + "/".join(p[3:])
-	            self.__read_includes(files, dir, dir_i)
+                    if len(p) < 3  or  p[2] != "include":
+                                  continue
+                    dir_i = "include/" + "/".join(p[3:])
+                    self.__read_includes(files, dir, dir_i)
 
             lkddb.parser.unwind_include_all()
 
             lkddb.log.phase("sources")
             for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
-	            self.__read_includes(fnmatch.filter(files, "*.h"), dir, dir)
+                    self.__read_includes(fnmatch.filter(files, "*.h"), dir, dir)
 
                 for dir, d_, files in os.walk(subdir):
                     for source in fnmatch.filter(files, "*.c"):
@@ -91,15 +91,15 @@ class linux_sources(lkddb.browser):
                         src = f.read()
                         f.close()
                         src = lkddb.parser.parse_header(src, filename, discard_source=False)
-			for s in self.scanners:
-			    s.in_scan(src, filename)
+                        for s in self.scanners:
+                            s.in_scan(src, filename)
         finally:
             os.chdir(orig_cwd)
 
     def finalize(self):
-	lkddb.browser.finalize(self)
-	for s in self.scanners:
-	    s.finalize()
+        lkddb.browser.finalize(self)
+        for s in self.scanners:
+            s.finalize()
 
     def __read_includes(self, files, dir, dir_i):
         for source in files:
@@ -122,15 +122,15 @@ ifdef_re = re.compile(
 class struct_parent_scanner(lkddb.scanner):
 
     def __init__(self, browser, makefiles):
-	lkddb.scanner.__init__(self, "struct_parent_scanner")
-	self.browser = browser
-	self.makefiles = makefiles
+        lkddb.scanner.__init__(self, "struct_parent_scanner")
+        self.browser = browser
+        self.makefiles = makefiles
         self.scanners = []
-	browser.register(self)
+        browser.register(self)
 
     def register(self, scanner):
-	self.scanners.append(scanner)
-	
+        self.scanners.append(scanner)
+
     def finalize(self):
         for s in self.scanners:
             s.finalize()
@@ -179,7 +179,7 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
                 res[fields[nparam]] = param
             except IndexError:
                 lkddb.log.exception("Error: index error: %s, %s, %s, %s" %
-					(scanner.name, fields, line, filename))
+                                        (scanner.name, fields, line, filename))
                 assert False, "Error: index error: %s, %s, %s, %s" % (scanner.name, fields, line, filename)
         nparam += 1
     if res:

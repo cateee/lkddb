@@ -11,24 +11,24 @@ import lkddb.log
 from lkddb.parser import unwind_include
 
 __all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
-	   "split_funct", "split_structs",
-	   "extract_value", "extract_string", "extract_struct")
+           "split_funct", "split_structs",
+           "extract_value", "extract_string", "extract_struct")
 
 class struct_subscanner(object):
 
     def __init__(self, name, tree, parent_scanner, table_name):
-	self.name = name
-	self.tree = tree
-	self.parent_scanner = parent_scanner
-	self.table = self.tree.get_table(table_name)
-	parent_scanner.register(self)
-	self.raw = []
+        self.name = name
+        self.tree = tree
+        self.parent_scanner = parent_scanner
+        self.table = self.tree.get_table(table_name)
+        parent_scanner.register(self)
+        self.raw = []
 
     def finalize(self):
-	self.data = []
+        self.data = []
         for data, filename, deps in self.raw:
-	    # we store also filename, to have usefull error messages
-	    data['__filename'] = filename
+            # we store also filename, to have usefull error messages
+            data['__filename'] = filename
             try:
                 row = self.store(data)
             except:
@@ -36,7 +36,7 @@ class struct_subscanner(object):
                     "scanner<%s>.finalize: filename: %s, data: %s" % (
                     self.name, filename, data) )
                 continue
-	    if row:
+            if row:
                 self.table.add_row(row + (" ".join(sorted(deps)), filename))
 
 # ---------------
@@ -52,7 +52,7 @@ class list_of_structs_scanner(struct_subscanner):
 
 class struct_scanner(struct_subscanner):
     def __init__(self, name, tree, parent_scanner, struct_name, table_name, struct_fields):
-	struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
+        struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
         self.struct_name = struct_name
         self.struct_fields = struct_fields
         regex = r"\b%s\s+\w+\s*\w*\s*\w*\s*=\s*(\{.*?\})\w*;" % struct_name
@@ -61,11 +61,11 @@ class struct_scanner(struct_subscanner):
 
 class function_scanner(struct_subscanner):
     def __init__(self, name, tree, parent_scanner, table_name, funct_name, funct_fields):
-	struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
+        struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
         self.struct_name = funct_name
         self.struct_fields = funct_fields
         regex = ( r"\b%s\s*\(([^()]*(?:\([^()]*\))?[^()]*(?:\([^()]*\))?[^()]*)\)"
-			% funct_name )
+                        % funct_name )
         self.regex = re.compile(regex, re.DOTALL)
         self.splitter = split_funct
 
@@ -132,12 +132,12 @@ def value_expand_tri(val):
               else:
                 res = f
             except:
-		lkddb.log.log("error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f))
+                lkddb.log.log("error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f))
                 assert False, "error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f)
             val = val[:m.start()] + res + val[m.end():]
             m = r.search(val)
     return eval(val)
-    
+
 def extract_value(field, dictionary):
     if field in dictionary:
         val = dictionary[field]
@@ -154,15 +154,15 @@ def extract_value(field, dictionary):
                 lkddb.log.log("Hmmmm, %s in '%s'" % (field, dictionary))
                 return eval(val[val.find("=")+1:])
             else:
-		lkddb.log.log("error in extract_value: %s, %s --- '%s'" % (field, dictionary, val))
+                lkddb.log.log("error in extract_value: %s, %s --- '%s'" % (field, dictionary, val))
                 assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
         except NameError:
             lkddb.log.log("error in extract_value: expected number in field %s from %s"
-			% (field, dictionary))
+                        % (field, dictionary))
             return -1
         except:
-	    lkddb.log.log("error in extract_value, 2: %s, %s --- '%s'" % (field, dictionary, val))
-	    assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
+            lkddb.log.log("error in extract_value, 2: %s, %s --- '%s'" % (field, dictionary, val))
+            assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
         try:
             return int(ret)
         except ValueError:
@@ -184,12 +184,12 @@ subfield_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)(\.[A-Za-z_0-9]*\s*=\s*.*)
 def extract_string_rec(v, default=""):
     if v[0] == '(':
         if v[-1] == ')':
-	    return extract_string_rec(v[1:-1].strip(), default)
+            return extract_string_rec(v[1:-1].strip(), default)
         else:
-	    if null_pointer_re.match(v):
-	        return default
+            if null_pointer_re.match(v):
+                return default
             v = char_cast_re.sub("", v).strip()
-	    return extract_string_rec(v, default)
+            return extract_string_rec(v, default)
     if v[0] == '{'  and  v[-1] == '}':
         return extract_string_rec(v[1:-1].strip(), default)
     if v[0] == '"'  and  v[-1] == '"':
@@ -200,14 +200,14 @@ def extract_string_rec(v, default=""):
             field, value = m.groups()
             return extract_string_rec(value, default)
         lkddb.log.log("Error on assumptions in translating strings: value '%s'" % v)
-	assert(True)
+        assert(True)
         return default
 
 
 def extract_string(field, dictionary, default=""):
     if field in dictionary:
         v = dictionary[field]
-	return extract_string_rec(v, default)
+        return extract_string_rec(v, default)
     else:
         return default
 
@@ -216,8 +216,8 @@ def extract_struct(field, dictionary, default=""):
     if field in dictionary:
         v = dictionary[field]
         if v[0] == '{' and  v[-1] == '}':
-	    return v[1:-1].strip()
+            return v[1:-1].strip()
         lkddb.log.die("unknow structure format: %s" % v)
     else:
         return default
-    
+

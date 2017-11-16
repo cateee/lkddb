@@ -30,10 +30,10 @@ class pci(list_of_structs_scanner):
 
     def __init__(self, parent_scanner, tree):
       list_of_structs_scanner.__init__(self,
-      	  name = 'pci',
+          name = 'pci',
           tree = tree,
           table_name = 'pci',
-	  parent_scanner = parent_scanner,
+          parent_scanner = parent_scanner,
           struct_name = "pci_device_id",
           struct_fields = ("vendor", "device", "subvendor", "subdevice",
                    "class", "class_mask", "driver_data"),
@@ -42,7 +42,7 @@ class pci(list_of_structs_scanner):
     def store(self, dict):
         v0 = extract_value("vendor", dict)
         v1 = extract_value("device", dict)
-	v4b = extract_value("class_mask",dict)
+        v4b = extract_value("class_mask",dict)
         if v0 == 0 and v1 == 0 and v4b == 0:
             return None
         v2 = extract_value("subvendor", dict)
@@ -70,23 +70,23 @@ class usb(list_of_structs_scanner):
       list_of_structs_scanner.__init__(self,
           name = 'usb',
           tree = tree,
-	  table_name = 'usb',
+          table_name = 'usb',
           parent_scanner = parent_scanner,
           struct_name = "usb_device_id",
           struct_fields = (
-	    "match_flags", "idVendor", "idProduct", "bcdDevice_lo", "bcdDevice_hi",
-	    "bDeviceClass", "bDeviceSubClass", "bDeviceProtocol",
-	    "bInterfaceClass", "bInterfaceSubClass", "bInterfaceProtocol",
-	    "driver_info" )
+            "match_flags", "idVendor", "idProduct", "bcdDevice_lo", "bcdDevice_hi",
+            "bDeviceClass", "bDeviceSubClass", "bDeviceProtocol",
+            "bInterfaceClass", "bInterfaceSubClass", "bInterfaceProtocol",
+            "driver_info" )
           )
 
     def store(self, dict):
-	match = extract_value("match_flags", dict)
+        match = extract_value("match_flags", dict)
         if not match:
             return None
-	v0=-1; v1=-1; v2=-1; v3=-1; v4=-1; v5=-1; v6=-1; v7=-1
-	v8 = 0; v9 = 0xffff
-	if match & self.USB_DEVICE_ID_MATCH_VENDOR:
+        v0=-1; v1=-1; v2=-1; v3=-1; v4=-1; v5=-1; v6=-1; v7=-1
+        v8 = 0; v9 = 0xffff
+        if match & self.USB_DEVICE_ID_MATCH_VENDOR:
             v0 = extract_value("idVendor", dict)
         if match & self.USB_DEVICE_ID_MATCH_PRODUCT:
             v1 = extract_value("idProduct", dict)
@@ -122,18 +122,18 @@ class ieee1394(list_of_structs_scanner):
       list_of_structs_scanner.__init__(self,
           name = 'ieee1394',
           tree = tree,
-	  table_name = 'ieee1394',
+          table_name = 'ieee1394',
           parent_scanner = parent_scanner,
           struct_name = "ieee1394_device_id",
           struct_fields = ("match_flags", "vendor_id", "model_id", "specifier_id",
-		"version", "driver_data")
+                "version", "driver_data")
           )
 
     def store(self, dict):
         match = extract_value("match_flags", dict)
         if not match:
             return None
-	v0=-1; v1=-1; v2=-1; v3=-1
+        v0=-1; v1=-1; v2=-1; v3=-1
         if match & self.IEEE1394_MATCH_VENDOR_ID:
             v0 = extract_value("vendor_id", dict)
         if match & self.IEEE1394_MATCH_MODEL_ID:
@@ -161,9 +161,9 @@ class hid(list_of_structs_scanner):
         v0 = extract_value("bus", dict)
         v1 = extract_value("vendor", dict)
         v2 =  extract_value("product",dict)
-	if v0 == 0 and v1 == 0 and v2  == 0:
-	    return None
-	return (v0, v1, v2)
+        if v0 == 0 and v1 == 0 and v2  == 0:
+            return None
+        return (v0, v1, v2)
 
 
 
@@ -181,14 +181,14 @@ class ccw(list_of_structs_scanner):
           parent_scanner = parent_scanner,
           struct_name = "ccw_device_id",
           struct_fields = ("match_flags", "cu_type", "dev_type",
-				"cu_model", "dev_model", "driver_info")
+                                "cu_model", "dev_model", "driver_info")
           )
 
     def store(self, dict):
         match = extract_value("match_flags", dict)
         if not match:
             return None
-	v0=-1; v1=-1; v2=-1; v3=-1
+        v0=-1; v1=-1; v2=-1; v3=-1
         if match & self.CCW_DEVICE_ID_MATCH_CU_TYPE:
             v0 = extract_value("cu_type", dict)
         if match & self.CCW_DEVICE_ID_MATCH_CU_MODEL:
@@ -242,8 +242,8 @@ class acpi(list_of_structs_scanner):
 
     def store(self, dict):
         v0 = extract_string("id", dict)
-	if not v0:
-	    return None
+        if not v0:
+            return None
         return (v0,)
 
 
@@ -263,8 +263,8 @@ class pnp(list_of_structs_scanner):
 
     def store(self, dict):
         v0 = extract_string("id", dict)
-	if not v0:
-	    return None
+        if not v0:
+            return None
         return (v0,  "","","","",  "","","","")
 
 
@@ -292,7 +292,7 @@ class pnp_card(list_of_structs_scanner):
         line = split_structs(prods)[0]
         dict_prod = parse_struct(pnp_card_intern_scanner, unwind_array,
                 line, None, None, ret=True)
-	vv = tuple(map(lambda n: extract_string(n, dict_prod, ""), unwind_array[:8]))
+        vv = tuple(map(lambda n: extract_string(n, dict_prod, ""), unwind_array[:8]))
         return (v0,) + vv
 
 
@@ -313,16 +313,16 @@ class serio(list_of_structs_scanner):
     def store(self, dict):
         v0 = extract_value("type", dict)
         v1 = extract_value("proto", dict)
-	if v0 == 0 and v1 == 0:
+        if v0 == 0 and v1 == 0:
             return None
         v2 = extract_value("id",dict)
         v3 = extract_value("extra",dict)
-	if v1 == 0xff:
-	    v1 = -1
-	if v2 == 0xff:
-	    v2 = -1
-	if v3 == 0xff:
-	    v3 = -1
+        if v1 == 0xff:
+            v1 = -1
+        if v2 == 0xff:
+            v2 = -1
+        if v3 == 0xff:
+            v3 = -1
         return (v0, v1, v2, v3)
 
 
@@ -396,14 +396,14 @@ class pcmcia(list_of_structs_scanner):
           parent_scanner = parent_scanner,
           struct_name = "pcmcia_device_id",
           struct_fields = ("match_flags", "manf_id", "card_id", "func_id", "function",
-		    "device_no", "prod_id_hash", "prod_id", "driver_info", "cisfile")
+                    "device_no", "prod_id_hash", "prod_id", "driver_info", "cisfile")
           )
 
     def store(self, dict):
         match = extract_value("match_flags", dict)
         if not match:
             return None
-	v0 = -1; v1 = -1; v2 = -1; v3 = -1; v4 = -1
+        v0 = -1; v1 = -1; v2 = -1; v3 = -1; v4 = -1
         if match & self.PCMCIA_DEV_ID_MATCH_MANF_ID:
             v0 = extract_value("manf_id", dict)
         if match & self.PCMCIA_DEV_ID_MATCH_CARD_ID:
@@ -414,8 +414,8 @@ class pcmcia(list_of_structs_scanner):
             v3 = extract_value("function", dict)
         if match & self.PCMCIA_DEV_ID_MATCH_DEVICE_NO:
             v4 = extract_value("device_no", dict)
-	n0, n1, n2, n3 = ("", "", "", "")
-	if match & ( self.PCMCIA_DEV_ID_MATCH_PROD_ID1 | self.PCMCIA_DEV_ID_MATCH_PROD_ID2 |
+        n0, n1, n2, n3 = ("", "", "", "")
+        if match & ( self.PCMCIA_DEV_ID_MATCH_PROD_ID1 | self.PCMCIA_DEV_ID_MATCH_PROD_ID2 |
                      self.PCMCIA_DEV_ID_MATCH_PROD_ID3 | self.PCMCIA_DEV_ID_MATCH_PROD_ID4 ):
 
             prods = dict["prod_id"]
@@ -458,15 +458,15 @@ class input(list_of_structs_scanner):
           parent_scanner = parent_scanner,
           struct_name = "input_device_id",
           struct_fields = ("flags", "bustype", "vendor", "product", "version",
-		   "evbit", "keybit", "relbit", "absbit", "mscbit", "ledbit",
-		   "sndbit", "ffbit", "swbit", "driver_info")
+                   "evbit", "keybit", "relbit", "absbit", "mscbit", "ledbit",
+                   "sndbit", "ffbit", "swbit", "driver_info")
           )
 
     def store(self, dict):
         match = extract_value("flags", dict)
         if not match:
             return None
-	v0 = -1; v1 = -1; v2 = -1; v3 = -1
+        v0 = -1; v1 = -1; v2 = -1; v3 = -1
         if match & self.INPUT_DEVICE_ID_MATCH_BUS:
             v0 = extract_value("bustype", dict)
         if match & self.INPUT_DEVICE_ID_MATCH_VENDOR:
@@ -475,8 +475,8 @@ class input(list_of_structs_scanner):
             v2 = extract_value("product", dict)
         if match & self.INPUT_DEVICE_ID_MATCH_VERSION:
             v3 = extract_value("version", dict)
-	v4 = -1; v5 = -1; v6 = -1; v7 = -1; v8 = -1;
-	v9 = -1; v10 = -1; v11 = -1; v12 = -1;
+        v4 = -1; v5 = -1; v6 = -1; v7 = -1; v8 = -1;
+        v9 = -1; v10 = -1; v11 = -1; v12 = -1;
         if match & self.INPUT_DEVICE_ID_MATCH_EVBIT:
             v4 = extract_value("evbit", dict)
         if match & self.INPUT_DEVICE_ID_MATCH_KEYBIT:
@@ -495,7 +495,7 @@ class input(list_of_structs_scanner):
             v11 = extract_value("ffbit", dict)
         if match & self.INPUT_DEVICE_ID_MATCH_SWBIT:
             v12 = extract_value("swbit", dict)
-	return (v0, v1, v2, v3,  v4, v5, v6, v7, v8, v9, v10, v11, v12)
+        return (v0, v1, v2, v3,  v4, v5, v6, v7, v8, v9, v10, v11, v12)
 
 
 # EISA, input_device_id include/linux/mod_devicetable.h
@@ -535,17 +535,17 @@ class parisc(list_of_structs_scanner):
 
     def store(self, dict):
         v3 = extract_value("sversion", dict)
-	if v3 == 0:
-	    return None
+        if v3 == 0:
+            return None
         v0 = extract_value("hw_type", dict)
         v1 = extract_value("hversion_rev",dict)
         v2 = extract_value("hversion",dict)
-	if v1 == 0xff:
-	    v1 = -1
-	if v2 == 0xffff:
-	    v2 = -1
-	if v3 == 0xffffffff:
-	    v3 = -1
+        if v1 == 0xff:
+            v1 = -1
+        if v2 == 0xffff:
+            v2 = -1
+        if v3 == 0xffffffff:
+            v3 = -1
         return (v0, v1, v2, v3)
 
 
@@ -564,7 +564,7 @@ class sdio(list_of_structs_scanner):
           )
 
     def store(self, dict):
-	v0 = extract_value("class", dict)
+        v0 = extract_value("class", dict)
         v1 = extract_value("vendor", dict)
         v2 = extract_value("device", dict)
         if v0 == 0  and  v1 == 0  and  c2 == 0:
@@ -592,12 +592,12 @@ class ssb(list_of_structs_scanner):
         v2 = extract_value("revision", dict)
         if v0 == 0  and  v1 == 0  and  v2 == 0:
             return None
-	if v0 == 0xffff:
-	   v0 = -1
-	if v1 == 0xffff:
-	   v1 = -1
-	if v2 == 0xff:
-	    v2 = -1
+        if v0 == 0xffff:
+           v0 = -1
+        if v1 == 0xffff:
+           v1 = -1
+        if v2 == 0xff:
+            v2 = -1
         return (v0, v1, v2)
 
 
@@ -620,8 +620,8 @@ class virtio(list_of_structs_scanner):
         v1 = extract_value("vendor", dict)
         if v0 == 0  and  v1 == 0:
             return None
-	if v1 == 0xffffffff:
-	    v1 = -1
+        if v1 == 0xffffffff:
+            v1 = -1
         return (v0, v1)
 
 
@@ -692,10 +692,10 @@ class zorro(list_of_structs_scanner):
         id = extract_value("id", dict)
         if id == 0:
             return None
-	if id == 0xffffffff:
-	    return (-1, -1)
-	else:
-	    return ( (id >> 16) & 0xffff,  (id & 0xffff) )
+        if id == 0xffffffff:
+            return (-1, -1)
+        else:
+            return ( (id >> 16) & 0xffff,  (id & 0xffff) )
 
 
 # AGP, agp_device_ids drivers/char/agp/agp.h drivers/char/agp/
@@ -714,8 +714,8 @@ class agp(list_of_structs_scanner):
 
     def store(self, dict):
         v0 = extract_value("device_id", dict)
-	if v0 == 0:
-	    return None
+        if v0 == 0:
+            return None
         v1 = extract_value("chipset", dict)
         v2 = extract_string("chipset_name", dict)
         return (v0, v1, v2)
