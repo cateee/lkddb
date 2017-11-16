@@ -1,0 +1,38 @@
+# Generic ignores
+*~
+*.swp
+*.pyc
+*.tmp
+
+# Ignore standard outputs
+
+/lkddb-*.data
+/lkddb-*.list
+/lkddb-*.log
+/lkddb.data
+/lkddb.list
+/lkddb.log
+
+/ids.data
+/ids.list
+/ids.log
+
+/merge.log
+/web.log
+
+/eisa.ids
+/eisa.list
+/pci.ids
+/pci.ids.bz2
+/pci.list
+/usb.ids
+/usb.ids.bz2
+/usb.list
+/zorro.ids
+/zorro.list
+
+# Ignore distribution files
+/changes/
+/dist/
+/web-out/
+
