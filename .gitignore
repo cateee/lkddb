@@ -4,6 +4,7 @@
 *.pyc
 *.tmp
 __pycache__
+tmp/
 
 # Ignore standard outputs
 /lkddb-*.db

@@ -84,7 +84,7 @@ def parse_header(src, filename, discard_source):
                 if os.path.samefile(filename, fn):
                     # kernel/locking/qspinlock.c includes himself
                     continue
-                f = open(fn)
+                f = open(fn, encoding='utf8', errors='replace')
                 src2 = f.read()
                 f.close()
                 src2 = src.replace(incl, "$"+incl[1:-1]+"$\n"+src2)
@@ -99,16 +99,16 @@ def parse_header(src, filename, discard_source):
         else:
             lkddb.log.log("preprocessor: parse_header(): unknow include in %s: '%s'" % (
                 filename, incl))
-    for id, defs in define_re.findall(src):
-        defines_pln.setdefault(id, {})
-        defines_pln[id][filename] = defs.strip()
-    for id, args, defs in define_fn_re.findall(src):
-        defines_fnc.setdefault(id, {})
-        defines_fnc[id][filename] = (args, defs.strip())
+    for name, defs in define_re.findall(src):
+        defines_pln.setdefault(name, {})
+        defines_pln[name][filename] = defs.strip()
+    for name, args, defs in define_fn_re.findall(src):
+        defines_fnc.setdefault(name, {})
+        defines_fnc[name][filename] = (args, defs.strip())
     if not discard_source:
-        for id, defs in strings_re.findall(src):
-            defines_str.setdefault(id, {})
-            defines_str[id][filename] = defs.strip()
+        for name, defs in strings_re.findall(src):
+            defines_str.setdefault(name, {})
+            defines_str[name][filename] = defs.strip()
         return src
 
 def unwind_include_rec(filename, known):
@@ -135,9 +135,10 @@ def search_define(token, filename, defines):
     if token not in defines:
         return None
     defs = defines[token]
-    for header in defs.keys():
-        if header == filename:
-            return defs[header]
+    headers = defs.keys()
+    if filename in headers:
+        return defs[filename]
+    for header in headers:
         if header in includes_unwind[filename]:
             return defs[header]
     return None
