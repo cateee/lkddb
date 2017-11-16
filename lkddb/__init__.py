@@ -8,7 +8,7 @@ import sys
 import os.path
 import traceback
 import time
-import shelve
+import pickle
 import sqlite3
 
 import lkddb.log
@@ -17,6 +17,8 @@ import lkddb.log
 TASK_BUILD = 1       # scan and build lkddb
 TASK_TABLE = 2       # read (and ev. format) tables
 TASK_CONSOLIDATE = 3 # consolidate trees (with versions)
+
+PICKLE_PROTOCOL = 4
 
 
 def init(options):
@@ -43,14 +45,16 @@ class storage(object):
 
     def register_tree(self, tree):
         self.available_trees[tree.name] = tree
-        for tabname, tab in tree.tables.iteritems():
+        for tabname, tab in tree.tables.items():
             self.available_tables[tabname] = (tree.name, tab)
 
     def read_consolidate(self, filename):
         lkddb.log.phase("reading data-file to consolidate: %s" % filename)
-        if not os.path.exists(filename):
-            lkddb.log.die("file '%s' don't exist" % filename)
-        persistent_data = shelve.open(filename, flag='r')
+        try:
+            with open(filename, 'rb') as f:
+                persistent_data = pickle.load(f)
+        except (EnvironmentError, pickle.PickleError) as e:
+            lkddb.log.die("Error reading file '%s': %s" % (filename, e))
         try:
             trees = persistent_data['_trees']
             tables = persistent_data['_tables']
@@ -62,15 +66,10 @@ class storage(object):
             tree = self.available_trees[treename]
             tree.read_consolidate(consolidated, persistent_data)
             self.readed_trees.update(map(lambda name: (name, self.available_trees[name]), trees))
-        persistent_data.close()
 
     def write_consolidate(self, filename, new=True):
         lkddb.log.phase("writing consolidate data '%s'" % filename)
-        if new:
-            oflag = 'n'
-        else:
-            oflag = 'w'
-        persistent_data = shelve.open(filename, flag=oflag)
+        persistent_data = {}
         trees = []
         tables = []
         versions = set(())
@@ -89,9 +88,8 @@ class storage(object):
         persistent_data['_tables'] = tables
         persistent_data['_versions'] = versions
         persistent_data['_consolidated'] = True
-
-        persistent_data.sync()
-        persistent_data.close()
+        with open(filename, 'wb') as f:
+            pickle.dump(persistent_data, f, protocol=PICKLE_PROTOCOL)
 
 
 class tree(object):
@@ -155,10 +153,10 @@ class tree(object):
 
     #
     # persistent data:
-    #   - data:  in python shelve format  [rows (raw)]
+    #   - data:  in python pickle format  [rows (raw)]
     #   - lines: in text (line based) format [fullrows (sort+uniq)]
     #   - sql:   in SQL database
-    #   - consolidate: in python shelve format [crows (with all versions)]
+    #   - consolidate: in python pickle format [crows (with all versions)]
     #
 
     def write(self, data_filename=None, list_filename=None, sql_filename=None):
@@ -172,43 +170,39 @@ class tree(object):
 
     def write_data(self, filename, new=True):
         lkddb.log.phase("writing 'data'")
-        if new:
-            oflag = 'n'
-        else:
-            oflag = 'w'
-        persistent_data = shelve.open(filename, flag=oflag)
+        persistent_data = {}
         persistent_data['_version'] = self.version
         persistent_data['_tables'] = tuple(self.tables.keys())
         persistent_data['_trees'] = [self.name]
         for t in self.tables.values():
             persistent_data[t.name] = t.rows
-        persistent_data.sync()
-        persistent_data.close()
+        with open(filename, 'wb') as f:
+            pickle.dump(persistent_data, f, protocol=PICKLE_PROTOCOL)
 
     def read_data(self, filename):
         lkddb.log.phase("reading data-file: '%s'" % filename)
-        if os.path.isfile(filename):
-            persistent_data = shelve.open(filename, flag='r')
-            try:
-                tables = persistent_data['_tables']
-                trees = persistent_data['_trees']
-                self.version = persistent_data['_version']
-            except KeyError:
-                lkddb.log.die("invalid data in file '%s'" % filename)
-            if self.name not in trees:
-                lkddb.log.die("file '%s' is not a valid data file for tree %s" % (filename, self.name))
-            for t in self.tables.values():
-                if t.name not in tables:
-                    lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
-                    continue
-                lkddb.log.log_extra("reading table '%s'" % t.name)
-                rows = persistent_data.get(t.name, None)
-                if rows != None:
-                    t.rows = rows
-                    t.restore()
-            persistent_data.close()
-        else:
-            lkddb.log.die("could not read file '%s' % filename")
+        try:
+            with open(filename, 'rb') as f:
+                persistent_data = pickle.load(f)
+        except (EnvironmentError, pickle.PickleError) as e:
+            lkddb.log.die("Error reading file '%s': %s" % (filename, e))
+        try:
+            tables = persistent_data['_tables']
+            trees = persistent_data['_trees']
+            self.version = persistent_data['_version']
+        except KeyError:
+            lkddb.log.die("invalid data in file '%s'" % filename)
+        if self.name not in trees:
+            lkddb.log.die("file '%s' is not a valid data file for tree %s" % (filename, self.name))
+        for t in self.tables.values():
+            if t.name not in tables:
+                lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
+                continue
+            lkddb.log.log_extra("reading table '%s'" % t.name)
+            rows = persistent_data.get(t.name, None)
+            if rows != None:
+                t.rows = rows
+                t.restore()
 
     def read_consolidate(self, consolidated, persistent_data):
         if not consolidated:
@@ -243,20 +237,6 @@ class tree(object):
         for t in self.tables.values():
             persistent_data[t.name] = t.crows
         return persistent_data
-
-    def append_data(self, filename, table_list):
-        "append new tables to an existing consolidated data file"
-        assert False, "remove this function"
-        persistent_data = shelve.open(filename, flag='w')
-        consolidated = persistent_data['_consolidated']
-        tables = persistent_data['_tables']
-        for t in table_list:
-            if not t.name in tables:
-                tables += (t.name,)
-            persistent_data[t.name] = t.crows
-        persistent_data['_tables'] = tables
-        persistent_data.sync()
-        persistent_data.close()
 
     def write_list(self, filename):
         lkddb.log.phase("writing 'list'")
@@ -396,8 +376,8 @@ class table(object):
 
         # consolitating
         if consolidated:
-            for key1, values1 in self.crows_tmp.iteritems():
-                for key2, values2 in values1.iteritems():
+            for key1, values1 in self.crows_tmp.items():
+                for key2, values2 in values1.items():
                     values, all_versions = values2
                     actual_crow = self.crows.get(key1, None)
                     if actual_crow == None:
