@@ -1,4 +1,5 @@
 # Generic ignores
+\#*#
 *~
 *.swp
 *.pyc
@@ -7,11 +8,9 @@ __pycache__
 tmp/
 
 # Ignore standard outputs
-/lkddb-*.db
 /lkddb-*.data
 /lkddb-*.list
 /lkddb-*.log
-/lkddb.db
 /lkddb.data
 /lkddb.list
 /lkddb.log

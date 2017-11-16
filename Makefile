@@ -46,16 +46,16 @@ mrproper: clean
 # --- building lists ---
 
 lkddb:
-	time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ${kdir}
+	time python3 ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ${kdir}
 
 merge: lkddb-all.data
 lkddb-all.data: ids.data ${datafiles} merge.py
 	[ ! -f lkddb-all.data ] || mv lkddb-all.data lkddb-all.data.tmp
-	time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp ${datafiles} ids.data
+	time python3 ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp ${datafiles} ids.data
 
 web: web-out/index.html
 web-out/index.html: lkddb-all.data templates/*.html gen-web-lkddb.py
-	time python ./gen-web-lkddb.py -v -l web.log -f lkddb-all.data templates/ web-out/
+	time python3 ./gen-web-lkddb.py -v -l web.log -f lkddb-all.data templates/ web-out/
 
 
 # These targets require extern files
@@ -77,7 +77,7 @@ ids.data: pci.ids usb.ids eisa.ids zorro.ids
 	@if ! [ -f pci.ids -a -f usb.ids -a -f eisa.ids -a -f zorro.ids ] ; then \
 	    echo "Missing one ids file."; echo "Run 'make check-ids' to download the needed files"; exit 1; \
 	fi
-	time python ./ids_importer.py -v -b ids -l ids.log  pci.ids usb.ids eisa.ids zorro.ids
+	time python3 ./ids_importer.py -v -b ids -l ids.log  pci.ids usb.ids eisa.ids zorro.ids
 
 
 # --- distributing ---

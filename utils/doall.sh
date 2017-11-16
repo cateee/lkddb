@@ -8,11 +8,10 @@
 
 set -e
 
-kdir="$HOME/kernel/"
+kdir="$HOME/kernel"
 
 build_lkddb() {
-    time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k "$1"
-    time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux/
+    time python3 ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k "$1"
 }
 
 
@@ -24,7 +23,7 @@ do_git_kernel() {
       [ -d include/config/ ] || mkdir include/config/
       [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
     )
-    build_lkddb "$kdir/linux/"
+    build_lkddb "$kdir/linux"
 }
 
 do_tar_kernel() {
@@ -35,9 +34,6 @@ do_tar_kernel() {
     echo "$kdir/linux-$1"
     build_lkddb "$kdir/linux-$1"
 }
-
-
-if false ; then
 
 do_tar_kernel '2.6.0'
 do_tar_kernel '2.6.1'
@@ -68,7 +64,6 @@ do_git_kernel 'v2.6.24'
 do_git_kernel 'v2.6.25'
 do_git_kernel 'v2.6.26'
 do_git_kernel 'v2.6.27'
-fi
 do_git_kernel 'v2.6.28'
 do_git_kernel 'v2.6.29'
 do_git_kernel 'v2.6.30'
@@ -81,9 +76,43 @@ do_git_kernel 'v2.6.36'
 do_git_kernel 'v2.6.37'
 do_git_kernel 'v2.6.38'
 do_git_kernel 'v2.6.39'
-#fi
 
 do_git_kernel 'v3.0'
+do_git_kernel 'v3.1'
+do_git_kernel 'v3.2'
+do_git_kernel 'v3.3'
+do_git_kernel 'v3.4'
+do_git_kernel 'v3.5'
+do_git_kernel 'v3.6'
+do_git_kernel 'v3.7'
+do_git_kernel 'v3.8'
+do_git_kernel 'v3.9'
+do_git_kernel 'v3.10'
+do_git_kernel 'v3.11'
+do_git_kernel 'v3.12'
+do_git_kernel 'v3.13'
+do_git_kernel 'v3.14'
+do_git_kernel 'v3.15'
+do_git_kernel 'v3.16'
+do_git_kernel 'v3.17'
+do_git_kernel 'v3.18'
+do_git_kernel 'v3.19'
+
+do_git_kernel 'v4.0'
+do_git_kernel 'v4.1'
+do_git_kernel 'v4.2'
+do_git_kernel 'v4.3'
+do_git_kernel 'v4.4'
+do_git_kernel 'v4.5'
+do_git_kernel 'v4.6'
+do_git_kernel 'v4.7'
+do_git_kernel 'v4.8'
+do_git_kernel 'v4.9'
+do_git_kernel 'v4.10'
+do_git_kernel 'v4.11'
+do_git_kernel 'v4.12'
+do_git_kernel 'v4.13'
+do_git_kernel 'v4.14'
 
 #HEAD
 do_git_kernel 'master'

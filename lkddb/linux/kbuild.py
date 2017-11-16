@@ -88,13 +88,13 @@ class makefiles(lkddb.browser):
             lkddb.log.log("parse_kbuild: not a directory: %s" % subdir)
             return
         if main != 1  and  "Kbuild" in files:
-            f = open(os.path.join(subdir, 'Kbuild'))
+            f = open(os.path.join(subdir, 'Kbuild'), encoding='utf8', errors='replace')
             src = kbuild_normalize.sub(" ", f.read())
             f.close()
         else:
             src = ""
         if main != 2  and  "Makefile" in files:
-            f = open(os.path.join(subdir, 'Makefile'))
+            f = open(os.path.join(subdir, 'Makefile'), encoding='utf8', errors='replace')
             src += '\n' + kbuild_normalize.sub(" ", f.read())
             f.close()
         if not src:
@@ -112,7 +112,7 @@ class makefiles(lkddb.browser):
                                 (subdir, mk2))
                 src = src[:m.start()] + "\n" + src[m.end():]
                 continue
-            f = open(mk2)
+            f = open(mk2, encoding='utf8', errors='replace')
             src2 = kbuild_normalize.sub(" ", f.read())
             f.close()
             src = src[:m.start()] + "\n" + src2 + "\n" + src[m.end():]
@@ -271,7 +271,7 @@ class kconfigs(lkddb.browser):
 
     def __parse_kconfig(self, filename):
         "read config menu in Kconfig"
-        f = open(filename)
+        f = open(filename, encoding='utf8', errors='replace')
         context = C_TOP
         config = None
         depends = []

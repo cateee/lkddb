@@ -21,14 +21,14 @@ ids = {}
 config_pages = {}  # 'A' -> [ ('CONFIG_ATM', '2.6.25, 2.6.26'), ('CONFIG_ABC', ...]
 
 def assemble_config_data(storage):
-    for tname, textra in storage.available_tables.iteritems():
+    for tname, textra in storage.available_tables.items():
         treename = textra[0]
         t = textra[1]
         tables[tname] = t
         if t.kind == ("linux-kernel", "device") or (
             t.kind == ("linux-kernel", "special") and t.name == "kconf"):
-            for key1, values1 in t.crows.iteritems():
-                for key2, values2 in values1.iteritems():
+            for key1, values1 in t.crows.items():
+                for key2, values2 in values1.items():
                     for config in key2[0].split():
                         if not config.startswith("CONFIG_") or config == "CONFIG_":
                             lkddb.log.log("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
@@ -41,8 +41,8 @@ def assemble_config_data(storage):
                         configs[config][t.name].append((key1, key2, values2[0], values2[1]))
         elif t.kind == ("ids", "ids"):
             ids[t.name] = {}
-            for key1, values1 in t.crows.iteritems():
-                for key2, values2 in values1.iteritems():
+            for key1, values1 in t.crows.items():
+                for key2, values2 in values1.items():
                     ids[t.name][key1] = values2[0][0]
 
 
@@ -60,7 +60,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
         if ver[1][0] > last_ver[1][0]:
             last_ver = ver
 
-    for config_full, table in configs.iteritems():
+    for config_full, table in configs.items():
         config = config_full[7:]
         if config == "_UNKNOW__":
             continue
@@ -137,7 +137,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 pageitems['title'] = config_full+ ": " + favorite_prompt
             else:
                 v = 0
-                for descr, vals in saved.iteritems():
+                for descr, vals in saved.items():
                     if vals > v:
                         favorite_prompt = descr
                 if favorite_prompt:
@@ -334,7 +334,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
         # lkddb
 
         lines = []
-        for tname, t in table.iteritems():
+        for tname, t in table.items():
             if tname == "kconf":
                 continue
             line_templ = tables[tname].line_templ.rstrip()
@@ -371,10 +371,10 @@ def generate_index_pages(templdir, webdir):
     template_index = string.Template(f.read())
     f.close()
     year = time.strftime("%Y", time.gmtime())
-    indices = config_pages.keys()
+    indices = list(config_pages.keys())
     indices.sort()
     count = {}
-    for subindex, config in config_pages.iteritems():
+    for subindex, config in config_pages.items():
         count[subindex] = len(config)
     for idx in indices + ["main"]:   # add also the main index page
         page = ""
@@ -500,9 +500,9 @@ def ver_list_str(versions, compress=False):
             head = [basestr + "+HEAD"]
     else:
         head = []
-    versions = filter(lambda v: v[3]>=0, versions)
+    versions = [v for v in versions if v[3] >= 0]
     if not compress:
-        ret = map(lambda v: v[2], versions)
+        ret = [v[2] for v in versions]
         return ", ".join(ret + head)
     else:
         prev = (0,0,0)

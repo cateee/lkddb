@@ -8,11 +8,10 @@
 
 set -e
 
-kdir="$HOME/kernel/"
+kdir="$HOME/kernel"
 
 build_lkddb() {
-    time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k "$1"
-    time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux/
+    time python3 ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k "$1"
 }
 
 
@@ -24,7 +23,7 @@ do_git_kernel() {
       [ -d include/config/ ] || mkdir include/config/
       [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
     )
-    build_lkddb "$kdir/linux/"
+    build_lkddb "$kdir/linux"
 }
 
 do_tar_kernel() {
@@ -44,7 +43,7 @@ else
 fi
 
 
-# rest to master
+# return to master
 ( cd "$kdir/linux"
     git checkout master
     git clean -d -f -f

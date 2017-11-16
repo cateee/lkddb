@@ -50,7 +50,7 @@ class ids_file_browser(lkddb.browser):
 
         # pci.ids
         lkddb.log.phase("pci.ids'")
-        f = open(self.pci_ids_filename, 'r')
+        f = open(self.pci_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"		# H : header
         v0, v1, v2 = -1, -1, -1
         for line in f:
@@ -100,7 +100,7 @@ class ids_file_browser(lkddb.browser):
 
         # usb.ids
         lkddb.log.phase("usb.ids'")
-        f = open(self.usb_ids_filename, 'r')
+        f = open(self.usb_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"
         v0, v1, v2 = -1, -1, -1
         for line in f:
@@ -151,7 +151,7 @@ class ids_file_browser(lkddb.browser):
 
         # eisa.ids
         lkddb.log.phase("eisa.ids'")
-        f = open(self.eisa_ids_filename, 'r')
+        f = open(self.eisa_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"
         for line in f:
             if part == "H":
@@ -169,7 +169,7 @@ class ids_file_browser(lkddb.browser):
 
         # zorro.ids
         lkddb.log.phase("zorro.ids'")
-        f = open(self.zorro_ids_filename, 'r')
+        f = open(self.zorro_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"
         v0, v1 = -1, -1
         for line in f:

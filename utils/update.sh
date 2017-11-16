@@ -39,10 +39,10 @@ changed=""
 
 # --- update data files (when necesary)
 
-new=`python utils/check-kernel-version.py "$kdir" . || true`
+new=`python3 utils/check-kernel-version.py "$kdir" . || true`
 if [ -n "$new" ] ; then
     echo "=== generating new datafile $new."
-    time python ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux/
+    time python3 ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux/
     echo build-lkddb.py: DONE
     changed="$changed $new"
 fi
@@ -66,7 +66,7 @@ if [[ "$changed" =~ "data" ]] ; then
 	exit 0
     fi
     mv lkddb-all.data lkddb-all.data.tmp
-    time python ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp $changed ids.data
+    time python3 ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp $changed ids.data
 fi
 
 bash utils/rebuild-web.sh
