@@ -49,7 +49,7 @@ def m64x(value):
 
 def mask_24m(v, m):
     ret = ""
-    for i in range(24/4):
+    for i in range(6):
         if m[i] == "0":
             ret += "."
         # '~0' means 0xfffff for mask

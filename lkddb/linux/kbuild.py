@@ -246,7 +246,7 @@ class kconfigs(lkddb.browser):
         # two kind of "tables": config and module
 
     def scan(self):
-        old_kernel = (self.tree.version < 0x020600)  ### find exact version
+        old_kernel = (self.tree.version_dict['numeric'] < 0x020600)  ### find exact version
         lkddb.browser.scan(self)
         orig_cwd = os.getcwd()
         try:

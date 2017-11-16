@@ -127,7 +127,7 @@ def unwind_include(filename):
     includes_unwind[filename].update(res)
 
 def unwind_include_all():
-    for header in includes_direct.iterkeys():
+    for header in includes_direct.keys():
         unwind_include(header)
 
 
@@ -135,7 +135,7 @@ def search_define(token, filename, defines):
     if token not in defines:
         return None
     defs = defines[token]
-    for header in defs.iterkeys():
+    for header in defs.keys():
         if header == filename:
             return defs[header]
         if header in includes_unwind[filename]:

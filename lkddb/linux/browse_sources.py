@@ -87,7 +87,7 @@ class linux_sources(lkddb.browser):
                         if filename in skeleton_files:
                             continue
                         lkddb.log.log_extra("reading file " + filename)
-                        f = open(filename)
+                        f = open(filename, encoding='utf8', errors='replace')
                         src = f.read()
                         f.close()
                         src = lkddb.parser.parse_header(src, filename, discard_source=False)
@@ -107,7 +107,7 @@ class linux_sources(lkddb.browser):
             if filename_i in skeleton_files:
                 continue
             lkddb.log.log_extra("reading include " + filename_i)
-            f = open(os.path.join(dir, source))
+            f = open(os.path.join(dir, source), encoding='utf8', errors='replace')
             src = f.read()
             f.close()
             lkddb.parser.parse_header(src, filename_i, discard_source=True)

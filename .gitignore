@@ -3,12 +3,14 @@
 *.swp
 *.pyc
 *.tmp
+__pycache__
 
 # Ignore standard outputs
-
+/lkddb-*.db
 /lkddb-*.data
 /lkddb-*.list
 /lkddb-*.log
+/lkddb.db
 /lkddb.data
 /lkddb.list
 /lkddb.log

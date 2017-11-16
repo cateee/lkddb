@@ -74,7 +74,7 @@ class storage(object):
         trees = []
         tables = []
         versions = set(())
-        for tree in self.readed_trees.itervalues():
+        for tree in self.readed_trees.values():
             lkddb.log.phase("writing consolidated tree '%s'" % tree.name)
             new_persistent = tree.write_consolidate()
             new_tables = new_persistent['_tables']
@@ -136,13 +136,13 @@ class tree(object):
             b.finalize()
 
     def format_tables(self):
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             t.fmt()
     def prepare_sql(self, db, create=True):
         c = db.cursor()
         if create:
             create_generic_tables(c)
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             t.prepare_sql()
             if create:
               t.create_sql(c)
@@ -150,7 +150,7 @@ class tree(object):
         c.close()
     def write_sql(self, db):
         prepare_sql(db)
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             t.in_sql(db)
 
     #
@@ -180,7 +180,7 @@ class tree(object):
         persistent_data['_version'] = self.version
         persistent_data['_tables'] = tuple(self.tables.keys())
         persistent_data['_trees'] = [self.name]
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             persistent_data[t.name] = t.rows
         persistent_data.sync()
         persistent_data.close()
@@ -197,7 +197,7 @@ class tree(object):
                 lkddb.log.die("invalid data in file '%s'" % filename)
             if self.name not in trees:
                 lkddb.log.die("file '%s' is not a valid data file for tree %s" % (filename, self.name))
-            for t in self.tables.itervalues():
+            for t in self.tables.values():
                 if t.name not in tables:
                     lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
                     continue
@@ -217,7 +217,7 @@ class tree(object):
         else:
             ver = None
             self.consolidated_versions.update(persistent_data['_versions'])
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             lkddb.log.log_extra("reading table '%s'" % t.name)
             rows = persistent_data.get(t.name, None)
             if rows != None:
@@ -240,7 +240,7 @@ class tree(object):
         persistent_data = {}
         persistent_data['_tables'] = tuple(self.tables.keys())
         persistent_data['_versions'] = self.consolidated_versions
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             persistent_data[t.name] = t.crows
         return persistent_data
 
@@ -261,7 +261,7 @@ class tree(object):
     def write_list(self, filename):
         lkddb.log.phase("writing 'list'")
         lines = []
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             new = t.get_lines()
             lines.extend(new)
         lines.sort()
@@ -282,12 +282,12 @@ class tree(object):
         db = sqlite3.connect(filename)
         c = db.cursor()
         lfddb = lkddb.create_generic_tables(c)
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             t.prepare_sql(ver)
             t.create_sql(c)
         db.commit()
         c.close()
-        for t in self.tables.itervalues():
+        for t in self.tables.values():
             t.to_sql(db)
         db.commit()
         db.close()
@@ -325,9 +325,9 @@ class table(object):
         self.line_fmt = tuple(line_fmt)
         self.line_len = len(line_fmt)
         self.col_len = len(self.cols)
-        self.key1_len = len(filter(lambda v: v>0, line_indices))
-        self.key2_len = len(filter(lambda v: -10<v<0, line_indices))
-        self.values_len = len(filter(lambda v: v==0, line_indices))
+        self.key1_len = len([v for v in line_indices if v>0])
+        self.key2_len = len([v for v in line_indices if -10<v<0])
+        self.values_len = len([v for v in line_indices if v==0])
         assert self.line_len == (self.key1_len + self.key2_len + self.values_len)
 
         indices = [0] * self.line_len

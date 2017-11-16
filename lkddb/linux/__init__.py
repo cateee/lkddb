@@ -14,8 +14,8 @@ import lkddb.tables
 # sources
 from .kbuild import kver, makefiles, kconfigs
 from . import browse_sources
-from parse_devicetables import *
-from parse_others import *
+from .parse_devicetables import *
+from .parse_others import *
 
 
 def register_linux_browsers(tree):
@@ -142,7 +142,7 @@ class linux_kernel(lkddb.tree):
                 script = subprocess.Popen(bang + " scripts/setlocalversion .",
                     shell=True, cwd=self.kerneldir,
                     stdout=subprocess.PIPE)
-                version_dict['local_ver'] = script.communicate()[0].strip().replace("-dirty", "")
+                version_dict['local_ver'] = script.communicate()[0].decode('utf-8','replace').strip().replace("-dirty", "")
                 if script.returncode > 0:
                     version_dict['local_ver'] = ""
         else:
