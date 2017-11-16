@@ -27,7 +27,6 @@ skeleton_files = frozenset((
         "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c",
     # discard these files
         "include/linux/compiler.h", "include/linux/mutex.h",
-        "drivers/net/ethernet/chelsio/cxgb4/cxgb4_main.c"
 ))
 
 
@@ -92,7 +91,10 @@ class linux_sources(lkddb.browser):
                         f.close()
                         src = lkddb.parser.parse_header(src, filename, discard_source=False)
                         for s in self.scanners:
-                            s.in_scan(src, filename)
+                            try:
+                                s.in_scan(src, filename)
+                            except RecursionError:
+                                lkddb.log.log("Recursion error in file %s" % filename)
         finally:
             os.chdir(orig_cwd)
 
@@ -180,7 +182,7 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
             except IndexError:
                 lkddb.log.exception("Error: index error: %s, %s, %s, %s" %
                                         (scanner.name, fields, line, filename))
-                assert False, "Error: index error: %s, %s, %s, %s" % (scanner.name, fields, line, filename)
+                return {}
         nparam += 1
     if res:
         if ret:

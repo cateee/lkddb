@@ -8,7 +8,7 @@
 
 set -e
 
-kdir=/home/cate/kernel/linux/
+kdir="$HOME/kernel/linux/"
 
 
 # --- update sources

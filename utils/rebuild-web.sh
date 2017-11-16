@@ -121,5 +121,5 @@ echo "=== updating web."
 
 [ -f ~/cateee.net/lkddb/Makefile ] && ( cd ~/cateee.net/lkddb ; make )
 
-[ -x /home/cate/cateee.net/tools/gen-sitemap-0.9/gen-sitemap ] && ( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
+[ -x "$HOME"/cateee.net/tools/gen-sitemap-0.9/gen-sitemap ] && ( cd /home/cate/cateee.net/; tools/gen-sitemap-0.9/gen-sitemap --notify )
 

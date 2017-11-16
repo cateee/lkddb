@@ -26,7 +26,7 @@ def make(options, kerneldir, dirs):
         tree.finalize_sources()
     except:
         lkddb.log.exception("unknow error in main loop")
-        assert False, "unknow error in main loop"
+        raise
     lkddb.log.phase("write")
     if options.sql:
         sql = options.dbfile + ".db"
