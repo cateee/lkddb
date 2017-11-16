@@ -46,7 +46,7 @@ class list_of_structs_scanner(struct_subscanner):
         struct_subscanner.__init__(self, name=name, tree=tree, parent_scanner=parent_scanner, table_name=table_name)
         self.struct_name = struct_name
         self.struct_fields = struct_fields
-        regex = r"\b%s\s+\w+\s*\w*\s*\[[^];]*\]\s*\w*\s*=\s*\{(.*?)\}\s*;" % struct_name
+        regex = r"\b%s\s+\w+\s*\w*\s*\[[^];]*\]\s*\w*\s*=\s*\{([^;]*)\}" % struct_name
         self.regex = re.compile(regex, re.DOTALL)
         self.splitter = split_structs
 
