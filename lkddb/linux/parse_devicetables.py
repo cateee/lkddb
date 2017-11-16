@@ -567,7 +567,7 @@ class sdio(list_of_structs_scanner):
         v0 = extract_value("class", dict)
         v1 = extract_value("vendor", dict)
         v2 = extract_value("device", dict)
-        if v0 == 0  and  v1 == 0  and  c2 == 0:
+        if v0 == 0 and v1 == 0 and v2 == 0:
             return None
         return (v0, v1, v2)
 

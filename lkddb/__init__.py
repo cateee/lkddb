@@ -4,10 +4,6 @@
 #  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import sys
-import os.path
-import traceback
-import time
 import pickle
 import sqlite3
 
@@ -23,13 +19,6 @@ PICKLE_PROTOCOL = 4
 
 def init(options):
     lkddb.log.init(options)
-
-#
-# Generic container to pass global data between modules
-#
-
-def share(name, object):
-    shared[name] = object
 
 #
 # Generic classes for device_class and source_trees
@@ -57,7 +46,6 @@ class storage(object):
             lkddb.log.die("Error reading file '%s': %s" % (filename, e))
         try:
             trees = persistent_data['_trees']
-            tables = persistent_data['_tables']
         except KeyError:
             lkddb.log.die("invalid data in file '%s'" % filename)
         consolidated = persistent_data.get('_consolidated', False)
@@ -110,7 +98,7 @@ class tree(object):
         self.consolidated_versions = set(())
 
     def get_strversion(self):
-        if self.version == None:
+        if self.version is None:
             self.retrive_version()
         return self.version[2]
     def retrive_version(self):
@@ -136,21 +124,7 @@ class tree(object):
     def format_tables(self):
         for t in self.tables.values():
             t.fmt()
-    def prepare_sql(self, db, create=True):
-        c = db.cursor()
-        if create:
-            create_generic_tables(c)
-        for t in self.tables.values():
-            t.prepare_sql()
-            if create:
-              t.create_sql(c)
-        db.commit()
-        c.close()
-    def write_sql(self, db):
-        prepare_sql(db)
-        for t in self.tables.values():
-            t.in_sql(db)
-
+    
     #
     # persistent data:
     #   - data:  in python pickle format  [rows (raw)]
@@ -200,7 +174,7 @@ class tree(object):
                 continue
             lkddb.log.log_extra("reading table '%s'" % t.name)
             rows = persistent_data.get(t.name, None)
-            if rows != None:
+            if rows is not None:
                 t.rows = rows
                 t.restore()
 
@@ -439,7 +413,8 @@ class table(object):
     def create_sql(self, cursor):
         cursor.execute(self.sql_create)
         sql = "INSERT OR IGNORE INTO `tables` (name) VALUES (" + self.name +");"
-        cursor.execute(sql);
+        cursor.execute(sql)
+
     def to_sql(self, db):
         c = db.cursor(db)
         for row in rows:
