@@ -8,6 +8,8 @@ __pycache__
 tmp/
 
 # Ignore standard outputs
+/Manifest
+
 /lkddb-*.data
 /lkddb-*.list
 /lkddb-*.log
@@ -36,5 +38,6 @@ tmp/
 # Ignore distribution files
 /changes/
 /dist/
+/dist.old/
 /web-out/
 

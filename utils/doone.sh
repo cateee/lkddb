@@ -38,16 +38,17 @@ do_tar_kernel() {
 
 if [[ "$1" =~ ^v ]] ; then
     do_git_kernel "$1"
+
+    if [[ "$2" != '--skip' ]] ; then
+        # restore repository to master
+        ( cd "$kdir/linux"
+            git checkout master
+            git clean -d -f -f
+            [ -d include/config/ ] || mkdir include/config/
+            [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
+        )
+    fi
 else
     do_tar_kernel "$1"
 fi
-
-
-# return to master
-( cd "$kdir/linux"
-    git checkout master
-    git clean -d -f -f
-    [ -d include/config/ ] || mkdir include/config/
-    [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
-)
 

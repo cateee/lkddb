@@ -28,11 +28,12 @@ function copy_to_dist() {
 
     mkdir "$dest/web-out"
 
-    find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name 'log' \! -name '*.pyc' \! -name '*.tmp' -print \) > dist/ls.orig
+    find . -name '.git' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o -name 'tmp' -prune -o -name '__pycache__' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name 'log' \! -name '*.pyc' \! -name '*.tmp' -print \) > dist/ls.orig
     cd dist/lkddb-sources-20??-??-?? ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log' \! -name 'log' \! -name '*.tmp' -print \) > ../../dist/ls.dist ; cd ../..
     if diff --unified=0 dist/ls.orig dist/ls.dist ; then
         true
     else
+        echo 'A file is missing in tar: check Makefile source files'
         exit 1
     fi
 }
