@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/linux/browse_sources : sources reader for Linux kernels
 #
-#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 # generic reader and container for source level scan
@@ -16,27 +16,26 @@ import lkddb.log
 import lkddb.parser
 from lkddb.parser import unwind_include
 
-
-
 skeleton_files = frozenset((
     # skeleton and example files are not useful (and not compiled/used)
-        "drivers/video/skeletonfb.c", "drivers/net/isa-skeleton.c",
-        "drivers/net/pci-skeleton.c", "drivers/pci/hotplug/pcihp_skeleton.c",
-        "drivers/usb/usb-skeleton.c",
+    "drivers/video/skeletonfb.c", "drivers/net/isa-skeleton.c",
+    "drivers/net/pci-skeleton.c", "drivers/pci/hotplug/pcihp_skeleton.c",
+    "drivers/usb/usb-skeleton.c",
     # these are #included in other files:
-        "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c",
+    "drivers/usb/host/ohci-pci.c", "drivers/usb/host/ehci-pci.c",
     # discard these files
-        "include/linux/compiler.h", "include/linux/mutex.h",
+    "include/linux/compiler.h", "include/linux/mutex.h",
 ))
 
 
 field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
 
+
 class linux_sources(lkddb.browser):
-    "generic reader, source level (c and h) files"
+    """generic reader, source level (c and h) files"""
 
     def __init__(self, kerneldir, dirs):
-        lkddb.browser.__init__(self, "linux_sources")
+        super().__init__("linux_sources")
         self.kerneldir = kerneldir
         self.dirs = dirs
         # devices:
@@ -53,9 +52,9 @@ class linux_sources(lkddb.browser):
             lkddb.log.phase("headers")
             for dir, d_, files in os.walk("include"):
                 p = dir.split("/")
-                if len(p) < 2 or p[1] == "asm"  or  p[1] == "asm-um"  or  p[1] == "config":
+                if len(p) < 2 or p[1] == "asm" or p[1] == "asm-um" or p[1] == "config":
                     continue
-                if p[1].startswith("asm-")  and  p[1] != "asm-generic":
+                if p[1].startswith("asm-") and p[1] != "asm-generic":
                     if len(p) == 2:
                         dir_i = "include/asm"
                     elif p[2].startswith("arch-"):
@@ -68,8 +67,8 @@ class linux_sources(lkddb.browser):
             for arch_incl in glob.glob("arch/*/include"):
                 for dir, d_, files in os.walk(arch_incl):
                     p = dir.split("/")
-                    if len(p) < 3  or  p[2] != "include":
-                                  continue
+                    if len(p) < 3 or p[2] != "include":
+                        continue
                     dir_i = "include/" + "/".join(p[3:])
                     self.__read_includes(files, dir, dir_i)
 
@@ -124,7 +123,7 @@ ifdef_re = re.compile(
 class struct_parent_scanner(lkddb.scanner):
 
     def __init__(self, browser, makefiles):
-        lkddb.scanner.__init__(self, "struct_parent_scanner")
+        super().__init__("struct_parent_scanner")
         self.browser = browser
         self.makefiles = makefiles
         self.scanners = []
@@ -144,7 +143,7 @@ class struct_parent_scanner(lkddb.scanner):
         for scanner in self.scanners:
             for block in scanner.regex.findall(src):
                 block = lkddb.parser.expand_block(block, filename)
-                for conf, sblock in ifdef_re.findall(block): ### here
+                for conf, sblock in ifdef_re.findall(block):  # here
                     sdep = dep.copy().add(conf)
                     for line in scanner.splitter(sblock):
                         parse_struct(scanner, scanner.struct_fields, line, sdep, filename)
@@ -153,11 +152,12 @@ class struct_parent_scanner(lkddb.scanner):
                 for line in scanner.splitter(block):
                     parse_struct(scanner, scanner.struct_fields, line, dep, filename)
 
+
 subfield_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)(\.[A-Za-z_0-9]*\s*=\s*.*)$", re.DOTALL)
 
 
 def parse_struct(scanner, fields, line, dep, filename, ret=False):
-    "convert a struct (array of parameters) into a dictionary"
+    """convert a struct (array of parameters) into a dictionary"""
     res = {}
     nparam = 0
     for param in line:
@@ -174,18 +174,17 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
                     field, value = m.groups()
                     value = "{" + value + "}"
                 else:
-                    lkddb.die("parse_line(): %s, %s, %s" % filename, line, param)
+                    lkddb.log.die("parse_line(): %s, %s, %s" % (filename, line, param))
             res[field] = value
         else:
             try:
                 res[fields[nparam]] = param
             except IndexError:
                 lkddb.log.exception("Error: index error: %s, %s, %s, %s" %
-                                        (scanner.name, fields, line, filename))
+                                    (scanner.name, fields, line, filename))
                 return {}
         nparam += 1
     if res:
         if ret:
             return res
         scanner.raw.append((res, filename, dep))
-

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/linux/__init__.py : scanners for Linux kernels
 #
-#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import os
@@ -30,8 +30,7 @@ def register_linux_browsers(tree):
     makefiles_ = makefiles(tree.get_table('firmware'), kerneldir, dirs)
     tree.register_browser(makefiles_)
 
-    kconfigs_ = kconfigs(tree.get_table('kconf'), tree.get_table('module'),
-                                 kerneldir, dirs, makefiles_, tree)
+    kconfigs_ = kconfigs(tree.get_table('kconf'), tree.get_table('module'), kerneldir, dirs, makefiles_, tree)
     tree.register_browser(kconfigs_)
 
     sources_ = browse_sources.linux_sources(kerneldir, dirs)
@@ -69,12 +68,13 @@ def register_linux_browsers(tree):
     tree.register_scanner(platform(parent_scanner, tree))
     tree.register_scanner(fs(parent_scanner, tree))
 
+
 ###
 
 class linux_kernel(lkddb.tree):
 
     def __init__(self, task, kerneldir, dirs):
-        lkddb.tree.__init__(self, "linux-kernel")
+        super().__init__("linux-kernel")
         self.kerneldir = kerneldir
         self.dirs = dirs
         if task == lkddb.TASK_BUILD:
@@ -84,7 +84,7 @@ class linux_kernel(lkddb.tree):
             register_linux_browsers(self)
 
     def retrive_version(self):
-        "Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"
+        """Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"""
         version_dict = {}
         f = open(os.path.join(self.kerneldir, "Makefile"))
         for i in range(10):
@@ -106,20 +106,21 @@ class linux_kernel(lkddb.tree):
         version_dict['patchlevel'] = int(version_dict["PATCHLEVEL"])
         version_dict['sublevel'] = int(version_dict["SUBLEVEL"])
 
-        version_dict['numeric'] =  ( version_dict["version"]    * 0x10000 +
-                                     version_dict["patchlevel"] * 0x100   +
-                                     version_dict["sublevel"]   )
+        version_dict['numeric'] = (version_dict["version"] * 0x10000 +
+                                   version_dict["patchlevel"] * 0x100 +
+                                   version_dict["sublevel"])
         version_dict['extra'] = version_dict["EXTRAVERSION"]
         if version_dict['numeric'] == 0x02040f and version_dict['extra'] == "-greased-turkey":
             version_dict["name"] = "greased-turkey"
             version_dict['extra'] = ""
         else:
-           version_dict["name"] = version_dict.get("NAME", "")
+            version_dict["name"] = version_dict.get("NAME", "")
         if version_dict["VERSION"] >= "3" and version_dict["SUBLEVEL"] == "0":
             # 3.x versions
-            version_dict['str'] = version_dict["VERSION"] +"."+ version_dict["PATCHLEVEL"] + version_dict['extra']
+            version_dict['str'] = version_dict["VERSION"] + "." + version_dict["PATCHLEVEL"] + version_dict['extra']
         else:
-            version_dict['str'] = version_dict["VERSION"] +"."+ version_dict["PATCHLEVEL"] +"."+ version_dict["SUBLEVEL"] + version_dict['extra']
+            version_dict['str'] = (version_dict["VERSION"] + "." + version_dict["PATCHLEVEL"] +
+                                   "." + version_dict["SUBLEVEL"] + version_dict['extra'])
 
         if not version_dict['extra']:
             version_dict['numeric2'] = 0
@@ -140,24 +141,25 @@ class linux_kernel(lkddb.tree):
             if bang.startswith("#!"):
                 bang = bang[2:].strip()
                 script = subprocess.Popen(bang + " scripts/setlocalversion .",
-                    shell=True, cwd=self.kerneldir,
-                    stdout=subprocess.PIPE)
-                version_dict['local_ver'] = script.communicate()[0].decode('utf-8','replace').strip().replace("-dirty", "")
+                                          shell=True, cwd=self.kerneldir, stdout=subprocess.PIPE)
+                version_dict['local_ver'] = script.communicate()[0].decode('utf-8', 'replace').strip().replace("-dirty", "")
                 if script.returncode > 0:
                     version_dict['local_ver'] = ""
         else:
             version_dict['local_ver'] = ""
         if not version_dict['local_ver'] or version_dict['local_ver'] == '-dirty':
             version_dict['numeric3'] = 0
-        elif version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and version_dict['local_ver'][1:6].isdigit():
+        elif (version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and
+              version_dict['local_ver'][1:6].isdigit()):
             version_dict['numeric3'] = int(version_dict['local_ver'][1:6])
         elif version_dict['numeric'] <= (0x020600 + 15):
             version_dict['numeric3'] = 0
         else:
-            assert False, "Unknow structure of scripts/setlocalversion (%s) in kernel version" % version_dict["local_ver"]
+            assert False, ("Unknown structure of scripts/setlocalversion (%s) in kernel version" %
+                           version_dict["local_ver"])
 
-        if version_dict['numeric3'] == 0  and  version_dict['numeric2'] == 0:
-            # a x.y or x.y.z or x.y.z.w relase
+        if version_dict['numeric3'] == 0 and version_dict['numeric2'] == 0:
+            # a x.y or x.y.z or x.y.z.w release
             version_dict['serie'] = 1
         else:
             # not a x.y, x.y.z or x.y.z.w release
@@ -166,4 +168,3 @@ class linux_kernel(lkddb.tree):
         self.version_dict = version_dict
         self.version = (self.name, (version_dict['numeric'], version_dict['numeric2'], version_dict['numeric3']),
                         version_dict['str'], version_dict['serie'])
-

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: merge.py : merge data from different version into a big database
 #
-#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import optparse
@@ -9,6 +9,7 @@ import optparse
 import lkddb
 import lkddb.linux
 import lkddb.ids
+
 
 def make(options, args):
 
@@ -27,6 +28,7 @@ def make(options, args):
 
     lkddb.log.phase("write consolidate main file")
     storage.write_consolidate(filename=options.consolidated)
+
 
 #
 # main
@@ -52,11 +54,10 @@ if __name__ == "__main__":
     parser.add_option("-T", "--timed-logs",   dest="timed_logs",
                       action="store_const", const=True,
                       help="append elapsed time to logs")
-    (options, args) = parser.parse_args()
+    options_, args_ = parser.parse_args()
 
-    if len(args) < 1:
+    if len(args_) < 1:
         parser.error("missing mandatory argument: on or more files to consolidate")
 
-    options.versioned = False
-    make(options, args)
-
+    options_.versioned = False
+    make(options_, args_)

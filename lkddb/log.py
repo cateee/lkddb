@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/log.py : log utilities for lkddb
 #
-#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import sys
@@ -21,7 +21,7 @@ def _get_versioned_name(log_filename, version):
         return log_filename
     size = len(log_filename)
     vsize = len(version)
-    while(i >= 0):
+    while i >= 0:
         i = log_filename.find("%", i)
         if i == -1:
             return log_filename
@@ -43,25 +43,27 @@ def init(options):
     _verbose = options.verbose
     _timed_logs = options.timed_logs
     log_filename = options.log_filename
-    if log_filename == None  or  log_filename == "-":
+    if log_filename is None or log_filename == "-":
         _logfile = sys.stdout
     else:
         if options.versioned:
             log_filename = _get_versioned_name(log_filename, options.version)
-        if _logfile != None:
+        if _logfile is not None:
             _logfile.flush()
             _logfile.close()
         _logfile = open(log_filename, 'w')
     _start_time = time.time()
     _logfile.flush()
 
+
 def finalize():
-    if _logfile != None:
+    if _logfile is not None:
         _logfile.flush()
         _logfile.close()
 
+
 def elapsed_time():
-    return (time.time() - _start_time)
+    return time.time() - _start_time
 
 
 def log(message):
@@ -72,6 +74,7 @@ def log(message):
             _logfile.write("* %s\n" % message)
         _logfile.flush()
 
+
 def log_extra(message):
     if _verbose > 1:
         if _timed_logs:
@@ -80,25 +83,27 @@ def log_extra(message):
             _logfile.write(". %s\n" % message)
         _logfile.flush()
 
-def die(message, errorcode=1):
+
+def die(message, error_code=1):
     sys.stdout.flush()
     sys.stderr.flush()
     _logfile.write("***%3.1f: fatal error: %s\n" % (elapsed_time(),  message))
     _logfile.flush()
     sys.stderr.write(message + "\n")
     sys.stderr.flush()
-    sys.exit(1)
+    sys.exit(error_code)
 
-def phase(phase):
+
+def phase(program_phase):
     global _phase
-    _phase = phase
-    log_extra("PHASE:" + phase)
+    _phase = program_phase
+    log_extra("PHASE:" + program_phase)
+
 
 def exception(msg=None):
     sys.stdout.flush()
     sys.stderr.flush()
-    _logfile.write("=" * 50 + "\nEXCEPTION in %s (after %.1f seconds)\n" %
-                        (_phase, elapsed_time()) )
+    _logfile.write("=" * 50 + "\nEXCEPTION in %s (after %.1f seconds)\n" % (_phase, elapsed_time()))
     if msg:
         _logfile.write(msg + "\n")
         _logfile.write("-" * 10)
@@ -120,4 +125,3 @@ if __name__ == "__main__":
     assert _get_versioned_name("lkddb-%.%.log", v) == "lkddb-1.2.3.1.2.3.log"
     assert _get_versioned_name("lkddb%%-%.log", v) == "lkddb%-1.2.3.log"
     assert _get_versioned_name("lkddb-%.%%log", v) == "lkddb-1.2.3.%log"
-

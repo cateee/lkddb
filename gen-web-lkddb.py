@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: gen-web-lkddb.py : generate the static html pages for web-lkddb
 #
-#  Copyright (c) 2007,2008,2010,2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007,2008,2010-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import optparse
@@ -20,23 +20,23 @@ configs = {}
 ids = {}
 config_pages = {}  # 'A' -> [ ('CONFIG_ATM', '2.6.25, 2.6.26'), ('CONFIG_ABC', ...]
 
+
 def assemble_config_data(storage):
     for tname, textra in storage.available_tables.items():
-        treename = textra[0]
         t = textra[1]
         tables[tname] = t
         if t.kind == ("linux-kernel", "device") or (
-            t.kind == ("linux-kernel", "special") and t.name == "kconf"):
+           t.kind == ("linux-kernel", "special") and t.name == "kconf"):
             for key1, values1 in t.crows.items():
                 for key2, values2 in values1.items():
                     for config in key2[0].split():
                         if not config.startswith("CONFIG_") or config == "CONFIG_":
                             lkddb.log.log("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
-                                                (config, t.name, key1, key2, values2))
+                                          (config, t.name, key1, key2, values2))
                             continue
-                        if not config in configs:
+                        if config not in configs:
                             configs[config] = {}
-                        if not t.name in configs[config]:
+                        if t.name not in configs[config]:
                             configs[config][t.name] = []
                         configs[config][t.name].append((key1, key2, values2[0], values2[1]))
         elif t.kind == ("ids", "ids"):
@@ -53,7 +53,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
     year = time.strftime("%Y", time.gmtime())
 
     # check last available version
-    last_ver = ("", (0,0,0), "0.0.0", 1)
+    last_ver = ("", (0, 0, 0), "0.0.0", 1)
     for ver in consolidated_versions:
         if ver[-1] != 1 or ver[0] != "linux-kernel":
             continue
@@ -74,7 +74,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
             'year': year
         }
 
-        #-------
+        # -------
         # module
         lines = []
         if 'module' in table:
@@ -82,22 +82,23 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 lines.append('<code>' + key1[0] + '</code>')
         if lines:
             lines.sort()
-            modules = "<li>modules built: " +", ".join(lines)+ "</li>\n"
+            modules = "<li>modules built: " + ", ".join(lines) + "</li>\n"
         else:
             modules = ""
 
-        #-------
+        # -------
         # kconf
         saved = {}
         favorite_prompt = None
         all_versions = set([])
-        if 'kconf' in  table:
+        if 'kconf' in table:
             rows = table['kconf']
             text2 = []
             if len(rows) > 1:
-                text = "<p>The Linux kernel configuration item <code>" +config_full+ "</code> has multiple definitions:\n"
+                text = ("<p>The Linux kernel configuration item <code>" + config_full +
+                        "</code> has multiple definitions:\n")
             else:
-                text = "<p>The Linux kernel configuration item <code>" +config_full+ "</code>:</p>\n<ul>"
+                text = "<p>The Linux kernel configuration item <code>" + config_full + "</code>:</p>\n<ul>"
             for key1, key2, values, versions in rows:
                 typ, descr = key1
                 c, filename = key2
@@ -105,8 +106,8 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 descr = descr.strip()
                 txt = ""
                 if len(rows) > 1:
-                    txt += ("\n<h2><emph>" +descr+ "</emph> found in <code>" +filename+ "</code></h2>\n"+
-                             "<p>The configuration item " +config_full+ ":</p>\n<ul>")
+                    txt += ("\n<h2><emph>" + descr + "</emph> found in <code>" + filename + "</code></h2>\n" +
+                            "<p>The configuration item " + config_full + ":</p>\n<ul>")
                     if filename.startswith("arch/x86/"):
                         favorite_prompt = descr
                     if descr in saved:
@@ -115,13 +116,12 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                         saved[descr] = 1
                 else:
                     favorite_prompt = descr
-                txt += ("<li>prompt: " +descr+ "</li>\n" +
-                         "<li>type: "   +typ+ "</li>\n" +
-                         "<li>depends on: <code>"   +prepare_depends(depends)+ "</code></li>\n" +
-                         "<li>defined in " + url_filename(filename) + "</li>\n" +
-                         "<li>found in Linux kernels: " +
-                            ver_list_str(versions, compress=True)+ "</li>\n" +
-                         modules + "</ul>\n")
+                txt += ("<li>prompt: " + descr + "</li>\n" +
+                        "<li>type: " + typ + "</li>\n" +
+                        "<li>depends on: <code>" + prepare_depends(depends) + "</code></li>\n" +
+                        "<li>defined in " + url_filename(filename) + "</li>\n" +
+                        "<li>found in Linux kernels: " + ver_list_str(versions, compress=True) + "</li>\n" +
+                        modules + "</ul>\n")
                 all_versions.update(versions)
                 if len(rows) > 1:
                     txt += "\n<h3>Help text</h3>\n<p>"
@@ -134,28 +134,28 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
             text2.sort()
             pageitems['general'] = text + "".join(text2)
             if favorite_prompt:
-                pageitems['title'] = config_full+ ": " + favorite_prompt
+                pageitems['title'] = config_full + ": " + favorite_prompt
             else:
                 v = 0
                 for descr, vals in saved.items():
                     if vals > v:
                         favorite_prompt = descr
                 if favorite_prompt:
-                    pageitems['title'] = config_full+ ": " + favorite_prompt
+                    pageitems['title'] = config_full + ": " + favorite_prompt
                 else:
                     pageitems['title'] = config_full
         else:
-            pageitems['general'] = ("<p>The Linux kernel configuration item <code>" +config_full+ "</code>: \n"+
+            pageitems['general'] = ("<p>The Linux kernel configuration item <code>" + config_full + "</code>: \n" +
                                     "<br />error: definition not found!</p>\n\n")
             pageitems['title'] = config_full
 
-        #------
+        # ------
         # start of systems and sources
 
-        systems = [] # -> system, [formated lines]
+        systems = []  # -> system, [formated lines]
         sources = []
 
-        #------
+        # ------
         # PCI
         if 'pci' in table:
             rows = table['pci']
@@ -169,18 +169,19 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     line += "vendor: <code>" + vendor + "</code>"
                     name = sub_ids.get((vendor, "....", "....", "...."), None)
                     if name:
-                         line += ' ("<i>' + escape(name) + '</i>")'
+                        line += ' ("<i>' + escape(name) + '</i>")'
                     if device != "....":
                         line += ", device: <code>" + device + "</code>"
                         name = sub_ids.get((vendor, device, "....", "...."), None)
                         if name:
                             line += ' ("<i>' + escape(name) + '</i>")'
-                        if subvendor != "...."  and  subdevice != "....":
-                            line +=  ", subvendor: <code>" + subvendor + "</code>, subdevice: <code>" + subdevice + "</code>"
+                        if subvendor != "...." and subdevice != "....":
+                            line += (", subvendor: <code>" + subvendor +
+                                     "</code>, subdevice: <code>" + subdevice + "</code>")
                             name = sub_ids.get((vendor, device, subvendor, subdevice), None)
                             if name:
                                 line += ' ("<i>' + escape(name) + '</i>")'
-                class_, subclass, prog_if = ( class_mask[0:2], class_mask[2:4], class_mask[4:6])
+                class_, subclass, prog_if = (class_mask[0:2], class_mask[2:4], class_mask[4:6])
                 if class_ != "..":
                     if line:
                         line += ", "
@@ -202,10 +203,12 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     lines.append(line)
             if lines:
                 lines.sort()
-                systems.append(('PCI', '<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>', lines))
+                systems.append(('PCI',
+                                '<p>Numeric ID (from LKDDb) and names (from pci.ids) of recognized devices:</p>',
+                                lines))
                 sources.append('The <a href="https://pci-ids.ucw.cz/">Linux PCI ID Repository</a>.')
 
-        #------
+        # ------
         # USB
         if 'usb' in table:
             rows = table['usb']
@@ -216,7 +219,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 vendor, product, dev_class, dev_subclass, dev_protocol, if_class, if_subclass, if_protocol, bcdlow, bcdhi = key1
                 line = ""
                 if vendor != "....":
-                    line += "vendor: <code>" +  vendor + "</code>"
+                    line += "vendor: <code>" + vendor + "</code>"
                     name = sub_ids.get((vendor, "...."), None)
                     if name:
                         line += ' ("<i>' + escape(name) + '</i>")'
@@ -224,7 +227,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                         line += ", product: <code>" + product + "</code>"
                         name = sub_ids.get((vendor, product), None)
                         if name:
-                             line += ' ("<i>' + escape(name) + '</i>")'
+                            line += ' ("<i>' + escape(name) + '</i>")'
                 # USB: device class
                 if dev_class != "..":
                     if line != "":
@@ -232,14 +235,14 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     line += "device class: <code>" + dev_class + "</code>"
                     name = sub_class_ids.get((dev_class, "..", ".."), None)
                     if name:
-                         line += ' ("<i>' + escape(name) + '</i>")'
+                        line += ' ("<i>' + escape(name) + '</i>")'
                     if dev_subclass != "..":
                         line += ", subclass: <code>" + dev_subclass + "</code>"
                         name = sub_class_ids.get((dev_class, dev_subclass, ".."), None)
                         if name:
                             line += ' ("<i>' + escape(name) + '</i>")'
                         if dev_protocol != "..":
-                            line +=  ", protocol: <code>" + dev_protocol + "</code>"
+                            line += ", protocol: <code>" + dev_protocol + "</code>"
                             name = sub_class_ids.get((dev_class, dev_subclass, dev_protocol), None)
                             if name:
                                 line += ' ("<i>' + escape(name) + '</i>")'
@@ -251,14 +254,14 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     line += "interface class: <code>" + if_class + "</code>"
                     name = sub_class_ids.get((if_class, "..", ".."), None)
                     if name:
-                         line += ' ("<i>' + escape(name) + '</i>")'
+                        line += ' ("<i>' + escape(name) + '</i>")'
                     if if_subclass != "..":
                         line += ", subclass: <code>" + if_subclass + "</code>"
                         name = sub_class_ids.get((if_class, if_subclass, ".."), None)
                         if name:
                             line += ' ("<i>' + escape(name) + '</i>")'
                         if if_protocol != "..":
-                            line +=  ", protocol: <code>" + if_protocol + "</code>"
+                            line += ", protocol: <code>" + if_protocol + "</code>"
                             name = sub_class_ids.get((if_class, if_subclass, if_protocol), None)
                             if name:
                                 line += ' ("<i>' + escape(name) + '</i>")'
@@ -266,16 +269,18 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 if bcdlow != "0000" and bcdhi != "ffff":
                     if line != "":
                         line += ", "
-                    line += "bcd min: " +bcdlow+ " (hex), bcd max:" +bcdhi + " (hex)"
+                    line += "bcd min: " + bcdlow + " (hex), bcd max:" + bcdhi + " (hex)"
                 # USB end
                 if line:
                     lines.append(line)
             if lines:
                 lines.sort()
-                systems.append(('USB', '<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>', lines))
+                systems.append(('USB',
+                                '<p>Numeric ID (from LKDDb) and names (from usb.ids) of recognized devices:</p>',
+                                lines))
                 sources.append('The <a href="http://www.linux-usb.org/usb-ids.html">Linux USB ID Repository</a>.')
 
-        #------
+        # ------
         # EISA
         if 'eisa' in table:
             rows = table['eisa']
@@ -287,14 +292,16 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 line += "signature: <code>" + sig + "</code>"
                 name = sub_ids.get((sig,), None)
                 if name:
-                     line += ' ("<i>' + escape(name) + '</i>")'
+                    line += ' ("<i>' + escape(name) + '</i>")'
                 lines.append(line)
             if lines:
                 lines.sort()
-                systems.append(('EISA', '<p>Numeric ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>', lines))
+                systems.append(('EISA',
+                                '<p>Numeric ID (from LKDDb) and names (from eisa.ids) of recognized devices:</p>',
+                                lines))
                 sources.append('The <a href="https://www.kernel.org/">Linux Kernel</a> (eisa.ids).')
 
-        #------
+        # ------
         # ZORRO
         if 'zorro' in table:
             rows = table['zorro']
@@ -307,7 +314,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     line += "manufacter: <code>" + manufacter + "</code>"
                     name = sub_ids.get((manufacter, "...."), None)
                     if name:
-                         line += ' ("<i>' + escape(name) + '</i>")'
+                        line += ' ("<i>' + escape(name) + '</i>")'
                     if product != "....":
                         line += ", product: <code>" + product + "</code>"
                         name = sub_ids.get((manufacter, product), None)
@@ -317,20 +324,22 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     lines.append(line)
             if lines:
                 lines.sort()
-                systems.append(('ZORRO', '<p>Numeric ID (from LKDDb) and names (from zorro.ids) of recognized devices:</p>', lines))
+                systems.append(('ZORRO',
+                                '<p>Numeric ID (from LKDDb) and names (from zorro.ids) of recognized devices:</p>',
+                                lines))
                 sources.append('The <a href="https://www.kernel.org/">Linux Kernel</a> (zorro.ids)')
 
-        #------
+        # ------
         # Assemble hardware and sources
 
         hardware = ""
         for title, descr, lines in systems:
-            hardware += ( '<h3>' + title + '</h3>\n' + descr + '\n<ul class="dblist">\n<li>'
-                                + "</li>\n<li>".join(lines)
-                                + '</li>\n</ul>\n')
+            hardware += ('<h3>' + title + '</h3>\n' + descr + '\n<ul class="dblist">\n<li>'
+                         + "</li>\n<li>".join(lines)
+                         + '</li>\n</ul>\n')
         pageitems['hardware'] = hardware
 
-        #------
+        # ------
         # lkddb
 
         lines = []
@@ -345,10 +354,10 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
         lines.sort()
         if not lines:
             lines.append("(none)")
-        lkddb = ( '<h3>LKDDb</h3>\n<p>Raw data from LKDDb:</p>\n<ul class="dblist">\n<li><code>'
-                   + "</code></li>\n<li><code>".join(lines)
-                   + '</code></li>\n</ul>\n')
-        pageitems['lkddb'] = lkddb
+        lkddb_section = ('<h3>LKDDb</h3>\n<p>Raw data from LKDDb:</p>\n<ul class="dblist">\n<li><code>' +
+                         "</code></li>\n<li><code>".join(lines) +
+                         '</code></li>\n</ul>\n')
+        pageitems['lkddb'] = lkddb_section
 
         if sources:
             # Note: in template we set already few sources
@@ -380,16 +389,18 @@ def generate_index_pages(templdir, webdir):
         page = ""
         for idx2 in indices:
             if idx != idx2:
-                page += ('<li><a href="index_' +idx2+ '.html">'
-                          +idx2+ ' index</a> (with ' +str(count[idx2])+ ' configuration items)</li>\n')
+                page += ('<li><a href="index_' + idx2 + '.html">'
+                         + idx2 + ' index</a> (with ' + str(count[idx2]) + ' configuration items)</li>\n')
             else:
-                page += ('<li><b>' +idx2+ '</b> (with ' +str(count[idx2])+ ' configuration items)<ul>\n')
+                page += ('<li><b>' + idx2 + '</b> (with ' + str(count[idx2]) + ' configuration items)<ul>\n')
                 pages_in_idx2 = config_pages[idx2]
                 pages_in_idx2.sort()
                 for conf, all_ver in pages_in_idx2:
                     if all_ver:
                         ver = ' (<small>' + ver_list_str(all_ver, compress=True) + '</small>)'
-                    page += ('<li><a href="' +conf+ '.html">CONFIG_' +conf+ '</a>'+ver+'</li>\n')
+                    else:
+                        ver = ''
+                    page += ('<li><a href="' + conf + '.html">CONFIG_' + conf + '</a>' + ver + '</li>\n')
                 page += '</ul></li>\n'
 
         if idx == "main":
@@ -421,11 +432,11 @@ escapemap = (
         ('"', "&quot;"),
         ("'", "&apos;"))
 
+
 def escape(src):
     for c, esc in escapemap:
         src = src.replace(c, esc)
     return src
-
 
 
 config_re = re.compile(r"CONFIG_([^_]\w*)")
@@ -437,55 +448,61 @@ help_remote_re = re.compile(r"<(https?:[^>]*)>")
 def prepare_help(helptext):
     helptext = helptext.replace("&", "&amp;")
     helptext = config_re.sub(r'&&lt;a href="\1.html"&&gt;\1&&lt;/a&&gt;', helptext)
-    helptext = help_local_re.sub(r'&&lt;a href="https://github.com/torvalds/linux/tree/master/\1"&&gt;\1&&lt;/a&&gt;', helptext)
+    helptext = help_local_re.sub(r'&&lt;a href="https://github.com/torvalds/linux/tree/master/\1"&&gt;\1&&lt;/a&&gt;',
+                                 helptext)
     helptext = help_remote_re.sub(r'&&lt;a href="\1"&&gt;\1&&lt;/a&&gt;', helptext)
     helptext = helptext.replace("<", "&lt;").replace(">", "&gt;")
     helptext = helptext.replace("&&lt;", "<").replace("&&gt;", ">")
     helptext = helptext.strip().replace("\n\n", "</p>\n\n<p>")
     return helptext
 
+
 def url_config(config):
     cc = config.split()
     cc.sort()
     ret = []
     for c in cc:
-        ret.append('<a href="' +c[7:]+ '.html">' +c+ '</a>')
+        ret.append('<a href="' + c[7:] + '.html">' + c + '</a>')
     return " ".join(ret)
 
+
 def url_filename(filename):
-    return  '<a href="https://github.com/torvalds/linux/tree/master/' +filename+ '">' +filename+ '</a>'
+    return '<a href="https://github.com/torvalds/linux/tree/master/' + filename + '">' + filename + '</a>'
+
 
 def prepare_depends(depends):
     if not depends:
         return "(none)"
     ret = ""
-    type = 0
+    c_type = 0
     for c in depends:
         if c.isalnum() or c == "_":
-            if type == 2:
+            if c_type == 2:
                 ret += " "
-            type = 1
+            c_type = 1
         elif c in frozenset("!=()&|"):
-            if type == 1:
+            if c_type == 1:
                 ret += " "
-            type = 2
+            c_type = 2
         else:
-            type = 0
+            c_type = 0
         ret += c
     toks = ret.split()
     for i in range(len(toks)):
-        if toks[i][0].isdigit()  or  toks[i][0].isalpha():
-            toks[i] = '<a href="' +toks[i]+ '.html">CONFIG_' +toks[i]+ '</a>'
+        if toks[i][0].isdigit() or toks[i][0].isalpha():
+            toks[i] = '<a href="' + toks[i] + '.html">CONFIG_' + toks[i] + '</a>'
     return " ".join(toks).replace("&", "&amp;")
+
 
 def str_kern_ver(ver):
     v1 = (ver >> 16) & 0xff
-    v2 = (ver >> 8 ) & 0xff
-    v3 =  ver        & 0xff
+    v2 = (ver >> 8) & 0xff
+    v3 = ver & 0xff
     if v1 < 3 or v3 != 0:
-        return "%i.%i.%i" %(v1, v2, v3)
+        return "%i.%i.%i" % (v1, v2, v3)
     else:
-        return "%i.%i" %(v1, v2)
+        return "%i.%i" % (v1, v2)
+
 
 def ver_list_str(versions, compress=False):
     versions = list(versions)
@@ -505,21 +522,21 @@ def ver_list_str(versions, compress=False):
         ret = [v[2] for v in versions]
         return ", ".join(ret + head)
     else:
-        prev = (0,0,0)
+        prev = (0, 0, 0)
         prev_str = "0.0.0"
         start = None
         start_str = None
         ret = []
-        for name, ver, v_str, serie in versions + [('', (-1,-1,-1), "-1,-1,-1", -1)]:
-            v = ((ver[0] >> 16) & 0xff, (ver[0] >> 8 ) & 0xff, ver[0] & 0xff)
-            if ( (v[0] < 3  and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
-                 (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1]+1) ):
-                if start == None:
+        for name, ver, v_str, serie in versions + [('', (-1, -1, -1), "-1,-1,-1", -1)]:
+            v = ((ver[0] >> 16) & 0xff, (ver[0] >> 8) & 0xff, ver[0] & 0xff)
+            if ((v[0] <  3 and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
+                (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1]+1)):
+                if start is None:
                     # prev is the first of the current serie
                     start = prev
                     start_str = prev_str
             else:
-                if start != None:
+                if start is not None:
                     # start to prev are a serie
                     ret.append(start_str + "&ndash;" + prev_str)
                     start = None
@@ -531,60 +548,59 @@ def ver_list_str(versions, compress=False):
 
 
 # compress=False
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1)
-                    ]), False) == "2.6.5"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020606,0,0), "2.6.6", 1)
-                    ]), False) == "2.6.5, 2.6.6"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020605,0,123), "2.6.5", -1)
-                    ]), False) == "2.6.5, 2.6.5+HEAD"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020606,-20,123), "2.6.3-rc12-2323", -1)
-                    ]), False) == "2.6.5, 2.6.6-rc+HEAD"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020606,0,0), "2.6.6", 1),
-                         ("", (0x020606,0,2), "2.6.6+1234", -1),
-                         ("", (0x020607,0,0), "2.6.7", 1),
-                         ("", (0x020608,-10,0), "2.6.8-rc1", -1)
-                    ]), False) == "2.6.5, 2.6.6, 2.6.7, 2.6.8-rc+HEAD"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x030000,0,0), "3.0", 1),
-                         ("", (0x030001,0,0), "3.0.1", 1),
-                         ("", (0x030200,0,234), "3.2", -1),
-                    ]), False) == "2.6.5, 3.0, 3.0.1, 3.2+HEAD"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1)
+                     }, False) == "2.6.5"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020606, 0, 0), "2.6.6", 1)
+                     }, False) == "2.6.5, 2.6.6"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020605, 0, 123), "2.6.5", -1)
+                     }, False) == "2.6.5, 2.6.5+HEAD"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020606, -20, 123), "2.6.3-rc12-2323", -1)
+                     }, False) == "2.6.5, 2.6.6-rc+HEAD"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020606, 0, 0), "2.6.6", 1),
+                     ("", (0x020606, 0, 2), "2.6.6+1234", -1),
+                     ("", (0x020607, 0, 0), "2.6.7", 1),
+                     ("", (0x020608, -10, 0), "2.6.8-rc1", -1)
+                     }, False) == "2.6.5, 2.6.6, 2.6.7, 2.6.8-rc+HEAD"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x030000, 0, 0), "3.0", 1),
+                     ("", (0x030001, 0, 0), "3.0.1", 1),
+                     ("", (0x030200, 0, 234), "3.2", -1)
+                     }, False) == "2.6.5, 3.0, 3.0.1, 3.2+HEAD"
 
 # compress=True
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1)
-                    ]), True) == "2.6.5"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020606,0,0), "2.6.6", 1)
-                    ]), True) == "2.6.5&ndash;2.6.6"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020607,0,0), "2.6.7", 1)
-                    ]), True) == "2.6.5, 2.6.7"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x020606,0,0), "2.6.6", 1),
-                         ("", (0x020607,0,0), "2.6.7", 1),
-                         ("", (0x020611,0,0), "2.6.11", 1),
-                    ]), True) == "2.6.5&ndash;2.6.7, 2.6.11"
-assert ver_list_str(set([("", (0x020600,0,0), "2.6.0", 1),
-                         ("", (0x020606,0,0), "2.6.6", 1),
-                         ("", (0x020607,0,0), "2.6.7", 1),
-                         ("", (0x020608,0,0), "2.6.8", 1),
-                         ("", (0x020611,0,0), "2.6.11", 1),
-                         ("", (0x030100,0,0), "3.1", 1),
-                         ("", (0x030200,0,0), "3.2", 1),
-                    ]), True) == "2.6.0, 2.6.6&ndash;2.6.8, 2.6.11, 3.1&ndash;3.2"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x030100,0,0), "3.1", 1),
-                         ("", (0x030100,-20,200), "3.1-rc+HEAD", -11),
-                    ]), True) == "2.6.5, 3.1"
-assert ver_list_str(set([("", (0x020605,0,0), "2.6.5", 1),
-                         ("", (0x030000,0,0), "3.0", 1),
-                         ("", (0x030100,-20,200), "3.1-rc+HEAD", -11),
-                    ]), True) == "2.6.5, 3.0, 3.1-rc+HEAD"
-
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1)
+                     }, True) == "2.6.5"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020606, 0, 0), "2.6.6", 1)
+                     }, True) == "2.6.5&ndash;2.6.6"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020607, 0, 0), "2.6.7", 1)
+                     }, True) == "2.6.5, 2.6.7"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x020606, 0, 0), "2.6.6", 1),
+                     ("", (0x020607, 0, 0), "2.6.7", 1),
+                     ("", (0x020611, 0, 0), "2.6.11", 1),
+                     }, True) == "2.6.5&ndash;2.6.7, 2.6.11"
+assert ver_list_str({("", (0x020600, 0, 0), "2.6.0", 1),
+                     ("", (0x020606, 0, 0), "2.6.6", 1),
+                     ("", (0x020607, 0, 0), "2.6.7", 1),
+                     ("", (0x020608, 0, 0), "2.6.8", 1),
+                     ("", (0x020611, 0, 0), "2.6.11", 1),
+                     ("", (0x030100, 0, 0), "3.1", 1),
+                     ("", (0x030200, 0, 0), "3.2", 1),
+                     }, True) == "2.6.0, 2.6.6&ndash;2.6.8, 2.6.11, 3.1&ndash;3.2"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x030100, 0, 0), "3.1", 1),
+                     ("", (0x030100, -20, 200), "3.1-rc+HEAD", -11),
+                     }, True) == "2.6.5, 3.1"
+assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
+                     ("", (0x030000, 0, 0), "3.0", 1),
+                     ("", (0x030100, -20, 200), "3.1-rc+HEAD", -11),
+                     }, True) == "2.6.5, 3.0, 3.1-rc+HEAD"
 
 
 def make(options, templdir, webdir):
@@ -609,6 +625,7 @@ def make(options, templdir, webdir):
 
     lkddb.log.phase("END [gen-web-lkddb.py]")
 
+
 #
 # main
 #
@@ -618,34 +635,33 @@ if __name__ == "__main__":
     usage = "Usage: %prog [options] template-dir output-dir"
     parser = optparse.OptionParser(usage=usage)
     parser.set_defaults(verbose=1, consolidated="lkddb-all.data", timed_logs=False)
-    parser.add_option("-q", "--quiet",	dest="verbose",
+    parser.add_option("-q", "--quiet", dest="verbose",
                       action="store_const", const=0,
                       help="inhibit messages")
     parser.add_option("-v", "--verbose", dest="verbose",
                       action="count",
                       help="increments verbosity")
-    parser.add_option("-f", "--input" , dest="consolidated",
-                      action="store",	type="string",
+    parser.add_option("-f", "--input", dest="consolidated",
+                      action="store", type="string",
                       help="consolidated lkddb database FILE", metavar="FILE")
-    parser.add_option("-l", "--log",	dest="log_filename",
-                      action="store",	type="string",
+    parser.add_option("-l", "--log", dest="log_filename",
+                      action="store", type="string",
                       help="FILE to put log messages (default to stderr)", metavar="FILE")
-    parser.add_option("-T", "--timed-logs",   dest="timed_logs",
+    parser.add_option("-T", "--timed-logs", dest="timed_logs",
                       action="store_const", const=True,
                       help="append elapsed time to logs")
-    (options, args) = parser.parse_args()
+    options_, args_ = parser.parse_args()
 
-    if len(args) < 2:
+    if len(args_) < 2:
         parser.error("missing mandatory arguments: template directory and output directory")
-    templdir = os.path.normpath(args[0])
-    webdir = os.path.normpath(args[1])
-    if not os.path.isdir(templdir):
+    templdir_ = os.path.normpath(args_[0])
+    webdir_ = os.path.normpath(args_[1])
+    if not os.path.isdir(templdir_):
         parser.error("first argument should be a directory (containing templates)")
-    if not os.path.isdir(webdir):
+    if not os.path.isdir(webdir_):
         parser.error("second argument should be a directory (to put generated files)")
 
-    options.versioned = False
-    options.year = time.strftime("%Y", time.gmtime())
+    options_.versioned = False
+    options_.year = time.strftime("%Y", time.gmtime())
 
-    make(options, templdir, webdir)
-
+    make(options_, templdir_, webdir_)

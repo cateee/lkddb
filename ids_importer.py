@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: ids_importer.py : import ids
 #
-#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import optparse
@@ -17,22 +17,18 @@ def make(options, paths):
     if options.versioned:
         options.dbfile += "-" + options.version
     lkddb.init(options)
-    try:
-        lkddb.log.phase("scan")
-        tree.scan_sources()
-        lkddb.log.phase("finalize")
-        tree.finalize_sources()
-    except:
-        lkddb.log.exception("unknow error in main loop")
-        assert False, "unknow error in main loop"
+    lkddb.log.phase("scan")
+    tree.scan_sources()
+    lkddb.log.phase("finalize")
+    tree.finalize_sources()
     lkddb.log.phase("write")
     if options.sql:
         sql = options.dbfile + ".db"
     else:
         sql = None
-    tree.write(data_filename = options.dbfile + ".data",
-               list_filename = options.dbfile + ".list",
-               sql_filename = sql)
+    tree.write(data_filename=options.dbfile + ".data",
+               list_filename=options.dbfile + ".list",
+               sql_filename=sql)
 
     build_single_ids(options.dbfile + ".list")
 
@@ -40,7 +36,7 @@ def make(options, paths):
 def build_single_ids(filename):
     f = open(filename)
     lists = {'eisa_ids': [], 'pci_class_ids': [], 'pci_ids': [],
-            'usb_class_ids': [], 'usb_ids': [], 'zorro_ids': [] }
+             'usb_class_ids': [], 'usb_ids': [], 'zorro_ids': []}
     for line in f:
         system, data = line.split(None, 1)
         lists[system].append(line)
@@ -65,6 +61,7 @@ def build_single_ids(filename):
     out.writelines(lists['zorro_ids'])
     out.flush()
     out.close()
+
 
 #
 # main
@@ -96,12 +93,10 @@ if __name__ == "__main__":
     parser.add_option("-k", "--versioned",   dest="versioned",
                       action="store_const", const=True,
                       help="ignored (for compatibility)")
-    (options, args) = parser.parse_args()
+    options_, args_ = parser.parse_args()
 
-    if len(args) != 4:
+    if len(args_) != 4:
         parser.error("needed exactly 4 files: pci.ids usb.ids eisa.ids zorro.ids")
 
-    options.versioned = False
-    make(options, args)
-
-
+    options_.versioned = False
+    make(options_, args_)

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/parser.py : this modules vaguely simulate a C preprocessor
 #
-# Copyright (c) 2007 by Giacomo A. Catenazzi <cate@cateee.net>
+# Copyright (c) 2007-2017 by Giacomo A. Catenazzi <cate@cateee.net>
 # This is free software, see GNU General Public License v2 (or later) for details
 #
 
@@ -11,7 +11,7 @@
 
 
 # the file is divided in:
-# - parse haders for #define
+# - parse headers for #define
 # - parse (detection) block, and expand macros
 
 
@@ -37,11 +37,11 @@ defines_str = {}
 # special cases:
 print("with special includes.  Check them from time to time.")
 includes_direct["drivers/char/synclink_gt.c"] = (
-                set(["include/linux/synclink.h"]))
+    {"include/linux/synclink.h"})
 includes_unwind["drivers/char/synclink_gt.c"] = set([])
 
 includes_direct["drivers/media/video/gspca/m5602/m5602_core.c"] = (
-                 set(["include/linux/usb.h"]))
+    {"include/linux/usb.h"})
 includes_unwind["drivers/media/video/gspca/m5602/m5602_core.c"] = set([])
 
 # see also lkddb/linux/browse_sources.py
@@ -54,10 +54,10 @@ comment_re = re.compile(
     r"(/\*.*?\*/|//.*?$|\\\n)", re.DOTALL | re.MULTILINE)
 # Find #defines without arguments (ignore empty define: we don't care)
 define_re = re.compile(r"^\s*#\s*define\s+([A-Za-z_0-9]+)[ \t]+(.+)$",
-        re.MULTILINE)
+                       re.MULTILINE)
 # Find #defines with arguments
 define_fn_re = re.compile(r"^\s*#\s*define\s+([A-Za-z_0-9]+)\(([^)]*)\)[ \t]+(.+)$",
-        re.MULTILINE)
+                          re.MULTILINE)
 # includes directive
 include_re = re.compile(r'^\s*#\s*include\s+(.*)$', re.MULTILINE)
 # Find static strings
@@ -65,17 +65,17 @@ strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]
 
 
 def parse_header(src, filename, discard_source):
-    "parse a single header file for #define, without recurse into other includes"
+    """parse a single header file for #define, without recurse into other includes"""
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
     dir, ignore = filename.rsplit("/", 1)
     if filename not in includes_direct:
         includes_direct[filename] = set()
-        includes_unwind[filename] = set([filename])
+        includes_unwind[filename] = {filename}
     for incl in include_re.findall(src):
         incl = incl.strip()
-        if incl[0] == '"'  and  incl[-1] == '"':
-            if not incl.endswith('.h"')  and not incl.endswith(".agh"):
+        if incl[0] == '"' and incl[-1] == '"':
+            if not incl.endswith('.h"') and not incl.endswith(".agh"):
                 fn = os.path.join(dir, incl[1:-1])
                 if not os.path.isfile(fn):
                     lkddb.log.log("preprocessor: parse_header(): unknown c-include in %s: %s" % (
@@ -91,9 +91,9 @@ def parse_header(src, filename, discard_source):
                 return parse_header(src2, filename, discard_source)
             else:
                 includes_direct[filename].add(os.path.normpath(os.path.join(dir, incl[1:-1])))
-        elif incl[0] == '<'  and  incl[-1] == '>':
+        elif incl[0] == '<' and incl[-1] == '>':
             includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
-        elif incl[0] == '$'  and  incl[-1] == '$':
+        elif incl[0] == '$' and incl[-1] == '$':
             # it is a non .h recursive include (set called, from above)
             continue
         else:
@@ -111,8 +111,9 @@ def parse_header(src, filename, discard_source):
             defines_str[name][filename] = defs.strip()
         return src
 
+
 def unwind_include_rec(filename, known):
-    incls = set([filename])
+    incls = {filename}
     if filename in includes_direct:
         incls.update(includes_direct[filename])
         known.update(includes_unwind[filename])
@@ -121,10 +122,12 @@ def unwind_include_rec(filename, known):
         known.update(unwind_include_rec(incl, known))
     return known
 
+
 def unwind_include(filename):
     known = set()
     res = unwind_include_rec(filename, known)
     includes_unwind[filename].update(res)
+
 
 def unwind_include_all():
     for header in includes_direct.keys():
@@ -153,7 +156,7 @@ def expand_block(block, filename):
     i = -1
     in_str = False
     start_token = -1
-    while (i < lbm):
+    while i < lbm:
         i += 1
         c = block[i]
         if c == '"':
@@ -167,7 +170,7 @@ def expand_block(block, filename):
             else:
                 ret += c
             continue
-        if c.isalnum()  or  c == "_":
+        if c.isalnum() or c == "_":
             if start_token < 0:
                 start_token = i
         elif start_token >= 0:
@@ -177,7 +180,7 @@ def expand_block(block, filename):
                 idx, ret_add = expand_token(block, start_token, i, filename)
                 ret += ret_add
                 if idx > i:
-                    i = idx # the next char after token and parenthesis is already parsed
+                    i = idx  # the next char after token and parenthesis is already parsed
                     c = ""
             # now parse this character
             start_token = -1
@@ -187,8 +190,8 @@ def expand_block(block, filename):
     return ret
 
 
-def expand_number(str):
-    return str.rstrip("uUlL")
+def expand_number(text):
+    return text.rstrip("uUlL")
 
 
 def expand_token(block, start, end, filename):
@@ -201,12 +204,12 @@ def expand_token(block, start, end, filename):
         instr = False
         args = []
         i = end-1
-        while(i<pend):
+        while i < pend:
             i += 1              # end should be at last chat of token
             c = block[i]
             if c.isspace():
                 continue
-            elif c == '"'  and  pstart > 0:
+            elif c == '"' and pstart > 0:
                 instr = not instr
                 continue
             elif instr:
@@ -228,25 +231,26 @@ def expand_token(block, start, end, filename):
                     break
                 else:
                     continue
-            elif c == ","  and  level == 1:
+            elif c == "," and level == 1:
                 args.append(block[pstart:i].strip())
                 pstart = i+1
         if pstart:
-            return (pend, expand_macro(tok, df, args, filename) + " ")
+            return pend, expand_macro(tok, df, args, filename) + " "
     df = search_define(tok, filename, defines_pln)
     if df:
-        return (0, expand_block(df+" ", filename) + " ")
-    if block[start-1] == "."  or  block[start-2:start] == "->":
+        return 0, expand_block(df+" ", filename) + " "
+    if block[start-1] == "." or block[start-2:start] == "->":
         # not in the right C namespace
         pass
     else:
         df = search_define(tok, filename, defines_str)
         if df:
-            return (0, expand_block(df+" ", filename) + " ")
-    return (0, tok)
+            return 0, expand_block(df+" ", filename) + " "
+    return 0, tok
 
 
 concatenate_re = re.compile(r"\s*##\s*")
+
 
 def expand_macro(tok, def_fnc, args, filename):
     def_args, defs = def_fnc
@@ -258,18 +262,18 @@ def expand_macro(tok, def_fnc, args, filename):
             # TODO: handle macro with args...
             pass
         else:
-            lkddb.log.log("Wrong argument number in macro: %s!=%s, %s, %s, %s, %s in %s" % (len(def_args), len(args), def_args, args, tok, def_fnc, filename))
+            lkddb.log.log("Wrong argument number in macro: %s!=%s, %s, %s, %s, %s in %s" % (
+                len(def_args), len(args), def_args, args, tok, def_fnc, filename))
     else:
         for i in range(len(args)):
             # !!!!!! ????????????
             try:
                 da = def_args[i].strip()
             except:
-                lkddb.log.log("FATAL ERROR: %s!=%s, %s, %s, %s, %s" % (len(def_args), len(args), def_args, args, tok, def_fnc))
+                lkddb.log.log("FATAL ERROR: %s!=%s, %s, %s, %s, %s" % (
+                    len(def_args), len(args), def_args, args, tok, def_fnc))
                 raise
-            defs = re.sub(r"[^#]#" +da+ r"\b", '"'+args[i]+'"', defs)
-            defs = re.sub(r"\b"    +da+ r"\b",     args[i],     defs)
+            defs = re.sub(r"[^#]#" + da + r"\b", '"' + args[i] + '"', defs)
+            defs = re.sub(r"\b"    + da + r"\b",       args[i],       defs)
     defs = concatenate_re.sub("", defs) + " "
     return expand_block(defs, filename)
-
-

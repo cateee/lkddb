@@ -1,33 +1,33 @@
 #!/usr/bin/python
 #: lkddb/linux/kbuild.py : scanners for kernel build infrastructure
 #
-#  Copyright (c) 2000,2001,2007-2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import os
 import os.path
 import re
-import subprocess
 import fnmatch
 import lkddb
+
 
 # kernel version and name
 
 class kver(lkddb.browser):
 
     def __init__(self, kver_table, tree):
-        lkddb.browser.__init__(self, "kver")
+        super().__init__("kver")
         self.table = kver_table
         self.tree = tree
         self.kerneldir = tree.kerneldir
 
     def scan(self):
-        "Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"
+        """Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"""
         lkddb.browser.scan(self)
         version_dict = self.tree.version_dict
         self.table.add_row((version_dict['version'], version_dict['patchlevel'], version_dict['sublevel'],
                             version_dict['numeric2'], version_dict['numeric3'],
-                            version_dict['str'], version_dict['name'] ))
+                            version_dict['str'], version_dict['name']))
 
 
 # parse kbuild files (Makefiles) and extract the file dependencies
@@ -36,19 +36,18 @@ class kver(lkddb.browser):
 kbuild_normalize = re.compile(
         r"(#.*$|\\\n)", re.MULTILINE)
 kbuild_includes = re.compile(
-        r"^-?include\s+\$[\(\{]srctree[\)\}]/(.*)$", re.MULTILINE)
+        r"^-?include\s+\$[({]srctree[)}]/(.*)$", re.MULTILINE)
 kbuild_rules = re.compile(
         r"^([A-Za-z0-9-_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
 
 ignore_rules_set = frozenset(
-#    ("init", "drivers", "net", "libs", "core", "obj", "lib",
     ("ccflags", "cflags", "cpuflags"))
 
-#build = frozenset('init', 'drivers', 'net', 'libs', 'core')
 
 class makefiles(lkddb.browser):
+
     def __init__(self, firmware_table, kerneldir, dirs):
-        lkddb.browser.__init__(self, "kmake")
+        super().__init__("kmake")
         self.firmware_table = firmware_table
         self.kerneldir = kerneldir
         self.dirs = dirs
@@ -77,7 +76,6 @@ class makefiles(lkddb.browser):
         finally:
             os.chdir(orig_cwd)
 
-
     def __parse_kbuild(self, subdir, deps, main):
         # main = 0: normal case -> path relatives
         # main = 1: arch/xxx/Makefile -> path from root
@@ -87,13 +85,13 @@ class makefiles(lkddb.browser):
         except OSError:
             lkddb.log.log("parse_kbuild: not a directory: %s" % subdir)
             return
-        if main != 1  and  "Kbuild" in files:
+        if main != 1 and "Kbuild" in files:
             f = open(os.path.join(subdir, 'Kbuild'), encoding='utf8', errors='replace')
             src = kbuild_normalize.sub(" ", f.read())
             f.close()
         else:
             src = ""
-        if main != 2  and  "Makefile" in files:
+        if main != 2 and "Makefile" in files:
             f = open(os.path.join(subdir, 'Makefile'), encoding='utf8', errors='replace')
             src += '\n' + kbuild_normalize.sub(" ", f.read())
             f.close()
@@ -102,14 +100,14 @@ class makefiles(lkddb.browser):
             return
 
         # includes
-        while(True):
+        while True:
             m = kbuild_includes.search(src)
             if not m:
                 break
             mk2 = m.group(1)
             if not os.path.isfile(mk2):
                 lkddb.log.log("parse_kbuild: could not find included file (from %s): %s" %
-                                (subdir, mk2))
+                              (subdir, mk2))
                 src = src[:m.start()] + "\n" + src[m.end():]
                 continue
             f = open(mk2, encoding='utf8', errors='replace')
@@ -125,21 +123,19 @@ class makefiles(lkddb.browser):
         self.__parse_kbuild_lines(base_subdir, deps, src)
 
         if main == 1:
-           self.__parse_kbuild(subdir, deps, 2)
-
+            self.__parse_kbuild(subdir, deps, 2)
 
     def __parse_kbuild_alias(self, subdir, rule, dep, files):
         for f in files.split():
             fn = os.path.normpath(os.path.join(subdir, f))
             if f[-2:] == ".o":
                 fc = fn[:-2]+".c"
-                virt = [ os.path.join(subdir, rule+".c") ]
+                virt = [os.path.join(subdir, rule + ".c")]
                 if fc in self.dep_aliases:
                     virt.extend(self.dep_aliases[fc])
                 self.dep_aliases[fc] = virt
             elif f[-1] == "/":
                 self.__parse_kbuild(fn, dep, 0)
-
 
     def __parse_kbuild_lines(self, subdir, deps, src):
 
@@ -166,9 +162,9 @@ class makefiles(lkddb.browser):
                         for f in files.split():
                             if f.find("$") > -1:
                                 lkddb.log.log("this firmware include indirect firmwares '%s': '%s'" %
-                                        (dep[2:-1], os.path.join(subdir,f)))
+                                              (dep[2:-1], os.path.join(subdir, f)))
                             else:
-                                self.firmware_table.add_row((dep[2:-1], os.path.join(subdir,f)))
+                                self.firmware_table.add_row((dep[2:-1], os.path.join(subdir, f)))
                         continue
                     else:
                         self.modules[dep[2:-1]] = files
@@ -192,20 +188,19 @@ class makefiles(lkddb.browser):
                     self.dependencies[fc] = v
                 else:
                     lkddb.log.log_extra(
-                        "parse_kbuild: unknow target in '%s': '%s, was %s'" % (
-                        subdir, f, (rule, dep, files)))
+                        "parse_kbuild: unknow target in '%s': '%s, was %s'" % (subdir, f, (rule, dep, files)))
 
-            if not rule in ignore_rules_set:
+            if rule not in ignore_rules_set:
                 self.__parse_kbuild_alias(subdir, rule, d, files)
 
 # -----
 
     def _list_dep_rec(self, fn, dep, passed):
         deps = self.dependencies.get(fn, None)
-        if deps != None:
+        if deps is not None:
             dep.update(deps)
         aliases = self.dep_aliases.get(fn, None)
-        if aliases != None:
+        if aliases is not None:
             for alias in aliases:
                 if alias in passed:
                     continue
@@ -216,27 +211,28 @@ class makefiles(lkddb.browser):
 
     def list_dep(self, fn):
         dep = set()
-        passed = set([fn])
+        passed = {fn}
         self._list_dep_rec(fn, dep, passed)
         if not dep:
-            return set( ["CONFIG__UNKNOW__"] )
+            return {"CONFIG__UNKNOW__"}
         return dep
+
 
 # parse kconfig files
 # Note: one sources, two devices
 
-tristate_re = re.compile(r'^config\s*(\w+)\s+tristate\s+"(.*?[^\\])"',
-                                                        re.DOTALL | re.MULTILINE)
-kconf_re = re.compile(r"^(?:menu)?config\s+(\w+)\s*\n(.*?)\n[a-z]",
-                                                        re.MULTILINE | re.DOTALL)
+tristate_re = re.compile(r'^config\s*(\w+)\s+tristate\s+"(.*?[^\\])"', re.DOTALL | re.MULTILINE)
+kconf_re = re.compile(r"^(?:menu)?config\s+(\w+)\s*\n(.*?)\n[a-z]", re.MULTILINE | re.DOTALL)
 # context
-C_TOP=0; C_CONF=1; C_HELP=2
+C_TOP = 0
+C_CONF = 1
+C_HELP = 2
 
 
 class kconfigs(lkddb.browser):
 
     def __init__(self, kconf_table, module_table, kerneldir, dirs, makefiles, tree):
-        lkddb.browser.__init__(self, "kconfigs")
+        super().__init__("kconfigs")
         self.kconf_table = kconf_table
         self.module_table = module_table
         self.kerneldir = kerneldir
@@ -246,7 +242,7 @@ class kconfigs(lkddb.browser):
         # two kind of "tables": config and module
 
     def scan(self):
-        old_kernel = (self.tree.version_dict['numeric'] < 0x020600)  ### find exact version
+        old_kernel = (self.tree.version_dict['numeric'] < 0x020600)  # find exact version
         lkddb.browser.scan(self)
         orig_cwd = os.getcwd()
         try:
@@ -270,10 +266,13 @@ class kconfigs(lkddb.browser):
         lkddb.browser.finalize(self)
 
     def __parse_kconfig(self, filename):
-        "read config menu in Kconfig"
+        """read config menu in Kconfig"""
         f = open(filename, encoding='utf8', errors='replace')
         context = C_TOP
         config = None
+        help = ""
+        conf_type = None
+        descr = ""
         depends = []
         for line in f:
             line = line.expandtabs()
@@ -281,33 +280,31 @@ class kconfigs(lkddb.browser):
                 ident_new = len(line) - len(line.lstrip())
                 if ident < 0:
                     ident = ident_new
-                if ident_new >= ident  or  line.strip() == "":
+                if ident_new >= ident or line.strip() == "":
                     help += line.strip() + "\n"
                     continue
                 context = C_CONF
             line = line.strip()
-            if len(line) == 0  or  line[0] == "#":
+            if len(line) == 0 or line[0] == "#":
                 continue
             try:
-                tok,args = line.split(None, 1)
-            except:
-                tok = line ; args = ""
-            #if "#" in args:
-            #    args = args.split("#", 1)[0]
+                tok, args = line.split(None, 1)
+            except AttributeError:
+                tok, args = line, ""
             if tok in frozenset(("menu", "endmenu", "source", "if", "endif", "endchoice", "mainmenu")):
                 if context == C_CONF:
-                    self.__kconf_save(config, dict, type, descr, depends, help, filename)
+                    self.__kconf_save(config, dict, conf_type, descr, depends, help, filename)
                 context = C_TOP
                 continue
             if tok in frozenset(("config", "menuconfig", "choice")):
                 if context == C_CONF:
-                    self.__kconf_save(config, dict, type, descr, depends, help, filename)
+                    self.__kconf_save(config, dict, conf_type, descr, depends, help, filename)
                 else:
                     context = C_CONF
                 config = args
                 help = ""
                 dict = {}
-                type = None
+                conf_type = None
                 descr = ""
                 depends = []
                 continue
@@ -323,15 +320,14 @@ class kconfigs(lkddb.browser):
             if tok in frozenset(("bool", "boolean", "tristate", "string", "hex", "int")):
                 if tok == "boolean":
                     tok = "bool"
-                type = tok
+                conf_type = tok
                 if not args or args[0] == "#":
                     descr = ""
                 else:
                     div = args[0]
-                    if not (div == '"'  or  div == "'"):
+                    if not (div == '"' or div == "'"):
                         descr = args
-                        lkddb.log.log("kconfig: bad line in %s %s: '%s'" %
-                                                                (filename, config, line))
+                        lkddb.log.log("kconfig: bad line in %s %s: '%s'" % (filename, config, line))
                     else:
                         if div == '"':
                             args = args.replace('\\"', "'").replace("\\'", "'")
@@ -343,15 +339,15 @@ class kconfigs(lkddb.browser):
                             descr = s[1].replace('"', "'")
                         if len(s) < 3:
                             lkddb.log.log("kconfig: bad line in %s %s: '%s': args=<%s>, s=%s" %
-                                                                (filename, config, line, args, s))
+                                          (filename, config, line, args, s))
                             assert False
                         else:
                             d = s[2].split()
-                            if len(d) > 1  and  d[0] == "if":
+                            if len(d) > 1 and d[0] == "if":
                                 depends.append(" ".join(d[1:]))
             if tok in frozenset(("default", "def_bool", "def_tristate")):
                 if tok[3] == "_":
-                    type = tok[4:]
+                    conf_type = tok[4:]
                     descr = ""
                 if "#" in args:
                     args = args.split("#", 1)[0]
@@ -361,61 +357,63 @@ class kconfigs(lkddb.browser):
                     depends.append(" ".join(d))
             if tok == "prompt":
                 div = args[0]
-                assert div == '"'  or  div == "'"
+                assert div == '"' or div == "'"
                 if div == '"':
                     args = args.replace('\\"', "'").replace("\\'", "'")
-                    s =  args.split(div)
+                    s = args.split(div)
                     descr = s[1]
                 else:
                     args = args.replace('\\"', '"').replace("\\'", '"')
                     s = args.split(div)
                     descr = s[1].replace('"', "'")
                 d = s[2].split()
-                if len(d) > 1  and  d[0] == "if":
+                if len(d) > 1 and d[0] == "if":
                     depends.append(" ".join(d[1:]))
             if tok == "depends":
-               if "#" in args:
+                if "#" in args:
                     args = args.split("#", 1)[0]
-               d = args.split()
-               if len(d) > 1  and  d[0] == "on":
+                d = args.split()
+                if len(d) > 1 and d[0] == "on":
                     depends.append(" ".join(d[1:]))
-               else:
+                else:
                     assert "false"
             if not context == C_CONF:
                 # e.g. depents after "menu" or prompt and default after "choice"
                 continue
             dict[tok] = args
-        if context == C_CONF  or  context == C_HELP:
-            self.__kconf_save(config, dict, type, descr, depends, help, filename)
+        if context == C_CONF or context == C_HELP:
+            self.__kconf_save(config, dict, conf_type, descr, depends, help, filename)
 
+    def __parse_config_in(self, filename):
+        # TODO
+        raise NotImplementedError
 
-    def __kconf_save(self, config, dict, type, descr, depends, help, filename):
-        if not type:  # e.g. on 'choice'
+    def __kconf_save(self, config, dict, conf_type, descr, depends, help, filename):
+        if not conf_type:  # e.g. on 'choice'
             return
         config = "CONFIG_" + config
         if depends:
             if len(depends) > 1:
-                depends = "(" +   ")  &&  (".join(depends)  + ")"
+                depends = "(" + ")  &&  (".join(depends) + ")"
             else:
                 depends = depends[0]
         else:
             depends = ""
-        self.kconf_table.add_row((type, descr, depends, help.strip(), config, filename))
+        self.kconf_table.add_row((conf_type, descr, depends, help.strip(), config, filename))
 
-        if type == "tristate"  or  type == "def_tristate":
+        if conf_type == "tristate" or conf_type == "def_tristate":
             mod = self.makefiles.modules.get(config, None)
             if mod:
                 if mod.find(" ") > -1:
                     lkddb.log.log("warning: multiple modules in '%s': '%s" %
-                                (config, mod))
+                                  (config, mod))
                 for name in mod.split():
                     if not name.endswith(".o"):
                         if name[-1] == "/":
                             lkddb.log.log(
                                 "Kconfig: name '%s' doesn't end with '.o (%s from %s)"
-                                                        % (name, config, filename))
+                                % (name, config, filename))
                         continue
                     self.module_table.add_row((name[:-2], descr, config, filename))
             else:
                 lkddb.log.log("kconfig: could not find the module obj of %s from %s" % (config, filename))
-

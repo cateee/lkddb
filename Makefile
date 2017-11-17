@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 #: Makefile : rules to make, distribute and test lkddb
 #
-#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 

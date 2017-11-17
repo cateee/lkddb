@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/tables/__init__.py : register all tables
 #
-#  Copyright (c) 2009  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2009-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 
@@ -26,4 +26,3 @@ def register_ids_tables(tree):
     tree.register_table('usb_class_ids', ids_tables.usb_class_ids_table())
     tree.register_table('eisa_ids', ids_tables.eisa_ids_table())
     tree.register_table('zorro_ids', ids_tables.zorro_ids_table())
-

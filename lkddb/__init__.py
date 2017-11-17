@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/__init__.py : generic definitions (and classes) for lkddb
 #
-#  Copyright (c) 2000,2001,2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import pickle
@@ -91,32 +91,35 @@ class tree(object):
         self.scanners = []
         self.tables = {}
         self.views = []
-
-        #self.version = [ "tree", (num_version), "strversion", series ]
-        #self_consolidated_versions = set((self.version))
         self.version = None
+        self.version_dict = {}
         self.consolidated_versions = set(())
 
     def get_strversion(self):
         if self.version is None:
             self.retrive_version()
         return self.version[2]
+
     def retrive_version(self):
         pass
 
     def register_browser(self, browser):
         self.browsers.append(browser)
+
     def register_scanner(self, scanner):
         self.scanners.append(scanner)
+
     def register_table(self, name, table):
         assert name not in self.tables, "table '%s' already registered'" % name
         self.tables[name] = table
+
     def get_table(self, name):
         return self.tables[name]
 
     def scan_sources(self):
         for b in self.browsers:
             b.scan()
+
     def finalize_sources(self):
         for b in self.browsers:
             b.finalize()
@@ -203,7 +206,6 @@ class tree(object):
                 if not hasattr(self, 'crows'):
                     self.crows = {}
 
-
     def write_consolidate(self):
         persistent_data = {}
         persistent_data['_tables'] = tuple(self.tables.keys())
@@ -248,23 +250,27 @@ class tree(object):
 
 
 class browser(object):
-    "scan a tree. In two phases: 'scan' read the tree; 'finalize' do the rest"
+    """scan a tree. In two phases: 'scan' read the tree; 'finalize' do the rest"""
     # two phases: only after reading all sources, we can do cross-references
 
     def __init__(self, name):
         self.name = name
+
     def scan(self):
         lkddb.log.phase("browse and scan " + self.name)
+
     def finalize(self):
         lkddb.log.phase("finalizing scan " + self.name)
 
 
 class scanner(object):
+
     def __init__(self, name):
         self.name = name
 
 
 class table(object):
+
     def __init__(self, name):
         self.name = name
         self.rows = []
@@ -319,28 +325,33 @@ class table(object):
         # order data
         rr = tuple(map(lambda i: r[self.indices_inv[i]], range(self.line_len)))
         self.fullrows.append(tuple(rr))
+
     def pre_row_fmt(self, row):
         return row
+
     def add_row(self, row):
         self.rows.append(row)
+
     def restore(self):
         self.fullrows = []
         pass
+
     def fmt(self):
         if not self.line_fmt:
             return
         lkddb.log.phase("formatting " + self.name)
         for row in self.rows:
             self.add_fullrow(row)
+
     def get_lines(self):
-        ### TODO: change to an iteractor ########################
+        # TODO: change to an iterator ########################
         lkddb.log.phase("printing lines in " + self.name)
         lines = []
         try:
             for fullrow in self.fullrows:
                 lines.append(self.line_templ % fullrow)
         except TypeError:
-            lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], row_fmt))
+            lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], fullrow))
         return lines
 
     def consolidate_table(self, consolidated, ver):
@@ -348,17 +359,17 @@ class table(object):
         if not hasattr(self, 'crows'):
             self.crows = {}
 
-        # consolitating
+        # consolidating
         if consolidated:
             for key1, values1 in self.crows_tmp.items():
                 for key2, values2 in values1.items():
                     values, all_versions = values2
                     actual_crow = self.crows.get(key1, None)
-                    if actual_crow == None:
+                    if actual_crow is None:
                         self.crows[key1] = {key2: [values, all_versions]}
                     else:
                         actual_sub_crow = actual_crow.get(key2, None)
-                        if actual_sub_crow == None:
+                        if actual_sub_crow is None:
                             self.crows[key1][key2] = [values, all_versions]
                         else:
                             self.crows[key1][key2][0] = values
@@ -369,11 +380,11 @@ class table(object):
                 key2 = fullrow[self.key1_len+self.values_len:]
                 values = fullrow[self.key1_len:self.key1_len+self.values_len]
                 actual_crow = self.crows.get(key1, None)
-                if actual_crow == None:
+                if actual_crow is None:
                     self.crows[key1] = {key2: [values, set((ver,))]}
                 else:
                     actual_sub_crow = actual_crow.get(key2, None)
-                    if actual_sub_crow == None:
+                    if actual_sub_crow is None:
                         self.crows[key1][key2] = [values, set((ver,))]
                     else:
                         self.crows[key1][key2][0] = values
@@ -417,10 +428,11 @@ class table(object):
 
     def to_sql(self, db):
         c = db.cursor(db)
-        for row in rows:
+        for row in self.rows:
             c.execute(self.sql_insert, row + self.extra_data)
         db.commit()
         c.close()
+
 
 def create_generic_tables(c):
     sql = "CREATE TABLE IF NOT EXISTS `tables` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
@@ -435,4 +447,3 @@ def create_generic_tables(c):
  `table_id` INTEGER REFERENCE `tables`
 );"""
 ##################
-
