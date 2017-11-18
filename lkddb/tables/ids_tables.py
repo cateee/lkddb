@@ -8,82 +8,76 @@ import lkddb
 from lkddb import fmt
 
 
-class pci_ids_table(lkddb.table):
+class pci_ids_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("pci_ids")
+        self.kind = ("ids", "ids")
+        self.cols = ((1, 'vendor', fmt.m16x, "INTEGER"),
+                     (2, 'device', fmt.m16x, "INTEGER"),
+                     (3, 'subvendor', fmt.m16x, "INTEGER"),
+                     (4, 'subdevice', fmt.m16x, "INTEGER"),
+                     (0, 'name', fmt.str, "TEXT"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("ids", "ids")
 
-    cols = ((1, 'vendor', fmt.m16x, "INTEGER"),
-            (2, 'device', fmt.m16x, "INTEGER"),
-            (3, 'subvendor', fmt.m16x, "INTEGER"),
-            (4, 'subdevice', fmt.m16x, "INTEGER"),
-            (0, 'name', fmt.str, "TEXT"),
-            (-99, 'version', None, "$kver"))
-
-
-class pci_class_ids_table(lkddb.table):
+class pci_class_ids_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("pci_class_ids")
+        self.kind = ("ids", "ids")
+        self.cols = ((1, 'class', fmt.m8x, "INTEGER"),
+                     (2, 'subclass', fmt.m8x, "INTEGER"),
+                     (3, 'prog-inf', fmt.m8x, "INTEGER"),
+                     (0, 'name', fmt.str, "TEXT"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("ids", "ids")
 
-    cols = ((1, 'class', fmt.m8x, "INTEGER"),
-            (2, 'subclass', fmt.m8x, "INTEGER"),
-            (3, 'prog-inf', fmt.m8x, "INTEGER"),
-            (0, 'name', fmt.str, "TEXT"),
-            (-99, 'version', None, "$kver"))
-
-
-class usb_ids_table(lkddb.table):
+class usb_ids_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("usb_ids")
+        self.kind = ("ids", "ids")
+        self.cols = ((1, 'vendor_id', fmt.m16x, "INTEGER"),
+                     (2, 'model_id', fmt.m16x, "INTEGER"),
+                     (0, 'name', fmt.str, "TEXT"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("ids", "ids")
 
-    cols = ((1, 'vendor_id', fmt.m16x, "INTEGER"),
-            (2, 'model_id', fmt.m16x, "INTEGER"),
-            (0, 'name', fmt.str, "TEXT"),
-            (-99, 'version', None, "$kver"))
-
-
-class usb_class_ids_table(lkddb.table):
+class usb_class_ids_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("usb_class_ids")
+        self.kind = ("ids", "ids")
+        self.cols = ((1, 'class', fmt.m8x, "INTEGER"),
+                     (2, 'subclass', fmt.m8x, "INTEGER"),
+                     (3, 'protocol', fmt.m8x, "INTEGER"),
+                     (0, 'name', fmt.str, "TEXT"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("ids", "ids")
 
-    cols = ((1, 'class', fmt.m8x, "INTEGER"),
-            (2, 'subclass', fmt.m8x, "INTEGER"),
-            (3, 'protocol', fmt.m8x, "INTEGER"),
-            (0, 'name', fmt.str, "TEXT"),
-            (-99, 'version', None, "$kver"))
-
-
-class eisa_ids_table(lkddb.table):
+class eisa_ids_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("eisa_ids")
+        self.kind = ("ids", "ids")
+        self.cols = ((1, 'id', fmt.dqstr, "TEXT"),
+                     (0, 'name', fmt.dqstr, "TEXT"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("ids", "ids")
 
-    cols = ((1, 'id', fmt.dqstr, "TEXT"),
-            (0, 'name', fmt.dqstr, "TEXT"),
-            (-99, 'version', None, "$kver"))
-
-
-class zorro_ids_table(lkddb.table):
+class zorro_ids_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("zorro_ids")
-
-    kind = ("ids", "ids")
-
-    cols = ((1, 'manufacter', fmt.m16x, "INTEGER"),
-            (2, 'product', fmt.m16x, "INTEGER"),
-            (0, 'name', fmt.str, "TEXT"),
-            (-99, 'version', None, "$kver"))
+        self.kind = ("ids", "ids")
+        self.cols = ((1, 'manufacter', fmt.m16x, "INTEGER"),
+                     (2, 'product', fmt.m16x, "INTEGER"),
+                     (0, 'name', fmt.str, "TEXT"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()

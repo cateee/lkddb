@@ -8,43 +8,40 @@ import lkddb
 from lkddb import fmt
 
 
-class i2c_snd_table(lkddb.table):
+class i2c_snd_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("i2c-snd")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("linux-kernel", "device")
 
-    cols = ((1, 'name', fmt.qstr, "TEXT"),
-            (-1, 'deps', fmt.deps, "$deps"),
-            (-2, 'filename', fmt.filename, "$filename"),
-            (-99, 'version', None, "$kver"))
-
-
-class platform_table(lkddb.table):
+class platform_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("platform")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
-    kind = ("linux-kernel", "device")
 
-    cols = ((1, 'name', fmt.qstr, "TEXT"),
-            (-1, 'deps', fmt.deps, "$deps"),
-            (-2, 'filename', fmt.filename, "$filename"),
-            (-99, 'version', None, "$kver"))
-
-
-class fs_table(lkddb.table):
+class fs_table(lkddb.Table):
 
     def __init__(self):
         super().__init__("fs")
-
-    kind = ("linux-kernel", "device")
-
-    cols = ((1, 'name', fmt.qstr, "TEXT"),
-            (-1, 'deps', fmt.deps, "$deps"),
-            (-2, 'filename', fmt.filename, "$filename"),
-            (-99, 'version', None, "$kver"))
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
 
 
 def register(tree):

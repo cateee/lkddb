@@ -10,7 +10,7 @@ import lkddb
 import lkddb.tables
 
 
-class ids_files(lkddb.tree):
+class ids_files(lkddb.Tree):
 
     def __init__(self, task, paths):
         super().__init__("ids_files")
@@ -25,7 +25,7 @@ class ids_files(lkddb.tree):
         self.version = ("ids_files", (int(time.time()/60/60),), "", -1)
 
 
-class ids_file_browser(lkddb.browser):
+class ids_file_browser(lkddb.Browser):
 
     def __init__(self, tree):
         super().__init__("ids_file_browser")
@@ -46,7 +46,7 @@ class ids_file_browser(lkddb.browser):
         self.scanners.append(scanner)
 
     def scan(self):
-        lkddb.browser.scan(self)
+        lkddb.Browser.scan(self)
 
         # pci.ids
         lkddb.log.phase("pci.ids'")
@@ -192,4 +192,4 @@ class ids_file_browser(lkddb.browser):
                     assert False, "Error in zorro.ids, with line: %s" % line
 
     def finalize(self):
-        lkddb.browser.finalize(self)
+        lkddb.Browser.finalize(self)

@@ -15,7 +15,7 @@ def make(options, args):
 
     lkddb.init(options)
 
-    storage = lkddb.storage()
+    storage = lkddb.Storage()
     tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
     storage.register_tree(tree)
     tree = lkddb.ids.ids_files(lkddb.TASK_CONSOLIDATE, None)

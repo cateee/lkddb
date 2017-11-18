@@ -20,12 +20,13 @@ PICKLE_PROTOCOL = 4
 def init(options):
     lkddb.log.init(options)
 
+
 #
 # Generic classes for device_class and source_trees
 #
 
-class storage(object):
-    "container of trees (for persistent_data)"
+class Storage:
+    """container of trees (for persistent_data)"""
 
     def __init__(self):
         self.available_trees = {}   # treename -> tree
@@ -80,8 +81,8 @@ class storage(object):
             pickle.dump(persistent_data, f, protocol=PICKLE_PROTOCOL)
 
 
-class tree(object):
-    "defines sources of a project with task, a base path, a version and some related browsers"
+class Tree:
+    """defines sources of a project with task, a base path, a version and some related browsers"""
     # e.g. kernel sources
 
     def __init__(self, name):
@@ -249,7 +250,7 @@ class tree(object):
         db.close()
 
 
-class browser(object):
+class Browser():
     """scan a tree. In two phases: 'scan' read the tree; 'finalize' do the rest"""
     # two phases: only after reading all sources, we can do cross-references
 
@@ -263,19 +264,31 @@ class browser(object):
         lkddb.log.phase("finalizing scan " + self.name)
 
 
-class scanner(object):
+class Scanner:
 
     def __init__(self, name):
         self.name = name
 
 
-class table(object):
+class Table:
 
     def __init__(self, name):
         self.name = name
         self.rows = []
         self.fullrows = []
         self.consolidate = {}
+        self.cols = None
+        self.line_fmt = None
+        self.line_len = None
+        self.col_len = None
+        self.key1_len = None
+        self.key2_len = None
+        self.values_len = None
+        self.indices = None
+        self.indices_inv = None
+        self.line_templ = None
+
+    def init_cols(self):
         line_fmt = []
         line_indices = []
         for col_index, col_name, col_line_fmt, col_sql in self.cols:
@@ -310,7 +323,8 @@ class table(object):
         self.indices = tuple(indices)
         self.indices_inv = tuple(indices_inv)
         if line_fmt:
-            self.line_templ = name + ( " %s" * self.key1_len + " %s" * self.values_len + " : %s" * self.key2_len +'\n')
+            self.line_templ = self.name + (" %s" * self.key1_len + " %s" * self.values_len +
+                                           " : %s" * self.key2_len + '\n')
 
     def add_fullrow(self, row):
         # format data

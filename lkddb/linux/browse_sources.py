@@ -31,7 +31,7 @@ skeleton_files = frozenset((
 field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
 
 
-class linux_sources(lkddb.browser):
+class linux_sources(lkddb.Browser):
     """generic reader, source level (c and h) files"""
 
     def __init__(self, kerneldir, dirs):
@@ -45,7 +45,7 @@ class linux_sources(lkddb.browser):
         self.scanners.append(scanner)
 
     def scan(self):
-        lkddb.browser.scan(self)
+        lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
@@ -98,7 +98,7 @@ class linux_sources(lkddb.browser):
             os.chdir(orig_cwd)
 
     def finalize(self):
-        lkddb.browser.finalize(self)
+        lkddb.Browser.finalize(self)
         for s in self.scanners:
             s.finalize()
 
@@ -120,7 +120,7 @@ ifdef_re = re.compile(
     r"^ifdef\s*(CONFIG_\w+)\s+.*?#endif", re.MULTILINE | re.DOTALL)
 
 
-class struct_parent_scanner(lkddb.scanner):
+class struct_parent_scanner(lkddb.Scanner):
 
     def __init__(self, browser, makefiles):
         super().__init__("struct_parent_scanner")

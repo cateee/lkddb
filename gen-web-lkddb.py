@@ -606,7 +606,7 @@ assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
 def make(options, templdir, webdir):
     lkddb.init(options)
 
-    storage = lkddb.storage()
+    storage = lkddb.Storage()
     linux_kernel_tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
     storage.register_tree(linux_kernel_tree)
     ids_files_tree = lkddb.ids.ids_files(lkddb.TASK_CONSOLIDATE, None)

@@ -71,7 +71,7 @@ def register_linux_browsers(tree):
 
 ###
 
-class linux_kernel(lkddb.tree):
+class linux_kernel(lkddb.Tree):
 
     def __init__(self, task, kerneldir, dirs):
         super().__init__("linux-kernel")

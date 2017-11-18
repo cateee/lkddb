@@ -13,7 +13,7 @@ import lkddb
 
 # kernel version and name
 
-class kver(lkddb.browser):
+class kver(lkddb.Browser):
     def __init__(self, kver_table, tree):
         super().__init__("kver")
         self.table = kver_table
@@ -22,7 +22,7 @@ class kver(lkddb.browser):
 
     def scan(self):
         """Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"""
-        lkddb.browser.scan(self)
+        lkddb.Browser.scan(self)
         version_dict = self.tree.version_dict
         self.table.add_row((version_dict['version'], version_dict['patchlevel'], version_dict['sublevel'],
                             version_dict['numeric2'], version_dict['numeric3'],
@@ -43,7 +43,7 @@ ignore_rules_set = frozenset(
     ("ccflags", "cflags", "cpuflags"))
 
 
-class makefiles(lkddb.browser):
+class makefiles(lkddb.Browser):
     def __init__(self, firmware_table, kerneldir, dirs):
         super().__init__("kmake")
         self.firmware_table = firmware_table
@@ -58,7 +58,7 @@ class makefiles(lkddb.browser):
         self.modules = {}
 
     def scan(self):
-        lkddb.browser.scan(self)
+        lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
@@ -227,7 +227,7 @@ C_CONF = 1
 C_HELP = 2
 
 
-class kconfigs(lkddb.browser):
+class kconfigs(lkddb.Browser):
     def __init__(self, kconf_table, module_table, kerneldir, dirs, makefiles, tree):
         super().__init__("kconfigs")
         self.kconf_table = kconf_table
@@ -240,7 +240,7 @@ class kconfigs(lkddb.browser):
 
     def scan(self):
         old_kernel = (self.tree.version_dict['numeric'] < 0x020600)  # find exact version
-        lkddb.browser.scan(self)
+        lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
@@ -260,7 +260,7 @@ class kconfigs(lkddb.browser):
             os.chdir(orig_cwd)
 
     def finalize(self):
-        lkddb.browser.finalize(self)
+        lkddb.Browser.finalize(self)
 
     def __parse_kconfig(self, filename):
         """read config menu in Kconfig"""
@@ -286,7 +286,7 @@ class kconfigs(lkddb.browser):
                 continue
             try:
                 tok, args = line.split(None, 1)
-            except AttributeError:
+            except ValueError:
                 tok, args = line, ""
             if tok in frozenset(("menu", "endmenu", "source", "if", "endif", "endchoice", "mainmenu")):
                 if context == C_CONF:
