@@ -142,7 +142,8 @@ class linux_kernel(lkddb.tree):
                 bang = bang[2:].strip()
                 script = subprocess.Popen(bang + " scripts/setlocalversion .",
                                           shell=True, cwd=self.kerneldir, stdout=subprocess.PIPE)
-                version_dict['local_ver'] = script.communicate()[0].decode('utf-8', 'replace').strip().replace("-dirty", "")
+                version_dict['local_ver'] = (
+                    script.communicate()[0].decode('utf-8', 'replace').strip().replace("-dirty", ""))
                 if script.returncode > 0:
                     version_dict['local_ver'] = ""
         else:

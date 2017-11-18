@@ -381,11 +381,11 @@ class table(object):
                 values = fullrow[self.key1_len:self.key1_len+self.values_len]
                 actual_crow = self.crows.get(key1, None)
                 if actual_crow is None:
-                    self.crows[key1] = {key2: [values, set((ver,))]}
+                    self.crows[key1] = {key2: [values, {ver}]}
                 else:
                     actual_sub_crow = actual_crow.get(key2, None)
                     if actual_sub_crow is None:
-                        self.crows[key1][key2] = [values, set((ver,))]
+                        self.crows[key1][key2] = [values, {ver}]
                     else:
                         self.crows[key1][key2][0] = values
                         self.crows[key1][key2][1].add(ver)

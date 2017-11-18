@@ -85,7 +85,7 @@ class usb(list_of_structs_scanner):
         if not match:
             return None
         v0, v1, v2, v3, v4, v5, v6, v7 = -1, -1, -1, -1, -1, -1, -1, -1
-        v8 , v9 = 0, 0xffff
+        v8, v9 = 0, 0xffff
         if match & self.USB_DEVICE_ID_MATCH_VENDOR:
             v0 = extract_value("idVendor", dict)
         if match & self.USB_DEVICE_ID_MATCH_PRODUCT:
@@ -687,13 +687,13 @@ class zorro(list_of_structs_scanner):
         )
 
     def store(self, dict):
-        id = extract_value("id", dict)
-        if id == 0:
+        dev_id = extract_value("id", dict)
+        if dev_id == 0:
             return None
-        if id == 0xffffffff:
+        if dev_id == 0xffffffff:
             return -1, -1
         else:
-            return (id >> 16) & 0xffff, (id & 0xffff)
+            return (dev_id >> 16) & 0xffff, (dev_id & 0xffff)
 
 
 # AGP, agp_device_ids drivers/char/agp/agp.h drivers/char/agp/

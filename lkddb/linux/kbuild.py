@@ -14,7 +14,6 @@ import lkddb
 # kernel version and name
 
 class kver(lkddb.browser):
-
     def __init__(self, kver_table, tree):
         super().__init__("kver")
         self.table = kver_table
@@ -34,18 +33,17 @@ class kver(lkddb.browser):
 
 # comment are remover; \ line are merged
 kbuild_normalize = re.compile(
-        r"(#.*$|\\\n)", re.MULTILINE)
+    r"(#.*$|\\\n)", re.MULTILINE)
 kbuild_includes = re.compile(
-        r"^-?include\s+\$[({]srctree[)}]/(.*)$", re.MULTILINE)
+    r"^-?include\s+\$[({]srctree[)}]/(.*)$", re.MULTILINE)
 kbuild_rules = re.compile(
-        r"^([A-Za-z0-9-_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
+    r"^([A-Za-z0-9-_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
 
 ignore_rules_set = frozenset(
     ("ccflags", "cflags", "cpuflags"))
 
 
 class makefiles(lkddb.browser):
-
     def __init__(self, firmware_table, kerneldir, dirs):
         super().__init__("kmake")
         self.firmware_table = firmware_table
@@ -129,7 +127,7 @@ class makefiles(lkddb.browser):
         for f in files.split():
             fn = os.path.normpath(os.path.join(subdir, f))
             if f[-2:] == ".o":
-                fc = fn[:-2]+".c"
+                fc = fn[:-2] + ".c"
                 virt = [os.path.join(subdir, rule + ".c")]
                 if fc in self.dep_aliases:
                     virt.extend(self.dep_aliases[fc])
@@ -149,13 +147,13 @@ class makefiles(lkddb.browser):
             if dep in ("y", "m"):
                 pass
             elif (dep[:9] == '$(CONFIG_' and dep[-1] == ')') or (
-                  dep[:9] == '${CONFIG_' and dep[-1] == '}'):
+                            dep[:9] == '${CONFIG_' and dep[-1] == '}'):
                 i = dep[:-1].find(')', 2)
-                if i > 0 and dep[i+1:i+10] == "$(CONFIG_":
+                if i > 0 and dep[i + 1:i + 10] == "$(CONFIG_":
                     d.add(dep[2:i])
                     self.modules[dep[2:i]] = files
-                    d.add(dep[i+3:-1])
-                    self.modules[dep[i+3:-1]] = files
+                    d.add(dep[i + 3:-1])
+                    self.modules[dep[i + 3:-1]] = files
                 else:
                     d.add(dep[2:-1])
                     if rule == "fw-shipped":
@@ -181,7 +179,7 @@ class makefiles(lkddb.browser):
                     fn = os.path.join(subdir, f[:-1])
                     self.__parse_kbuild(fn, d, 0)
                 elif f[-2:] == ".o":
-                    fc = fn[:-2]+".c"
+                    fc = fn[:-2] + ".c"
                     v = d.copy()
                     if fc in self.dependencies:
                         v.update(self.dependencies[fc])
@@ -193,7 +191,7 @@ class makefiles(lkddb.browser):
             if rule not in ignore_rules_set:
                 self.__parse_kbuild_alias(subdir, rule, d, files)
 
-# -----
+            # -----
 
     def _list_dep_rec(self, fn, dep, passed):
         deps = self.dependencies.get(fn, None)
@@ -230,7 +228,6 @@ C_HELP = 2
 
 
 class kconfigs(lkddb.browser):
-
     def __init__(self, kconf_table, module_table, kerneldir, dirs, makefiles, tree):
         super().__init__("kconfigs")
         self.kconf_table = kconf_table
@@ -313,7 +310,7 @@ class kconfigs(lkddb.browser):
                     help = ""
                     lkddb.log.log(
                         "kconfig: error: help out of context (%s), in %s, after '%s'" %
-                                                        (context, filename, config))
+                        (context, filename, config))
                 context = C_HELP
                 ident = -1
                 continue

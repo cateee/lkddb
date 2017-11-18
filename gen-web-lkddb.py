@@ -529,8 +529,8 @@ def ver_list_str(versions, compress=False):
         ret = []
         for name, ver, v_str, serie in versions + [('', (-1, -1, -1), "-1,-1,-1", -1)]:
             v = ((ver[0] >> 16) & 0xff, (ver[0] >> 8) & 0xff, ver[0] & 0xff)
-            if ((v[0] <  3 and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2]+1) or
-                (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1]+1)):
+            if ((v[0] < 3 and v[0] == prev[0] and v[1] == prev[1] and v[2] == prev[2] + 1) or
+               (v[0] >= 3 and v[0] == prev[0] and v[1] == prev[1] + 1)):
                 if start is None:
                     # prev is the first of the current serie
                     start = prev
