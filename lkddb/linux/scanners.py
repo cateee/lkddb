@@ -207,7 +207,8 @@ def extract_string_rec(v, default=""):
         if m:
             field, value = m.groups()
             return extract_string_rec(value, default)
-        raise lkddb.ParserError("Error on assumptions in translating strings: value '%s'" % v)
+        logger.error("Error on assumptions in translating strings: value '%s'" % v)
+        return default
 
 
 def extract_string(field, dictionary, default=""):
