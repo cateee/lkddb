@@ -10,11 +10,13 @@ import os
 import re
 import glob
 import fnmatch
+import logging
 
 import lkddb
-import lkddb.log
 import lkddb.parser
 from lkddb.parser import unwind_include
+
+logger = logging.getLogger(__name__)
 
 skeleton_files = frozenset((
     # skeleton and example files are not useful (and not compiled/used)
@@ -26,7 +28,6 @@ skeleton_files = frozenset((
     # discard these files
     "include/linux/compiler.h", "include/linux/mutex.h",
 ))
-
 
 field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
 
@@ -84,7 +85,7 @@ class linux_sources(lkddb.Browser):
                         filename = os.path.join(dir, source)
                         if filename in skeleton_files:
                             continue
-                        lkddb.log.log_extra("reading file " + filename)
+                        logger.info("Reading file " + filename)
                         f = open(filename, encoding='utf8', errors='replace')
                         src = f.read()
                         f.close()
@@ -93,7 +94,7 @@ class linux_sources(lkddb.Browser):
                             try:
                                 s.in_scan(src, filename)
                             except RecursionError:
-                                lkddb.log.log("Recursion error in file %s" % filename)
+                                logger.error("Recursion error in file %s" % filename)
         finally:
             os.chdir(orig_cwd)
 
@@ -107,7 +108,7 @@ class linux_sources(lkddb.Browser):
             filename_i = os.path.join(dir_i, source)
             if filename_i in skeleton_files:
                 continue
-            lkddb.log.log_extra("reading include " + filename_i)
+            logger.info("Reading include " + filename_i)
             f = open(os.path.join(dir, source), encoding='utf8', errors='replace')
             src = f.read()
             f.close()
@@ -137,7 +138,7 @@ class struct_parent_scanner(lkddb.Scanner):
             s.finalize()
 
     def in_scan(self, src, filename):
-        "parse .c source file"
+        """parse .c source file"""
         dep = self.makefiles.list_dep(filename)
         unwind_include(filename)
         for scanner in self.scanners:
@@ -174,14 +175,14 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
                     field, value = m.groups()
                     value = "{" + value + "}"
                 else:
-                    lkddb.log.die("parse_line(): %s, %s, %s" % (filename, line, param))
+                    raise lkddb.ParserError("in parse_line(): %s, %s, %s" % (filename, line, param))
             res[field] = value
         else:
             try:
                 res[fields[nparam]] = param
             except IndexError:
-                lkddb.log.exception("Error: index error: %s, %s, %s, %s" %
-                                    (scanner.name, fields, line, filename))
+                logger.exception("Index error: %s, %s, %s, %s" %
+                                 (scanner.name, fields, line, filename))
                 return {}
         nparam += 1
     if res:

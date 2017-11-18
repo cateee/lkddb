@@ -7,6 +7,9 @@
 from lkddb.linux.scanners import *
 from .browse_sources import parse_struct
 
+__all_ = ('intern_scanner', 'pci', 'usb', 'ieee1394', 'hid', 'ccw', 'ap', 'acpi', 'pnp', 'pnp_card',
+          'serio', 'of', 'vio', 'pcmcia', 'input', 'eisa', 'parisc', 'sdio', 'ssb', 'virtio' 'i2c',
+          'tc', 'zorro', 'agp')
 
 # device_driver include/linux/device.h
 device_driver_fields = (

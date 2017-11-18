@@ -57,12 +57,9 @@ if __name__ == "__main__":
     parser.add_option("-l", "--log", dest="log_filename",
                       action="store", type="string",
                       help="FILE to put log messages (default to stderr)", metavar="FILE")
-    parser.add_option("-T", "--timed-logs", dest="timed_logs",
-                      action="store_const", const=True,
-                      help="append elapsed time to logs")
     parser.add_option("-k", "--versioned", dest="versioned",
                       action="store_const", const=True,
-                      help="append version to filenames (log and db)")
+                      help="append version to file names (log and data)")
     options_, args_ = parser.parse_args()
 
     if len(args_) < 1:

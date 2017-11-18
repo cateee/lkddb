@@ -8,7 +8,11 @@ import os
 import os.path
 import re
 import fnmatch
+import logging
+
 import lkddb
+
+logger = logging.getLogger(__name__)
 
 
 # kernel version and name
@@ -81,7 +85,7 @@ class makefiles(lkddb.Browser):
         try:
             files = os.listdir(subdir)
         except OSError:
-            lkddb.log.log("parse_kbuild: not a directory: %s" % subdir)
+            logger.warning("parse_kbuild: not a directory: %s" % subdir)
             return
         if main != 1 and "Kbuild" in files:
             f = open(os.path.join(subdir, 'Kbuild'), encoding='utf8', errors='replace')
@@ -94,7 +98,7 @@ class makefiles(lkddb.Browser):
             src += '\n' + kbuild_normalize.sub(" ", f.read())
             f.close()
         if not src:
-            lkddb.log.log("No Makefile/Kbuild in %s" % subdir)
+            logger.warning("No Makefile/Kbuild in %s" % subdir)
             return
 
         # includes
@@ -104,8 +108,8 @@ class makefiles(lkddb.Browser):
                 break
             mk2 = m.group(1)
             if not os.path.isfile(mk2):
-                lkddb.log.log("parse_kbuild: could not find included file (from %s): %s" %
-                              (subdir, mk2))
+                logger.warning("parse_kbuild: could not find included file (from %s): %s" %
+                               (subdir, mk2))
                 src = src[:m.start()] + "\n" + src[m.end():]
                 continue
             f = open(mk2, encoding='utf8', errors='replace')
@@ -159,8 +163,8 @@ class makefiles(lkddb.Browser):
                     if rule == "fw-shipped":
                         for f in files.split():
                             if f.find("$") > -1:
-                                lkddb.log.log("this firmware include indirect firmwares '%s': '%s'" %
-                                              (dep[2:-1], os.path.join(subdir, f)))
+                                logger.warning("this firmware include indirect firmwares '%s': '%s'" %
+                                               (dep[2:-1], os.path.join(subdir, f)))
                             else:
                                 self.firmware_table.add_row((dep[2:-1], os.path.join(subdir, f)))
                         continue
@@ -170,7 +174,7 @@ class makefiles(lkddb.Browser):
                 self.__parse_kbuild_alias(subdir, rule, dep, files)
                 continue
             else:
-                lkddb.log.log("parse_kbuild: unknow dep in %s: '%s'" % (subdir, dep))
+                logger.warning("parse_kbuild: unknown dep in %s: '%s'" % (subdir, dep))
                 continue
 
             for f in files.split():
@@ -185,8 +189,8 @@ class makefiles(lkddb.Browser):
                         v.update(self.dependencies[fc])
                     self.dependencies[fc] = v
                 else:
-                    lkddb.log.log_extra(
-                        "parse_kbuild: unknow target in '%s': '%s, was %s'" % (subdir, f, (rule, dep, files)))
+                    logger.info("parse_kbuild: unknow target in '%s': '%s, was %s'" %
+                                (subdir, f, (rule, dep, files)))
 
             if rule not in ignore_rules_set:
                 self.__parse_kbuild_alias(subdir, rule, d, files)
@@ -249,12 +253,12 @@ class kconfigs(lkddb.Browser):
                     if old_kernel:
                         for kconf in fnmatch.filter(files, "Config.in"):
                             filename = os.path.join(dir, kconf)
-                            lkddb.log.log_extra("Kconfig (<2.6) doing: " + filename)
+                            logger.info("Kconfig (<2.6) doing: " + filename)
                             self.__parse_config_in(filename)
                     else:
                         for kconf in fnmatch.filter(files, "Kconfig*"):
                             filename = os.path.join(dir, kconf)
-                            lkddb.log.log_extra("Kconfig (>=2.6) doing: " + filename)
+                            logger.info("Kconfig (>=2.6) doing: " + filename)
                             self.__parse_kconfig(filename)
         finally:
             os.chdir(orig_cwd)
@@ -308,7 +312,7 @@ class kconfigs(lkddb.Browser):
             if tok in frozenset(("help", "---help---")):
                 if context != C_CONF:
                     help = ""
-                    lkddb.log.log(
+                    logger.error(
                         "kconfig: error: help out of context (%s), in %s, after '%s'" %
                         (context, filename, config))
                 context = C_HELP
@@ -324,7 +328,7 @@ class kconfigs(lkddb.Browser):
                     div = args[0]
                     if not (div == '"' or div == "'"):
                         descr = args
-                        lkddb.log.log("kconfig: bad line in %s %s: '%s'" % (filename, config, line))
+                        logger.warning("kconfig: bad line in %s %s: '%s'" % (filename, config, line))
                     else:
                         if div == '"':
                             args = args.replace('\\"', "'").replace("\\'", "'")
@@ -335,8 +339,8 @@ class kconfigs(lkddb.Browser):
                             s = args.split(div)
                             descr = s[1].replace('"', "'")
                         if len(s) < 3:
-                            lkddb.log.log("kconfig: bad line in %s %s: '%s': args=<%s>, s=%s" %
-                                          (filename, config, line, args, s))
+                            logger.warning("kconfig: bad line in %s %s: '%s': args=<%s>, s=%s" %
+                                           (filename, config, line, args, s))
                             assert False
                         else:
                             d = s[2].split()
@@ -402,15 +406,15 @@ class kconfigs(lkddb.Browser):
             mod = self.makefiles.modules.get(config, None)
             if mod:
                 if mod.find(" ") > -1:
-                    lkddb.log.log("warning: multiple modules in '%s': '%s" %
-                                  (config, mod))
+                    logger.warning("warning: multiple modules in '%s': '%s" %
+                                   (config, mod))
                 for name in mod.split():
                     if not name.endswith(".o"):
                         if name[-1] == "/":
-                            lkddb.log.log(
+                            logger.error(
                                 "Kconfig: name '%s' doesn't end with '.o (%s from %s)"
                                 % (name, config, filename))
                         continue
                     self.module_table.add_row((name[:-2], descr, config, filename))
             else:
-                lkddb.log.log("kconfig: could not find the module obj of %s from %s" % (config, filename))
+                logger.warning("kconfig: could not find the module obj of %s from %s" % (config, filename))

@@ -51,9 +51,6 @@ if __name__ == "__main__":
     parser.add_option("-l", "--log",	dest="log_filename",
                       action="store",	type="string",
                       help="FILE to put log messages (default is stderr)", metavar="FILE")
-    parser.add_option("-T", "--timed-logs",   dest="timed_logs",
-                      action="store_const", const=True,
-                      help="append elapsed time to logs")
     options_, args_ = parser.parse_args()
 
     if len(args_) < 1:

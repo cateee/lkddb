@@ -5,9 +5,12 @@
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import time
+import logging
 
 import lkddb
 import lkddb.tables
+
+logger = logging.getLogger(__name__)
 
 
 class ids_files(lkddb.Tree):
@@ -130,7 +133,7 @@ class ids_file_browser(lkddb.Browser):
                     name = " ".join(s[1:])
                     self.usb_ids_table.add_row((v0, v1, name))
                 else:
-                    lkddb.log.log("importing usb interface fields on usb.id is not yet implemented")
+                    raise lkddb.DataError("Importing usb interface fields on usb.id is not yet implemented")
             elif part == "C":
                 if line[0] != "\t":
                     v0 = int(s[1], 0x10)

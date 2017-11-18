@@ -5,13 +5,15 @@
 # This is free software, see GNU General Public License v2 (or later) for details
 
 import re
+import logging
 
 import lkddb
-import lkddb.log
 
 __all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
            "split_funct", "split_structs",
            "extract_value", "extract_string", "extract_struct")
+
+logger = logging.getLogger(__name__)
 
 
 class struct_subscanner():
@@ -31,7 +33,7 @@ class struct_subscanner():
             try:
                 row = self.store(data)
             except:
-                lkddb.log.exception("scanner<%s>.finalize: filename: %s, data: %s" % (
+                logger.exception("scanner<%s>.finalize: filename: %s, data: %s" % (
                                     self.name, filename, data))
                 continue
             if row:
@@ -138,8 +140,8 @@ def value_expand_tri(val):
                 else:
                     res = f
             except:
-                lkddb.log.log("error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f))
-                assert False, "error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f)
+                raise lkddb.ParserError(
+                    "Error on value_expand_tri(val=%s): match: %s --- %s ---- %s" % (val, cond, t, f))
             val = val[:m.start()] + res + val[m.end():]
             m = r.search(val)
     return eval(val)
@@ -158,18 +160,17 @@ def extract_value(field, dictionary):
             elif val.find("?") >= 0:
                 return value_expand_tri(val)
             elif val.find("=") >= 0:
-                lkddb.log.log("Hmmmm, %s in '%s'" % (field, dictionary))
+                logger.warning("Hmmmm, %s in '%s'" % (field, dictionary))
                 return eval(val[val.find("=")+1:])
             else:
-                lkddb.log.log("error in extract_value: %s, %s --- '%s'" % (field, dictionary, val))
+                logger.error("error in extract_value: %s, %s --- '%s'" % (field, dictionary, val))
                 assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
         except NameError:
-            lkddb.log.log("error in extract_value: expected number in field %s from %s" %
-                          (field, dictionary))
+            logger.exception("error in extract_value: expected number in field %s from %s" %
+                             (field, dictionary))
             return -1
         except:
-            lkddb.log.log("error in extract_value, 2: %s, %s --- '%s'" % (field, dictionary, val))
-            assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
+            raise lkddb.ParserError("error in extract_value, 2: %s, %s --- '%s'" % (field, dictionary, val))
         try:
             return int(ret)
         except ValueError:
@@ -177,8 +178,7 @@ def extract_value(field, dictionary):
                 # ('X') --eval()--> X --> ord(X)
                 return ord(ret)
             else:
-                lkddb.log.log("str_value(): Numeric value of '%s'" % ret)
-                assert False, "str_value(): Numeric value of '%s'" % ret
+                raise lkddb.ParserError("str_value(): Numeric value of '%s'" % ret)
     else:
         return 0
 
@@ -207,9 +207,7 @@ def extract_string_rec(v, default=""):
         if m:
             field, value = m.groups()
             return extract_string_rec(value, default)
-        lkddb.log.log("Error on assumptions in translating strings: value '%s'" % v)
-        assert True
-        return default
+        raise lkddb.ParserError("Error on assumptions in translating strings: value '%s'" % v)
 
 
 def extract_string(field, dictionary, default=""):
@@ -225,6 +223,6 @@ def extract_struct(field, dictionary, default=""):
         v = dictionary[field]
         if v[0] == '{' and v[-1] == '}':
             return v[1:-1].strip()
-        lkddb.log.die("unknown structure format: %s" % v)
+        raise lkddb.ParserError("Unknown structure format: %s" % v)
     else:
         return default

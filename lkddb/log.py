@@ -4,15 +4,11 @@
 #  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import sys
-import traceback
-import time
+import logging
 
-_verbose = 0
-_logfile = None
+logger = logging.getLogger(__name__)
+
 _phase = "(init)"
-_start_time = 0
-_timed_logs = False
 
 
 def _get_versioned_name(log_filename, version):
@@ -39,77 +35,24 @@ def _get_versioned_name(log_filename, version):
 
 
 def init(options):
-    global _verbose, _timed_logs, _logfile, _start_time
-    _verbose = options.verbose
-    _timed_logs = options.timed_logs
+    level = {
+        0: logging.WARNING,
+        1: logging.INFO,
+        2: logging.DEBUG
+    }.get(options.verbose, logging.DEBUG)
     log_filename = options.log_filename
     if log_filename is None or log_filename == "-":
-        _logfile = sys.stdout
+        logging.basicConfig(level=level)
     else:
         if options.versioned:
             log_filename = _get_versioned_name(log_filename, options.version)
-        if _logfile is not None:
-            _logfile.flush()
-            _logfile.close()
-        _logfile = open(log_filename, 'w')
-    _start_time = time.time()
-    _logfile.flush()
-
-
-def finalize():
-    if _logfile is not None:
-        _logfile.flush()
-        _logfile.close()
-
-
-def elapsed_time():
-    return time.time() - _start_time
-
-
-def log(message):
-    if _verbose:
-        if _timed_logs:
-            _logfile.write("*%3.1f: %s\n" % (elapsed_time(),  message))
-        else:
-            _logfile.write("* %s\n" % message)
-        _logfile.flush()
-
-
-def log_extra(message):
-    if _verbose > 1:
-        if _timed_logs:
-            _logfile.write(".%3.1f: %s\n" % (elapsed_time(),  message))
-        else:
-            _logfile.write(". %s\n" % message)
-        _logfile.flush()
-
-
-def die(message, error_code=1):
-    sys.stdout.flush()
-    sys.stderr.flush()
-    _logfile.write("***%3.1f: fatal error: %s\n" % (elapsed_time(),  message))
-    _logfile.flush()
-    sys.stderr.write(message + "\n")
-    sys.stderr.flush()
-    sys.exit(error_code)
+        logging.basicConfig(filename=log_filename, level=level)
 
 
 def phase(program_phase):
     global _phase
     _phase = program_phase
-    log_extra("PHASE:" + program_phase)
-
-
-def exception(msg=None):
-    sys.stdout.flush()
-    sys.stderr.flush()
-    _logfile.write("=" * 50 + "\nEXCEPTION in %s (after %.1f seconds)\n" % (_phase, elapsed_time()))
-    if msg:
-        _logfile.write(msg + "\n")
-        _logfile.write("-" * 10)
-    traceback.print_exc(file=_logfile)
-    _logfile.write("-" * 50 + "\n")
-    _logfile.flush()
+    logging.info("PHASE:" + program_phase)
 
 
 if __name__ == "__main__":

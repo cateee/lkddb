@@ -7,6 +7,7 @@
 import os
 import os.path
 import subprocess
+import logging
 
 import lkddb
 import lkddb.tables
@@ -16,6 +17,8 @@ from .kbuild import kver, makefiles, kconfigs
 from . import browse_sources
 from .parse_devicetables import *
 from .parse_others import *
+
+logger = logging.getLogger(__name__)
 
 
 def register_linux_browsers(tree):

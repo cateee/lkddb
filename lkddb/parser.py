@@ -9,17 +9,17 @@
 # most uses: Usually preprocessors hacks are done for code
 # and not data.
 
-
 # the file is divided in:
 # - parse headers for #define
 # - parse (detection) block, and expand macros
 
-
 import re
 import os.path
-import lkddb
-import lkddb.log
+import logging
 
+import lkddb
+
+logger = logging.getLogger(__name__)
 
 # global dictionaries
 
@@ -78,7 +78,7 @@ def parse_header(src, filename, discard_source):
             if not incl.endswith('.h"') and not incl.endswith(".agh"):
                 fn = os.path.join(dir, incl[1:-1])
                 if not os.path.isfile(fn):
-                    lkddb.log.log("preprocessor: parse_header(): unknown c-include in %s: %s" % (
+                    logger.warning("preprocessor: parse_header(): unknown c-include in %s: %s" % (
                         filename, incl))
                     continue
                 if os.path.samefile(filename, fn):
@@ -97,7 +97,7 @@ def parse_header(src, filename, discard_source):
             # it is a non .h recursive include (set called, from above)
             continue
         else:
-            lkddb.log.log("preprocessor: parse_header(): unknow include in %s: '%s'" % (
+            logger.warning("preprocessor: parse_header(): unknow include in %s: '%s'" % (
                 filename, incl))
     for name, defs in define_re.findall(src):
         defines_pln.setdefault(name, {})
@@ -262,7 +262,7 @@ def expand_macro(tok, def_fnc, args, filename):
             # TODO: handle macro with args...
             pass
         else:
-            lkddb.log.log("Wrong argument number in macro: %s!=%s, %s, %s, %s, %s in %s" % (
+            logger.error("Wrong argument number in macro: %s!=%s, %s, %s, %s, %s in %s" % (
                 len(def_args), len(args), def_args, args, tok, def_fnc, filename))
     else:
         for i in range(len(args)):
@@ -270,9 +270,8 @@ def expand_macro(tok, def_fnc, args, filename):
             try:
                 da = def_args[i].strip()
             except:
-                lkddb.log.log("FATAL ERROR: %s!=%s, %s, %s, %s, %s" % (
+                raise lkddb.ParserError("FATAL ERROR: %s!=%s, %s, %s, %s, %s" % (
                     len(def_args), len(args), def_args, args, tok, def_fnc))
-                raise
             defs = re.sub(r"[^#]#" + da + r"\b", '"' + args[i] + '"', defs)
             defs = re.sub(r"\b"    + da + r"\b",       args[i],       defs)
     defs = concatenate_re.sub("", defs) + " "

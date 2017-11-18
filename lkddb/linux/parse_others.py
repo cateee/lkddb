@@ -7,6 +7,7 @@
 from lkddb.linux.scanners import *
 from .browse_sources import parse_struct
 
+__all__ = ('i2c_snd', 'platform', 'fs')
 
 # device_driver include/linux/device.h
 device_driver_fields = (

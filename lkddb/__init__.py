@@ -6,8 +6,11 @@
 
 import pickle
 import sqlite3
+import logging
 
 import lkddb.log
+
+logger = logging.getLogger(__name__)
 
 # tasks
 TASK_BUILD = 1       # scan and build lkddb
@@ -21,9 +24,24 @@ def init(options):
     lkddb.log.init(options)
 
 
+class Error(Exception):
+    pass
+
+
+class ParserError(Error):
+    def __init__(self, message):
+        self.message = message
+
+
+class DataError(Error):
+    def __init__(self, message):
+        self.message = message
+
+
 #
 # Generic classes for device_class and source_trees
 #
+
 
 class Storage:
     """container of trees (for persistent_data)"""
@@ -39,31 +57,31 @@ class Storage:
             self.available_tables[tabname] = (tree.name, tab)
 
     def read_consolidate(self, filename):
-        lkddb.log.phase("reading data-file to consolidate: %s" % filename)
+        lkddb.log.phase("Reading data-file to consolidate: %s" % filename)
         try:
             with open(filename, 'rb') as f:
                 persistent_data = pickle.load(f)
         except (EnvironmentError, pickle.PickleError) as e:
-            lkddb.log.die("Error reading file '%s': %s" % (filename, e))
+            raise DataError("Error reading file '%s': %s" % (filename, e))
         try:
             trees = persistent_data['_trees']
         except KeyError:
-            lkddb.log.die("invalid data in file '%s'" % filename)
+            raise DataError("Invalid data in file '%s'" % filename)
         consolidated = persistent_data.get('_consolidated', False)
         for treename in trees:
-            lkddb.log.log_extra("consolidating tree '%s'" % treename)
+            logger.info("Consolidating tree '%s'" % treename)
             tree = self.available_trees[treename]
             tree.read_consolidate(consolidated, persistent_data)
             self.readed_trees.update(map(lambda name: (name, self.available_trees[name]), trees))
 
     def write_consolidate(self, filename, new=True):
-        lkddb.log.phase("writing consolidate data '%s'" % filename)
+        lkddb.log.phase("Writing consolidate data '%s'" % filename)
         persistent_data = {}
         trees = []
         tables = []
         versions = set(())
         for tree in self.readed_trees.values():
-            lkddb.log.phase("writing consolidated tree '%s'" % tree.name)
+            lkddb.log.phase("Writing consolidated tree '%s'" % tree.name)
             new_persistent = tree.write_consolidate()
             new_tables = new_persistent['_tables']
             trees.append(tree.name)
@@ -71,7 +89,7 @@ class Storage:
             versions.update(new_persistent['_versions'])
             for t in new_tables:
                 if t in persistent_data:
-                    lkddb.log.die("two different trees share the table name '%s'" % t)
+                    raise DataError("two different trees share the table name '%s'" % t)
                 persistent_data[t] = new_persistent[t]
         persistent_data['_trees'] = trees
         persistent_data['_tables'] = tables
@@ -147,7 +165,7 @@ class Tree:
             self.write_sql(sql_filename)
 
     def write_data(self, filename, new=True):
-        lkddb.log.phase("writing 'data'")
+        lkddb.log.phase("Writing 'data'")
         persistent_data = {}
         persistent_data['_version'] = self.version
         persistent_data['_tables'] = tuple(self.tables.keys())
@@ -158,25 +176,25 @@ class Tree:
             pickle.dump(persistent_data, f, protocol=PICKLE_PROTOCOL)
 
     def read_data(self, filename):
-        lkddb.log.phase("reading data-file: '%s'" % filename)
+        lkddb.log.phase("Reading data-file: '%s'" % filename)
         try:
             with open(filename, 'rb') as f:
                 persistent_data = pickle.load(f)
         except (EnvironmentError, pickle.PickleError) as e:
-            lkddb.log.die("Error reading file '%s': %s" % (filename, e))
+            raise DataError("Error reading file '%s': %s" % (filename, e))
         try:
             tables = persistent_data['_tables']
             trees = persistent_data['_trees']
             self.version = persistent_data['_version']
         except KeyError:
-            lkddb.log.die("invalid data in file '%s'" % filename)
+            raise DataError("Invalid data in file '%s'" % filename)
         if self.name not in trees:
-            lkddb.log.die("file '%s' is not a valid data file for tree %s" % (filename, self.name))
+            raise DataError("File '%s' is not a valid data file for tree %s" % (filename, self.name))
         for t in self.tables.values():
             if t.name not in tables:
-                lkddb.log.log_extra("table '%s' not found in '%s'" % (t.name, filename))
+                logger.info("Table '%s' not found in '%s'" % (t.name, filename))
                 continue
-            lkddb.log.log_extra("reading table '%s'" % t.name)
+            logger.info("Reading table '%s'" % t.name)
             rows = persistent_data.get(t.name, None)
             if rows is not None:
                 t.rows = rows
@@ -190,9 +208,9 @@ class Tree:
             ver = None
             self.consolidated_versions.update(persistent_data['_versions'])
         for t in self.tables.values():
-            lkddb.log.log_extra("reading table '%s'" % t.name)
+            logger.info("Reading table '%s'" % t.name)
             rows = persistent_data.get(t.name, None)
-            if rows != None:
+            if rows is not None:
                 if not consolidated:
                     t.rows = rows
                     t.restore()
@@ -203,7 +221,7 @@ class Tree:
                 if consolidated:
                     del t.crows_tmp
             else:
-                lkddb.log.log_extra("table '%s' is empty" % t.name)
+                logger.info("Table '%s' is empty" % t.name)
                 if not hasattr(self, 'crows'):
                     self.crows = {}
 
@@ -216,7 +234,7 @@ class Tree:
         return persistent_data
 
     def write_list(self, filename):
-        lkddb.log.phase("writing 'list'")
+        lkddb.log.phase("Writing 'list'")
         lines = []
         for t in self.tables.values():
             new = t.get_lines()
@@ -234,7 +252,7 @@ class Tree:
         f.close()
 
     def write_sql(self, filename):
-        lkddb.log.phase("writing 'sql'")
+        lkddb.log.phase("Writing 'sql'")
         ver = self.version
         db = sqlite3.connect(filename)
         c = db.cursor()
@@ -258,10 +276,10 @@ class Browser():
         self.name = name
 
     def scan(self):
-        lkddb.log.phase("browse and scan " + self.name)
+        lkddb.log.phase("Browse and scan " + self.name)
 
     def finalize(self):
-        lkddb.log.phase("finalizing scan " + self.name)
+        lkddb.log.phase("Finalizing scan " + self.name)
 
 
 class Scanner:
@@ -333,8 +351,7 @@ class Table:
             for f, v in zip(self.line_fmt, self.pre_row_fmt(row)):
                 r.append(f(v))
         except AssertionError:
-            lkddb.log.log("assertion in table %s in row %s" %
-                (self.name, row) )
+            logger.exception("Assertion in table %s in row %s" % (self.name, row))
             return
         # order data
         rr = tuple(map(lambda i: r[self.indices_inv[i]], range(self.line_len)))
@@ -353,23 +370,24 @@ class Table:
     def fmt(self):
         if not self.line_fmt:
             return
-        lkddb.log.phase("formatting " + self.name)
+        lkddb.log.phase("Formatting " + self.name)
         for row in self.rows:
             self.add_fullrow(row)
 
     def get_lines(self):
         # TODO: change to an iterator ########################
-        lkddb.log.phase("printing lines in " + self.name)
+        lkddb.log.phase("Printing lines in " + self.name)
         lines = []
+        fullrow = None
         try:
             for fullrow in self.fullrows:
                 lines.append(self.line_templ % fullrow)
         except TypeError:
-            lkddb.log.exception("in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], fullrow))
+            logger.exception("Exception in %s, templ: '%s', row: %s" % (self.name, self.line_templ[:-1], fullrow))
         return lines
 
     def consolidate_table(self, consolidated, ver):
-        lkddb.log.phase("consolidating lines in " + self.name)
+        lkddb.log.phase("Consolidating lines in " + self.name)
         if not hasattr(self, 'crows'):
             self.crows = {}
 
