@@ -11,7 +11,7 @@ import lkddb.ids
 
 
 def make(options, paths):
-    tree = lkddb.ids.ids_files(lkddb.TASK_BUILD, paths)
+    tree = lkddb.ids.IdsTree(lkddb.TASK_BUILD, paths)
     options.tree = tree
     options.version = tree.get_strversion()
     if options.versioned:

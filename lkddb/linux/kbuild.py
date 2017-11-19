@@ -35,16 +35,16 @@ class kver(lkddb.Browser):
 
 # parse kbuild files (Makefiles) and extract the file dependencies
 
-# comment are remover; \ line are merged
+# comment are removed; \ line are merged
 kbuild_normalize = re.compile(
     r"(#.*$|\\\n)", re.MULTILINE)
 kbuild_includes = re.compile(
     r"^-?include\s+\$[({]srctree[)}]/(.*)$", re.MULTILINE)
 kbuild_rules = re.compile(
-    r"^([A-Za-z0-9-_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
+    r"^([-A-Za-z0-9_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
 
 ignore_rules_set = frozenset(
-    ("ccflags", "cflags", "cpuflags"))
+    ("clean", "ccflags", "cflags", "aflags", "asflags", "mflags", "cpuflags", "subdir-ccflags", "extra"))
 
 
 class makefiles(lkddb.Browser):
@@ -140,13 +140,12 @@ class makefiles(lkddb.Browser):
                 self.__parse_kbuild(fn, dep, 0)
 
     def __parse_kbuild_lines(self, subdir, deps, src):
-
         # rule-$(dep): files
         for (rule, dep, files) in kbuild_rules.findall(src):
             d = deps.copy()
-            if not files:
-                pass
-            if rule == "clean":
+            if not files or files.startswith('-'):  # compiler options
+                continue
+            if rule in ignore_rules_set:
                 continue
             if dep in ("y", "m"):
                 pass
@@ -189,11 +188,10 @@ class makefiles(lkddb.Browser):
                         v.update(self.dependencies[fc])
                     self.dependencies[fc] = v
                 else:
-                    logger.info("parse_kbuild: unknow target in '%s': '%s, was %s'" %
+                    logger.info("parse_kbuild: unknown target in '%s': '%s, was %s'" %
                                 (subdir, f, (rule, dep, files)))
 
-            if rule not in ignore_rules_set:
-                self.__parse_kbuild_alias(subdir, rule, d, files)
+            self.__parse_kbuild_alias(subdir, rule, d, files)
 
             # -----
 
@@ -253,12 +251,12 @@ class kconfigs(lkddb.Browser):
                     if old_kernel:
                         for kconf in fnmatch.filter(files, "Config.in"):
                             filename = os.path.join(dir, kconf)
-                            logger.info("Kconfig (<2.6) doing: " + filename)
+                            logger.debug("Config.in (<2.5) doing: " + filename)
                             self.__parse_config_in(filename)
                     else:
                         for kconf in fnmatch.filter(files, "Kconfig*"):
                             filename = os.path.join(dir, kconf)
-                            logger.info("Kconfig (>=2.6) doing: " + filename)
+                            logger.debug("Kconfig (>=2.6) doing: " + filename)
                             self.__parse_kconfig(filename)
         finally:
             os.chdir(orig_cwd)
@@ -377,7 +375,7 @@ class kconfigs(lkddb.Browser):
                 if len(d) > 1 and d[0] == "on":
                     depends.append(" ".join(d[1:]))
                 else:
-                    assert "false"
+                    raise lkddb.ParserError("kconfig: Cannot parse 'depends'")
             if not context == C_CONF:
                 # e.g. depents after "menu" or prompt and default after "choice"
                 continue

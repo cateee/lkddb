@@ -36,7 +36,7 @@ def register_linux_browsers(tree):
     kconfigs_ = kconfigs(tree.get_table('kconf'), tree.get_table('module'), kerneldir, dirs, makefiles_, tree)
     tree.register_browser(kconfigs_)
 
-    sources_ = browse_sources.linux_sources(kerneldir, dirs)
+    sources_ = browse_sources.LinuxKernelBrowser(kerneldir, dirs)
     tree.register_browser(sources_)
 
     parent_scanner = browse_sources.struct_parent_scanner(sources_, makefiles_)
@@ -74,19 +74,19 @@ def register_linux_browsers(tree):
 
 ###
 
-class linux_kernel(lkddb.Tree):
+class LinuxKernelTree(lkddb.Tree):
 
     def __init__(self, task, kerneldir, dirs):
         super().__init__("linux-kernel")
         self.kerneldir = kerneldir
         self.dirs = dirs
         if task == lkddb.TASK_BUILD:
-            self.retrive_version()
+            self.retrieve_version()
         lkddb.tables.register_linux_tables(self)
         if task == lkddb.TASK_BUILD:
             register_linux_browsers(self)
 
-    def retrive_version(self):
+    def retrieve_version(self):
         """Makefile, scripts/setlocalversion -> return (ver_number, ver_string, released)"""
         version_dict = {}
         f = open(os.path.join(self.kerneldir, "Makefile"))
@@ -136,7 +136,7 @@ class linux_kernel(lkddb.Tree):
         elif version_dict['extra'].startswith("pre") and version_dict['extra'][3:].isdigit():
             version_dict['numeric2'] = -0x200 + int(version_dict['extra'][3:])
         else:
-            assert False, "Unknow structure of EXTRAVERSION (%s) in kernel version" % version_dict["extra"]
+            assert False, "Unknown structure of EXTRAVERSION (%s) in kernel version" % version_dict["extra"]
 
         if os.path.exists(os.path.join(self.kerneldir, "scripts/setlocalversion")):
             f = open(os.path.join(self.kerneldir, "scripts/setlocalversion"))

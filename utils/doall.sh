@@ -1,7 +1,7 @@
 #!/bin/sh
 #: utils/doall.sh : redo "all" released kernel
 #
-#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License
 
@@ -11,7 +11,7 @@ set -e
 kdir="$HOME/kernel"
 
 build_lkddb() {
-    time python3 ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k "$1"
+    time python3 ./build-lkddb.py -b lkddb -l lkddb-%.log -k "$1"
 }
 
 
@@ -117,3 +117,8 @@ do_git_kernel 'v4.14'
 #HEAD
 do_git_kernel 'master'
 
+# Merging
+echo 'merging *.data'
+rm -f lkddb-all.data
+all='lkddb-2.6.?.data lkddb-2.6.??.data lkddb-3.?.data lkddb-3.??.data lkddb-4.?.data lkddb-4.??.data'
+time python3 ./merge.py -l merge.log -o lkddb-all.data $all ids.data

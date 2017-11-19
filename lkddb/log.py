@@ -46,7 +46,7 @@ def init(options):
     else:
         if options.versioned:
             log_filename = _get_versioned_name(log_filename, options.version)
-        logging.basicConfig(filename=log_filename, level=level)
+        logging.basicConfig(filename=log_filename, filemode='w', level=level)
 
 
 def phase(program_phase):

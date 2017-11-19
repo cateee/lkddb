@@ -32,7 +32,7 @@ skeleton_files = frozenset((
 field_init_re = re.compile(r"^\.([A-Za-z_][A-Za-z_0-9]*)\s*=\s*(.*)$", re.DOTALL)
 
 
-class linux_sources(lkddb.Browser):
+class LinuxKernelBrowser(lkddb.Browser):
     """generic reader, source level (c and h) files"""
 
     def __init__(self, kerneldir, dirs):
@@ -50,7 +50,7 @@ class linux_sources(lkddb.Browser):
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
-            lkddb.log.phase("headers")
+            lkddb.log.phase("Headers")
             for dir, d_, files in os.walk("include"):
                 p = dir.split("/")
                 if len(p) < 2 or p[1] == "asm" or p[1] == "asm-um" or p[1] == "config":
@@ -75,7 +75,7 @@ class linux_sources(lkddb.Browser):
 
             lkddb.parser.unwind_include_all()
 
-            lkddb.log.phase("sources")
+            lkddb.log.phase("Sources")
             for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
                     self.__read_includes(fnmatch.filter(files, "*.h"), dir, dir)
@@ -85,7 +85,7 @@ class linux_sources(lkddb.Browser):
                         filename = os.path.join(dir, source)
                         if filename in skeleton_files:
                             continue
-                        logger.info("Reading file " + filename)
+                        logger.debug("Reading file " + filename)
                         f = open(filename, encoding='utf8', errors='replace')
                         src = f.read()
                         f.close()
@@ -108,7 +108,7 @@ class linux_sources(lkddb.Browser):
             filename_i = os.path.join(dir_i, source)
             if filename_i in skeleton_files:
                 continue
-            logger.info("Reading include " + filename_i)
+            logger.debug("Reading include " + filename_i)
             f = open(os.path.join(dir, source), encoding='utf8', errors='replace')
             src = f.read()
             f.close()

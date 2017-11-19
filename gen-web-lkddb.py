@@ -607,9 +607,9 @@ def make(options, templdir, webdir):
     lkddb.init(options)
 
     storage = lkddb.Storage()
-    linux_kernel_tree = lkddb.linux.linux_kernel(lkddb.TASK_CONSOLIDATE, None, [])
+    linux_kernel_tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
     storage.register_tree(linux_kernel_tree)
-    ids_files_tree = lkddb.ids.ids_files(lkddb.TASK_CONSOLIDATE, None)
+    ids_files_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
     storage.register_tree(ids_files_tree)
 
     lkddb.log.phase("read consolidated file")

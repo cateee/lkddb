@@ -1,7 +1,7 @@
 #!/bin/bash
 #: utils/update.sh : update kernel and data
 #
-#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License 
 
@@ -42,7 +42,7 @@ changed=""
 new=`python3 utils/check-kernel-version.py "$kdir" . || true`
 if [ -n "$new" ] ; then
     echo "=== generating new datafile $new."
-    time python3 ./build-lkddb.py -v -b lkddb -l lkddb-%.log -k ~/kernel/linux/
+    time python3 ./build-lkddb.py -b lkddb -l lkddb-%.log -k ~/kernel/linux/
     echo build-lkddb.py: DONE
     changed="$changed $new"
 fi

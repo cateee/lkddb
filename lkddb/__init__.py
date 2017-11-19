@@ -116,10 +116,10 @@ class Tree:
 
     def get_strversion(self):
         if self.version is None:
-            self.retrive_version()
+            self.retrieve_version()
         return self.version[2]
 
-    def retrive_version(self):
+    def retrieve_version(self):
         pass
 
     def register_browser(self, browser):

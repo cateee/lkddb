@@ -13,7 +13,7 @@ import lkddb.tables
 logger = logging.getLogger(__name__)
 
 
-class ids_files(lkddb.Tree):
+class IdsTree(lkddb.Tree):
 
     def __init__(self, task, paths):
         super().__init__("ids_files")
@@ -21,14 +21,14 @@ class ids_files(lkddb.Tree):
         lkddb.tables.register_ids_tables(self)
         if task == lkddb.TASK_BUILD:
             assert len(paths) >= 4, "needs 4 ids files: pci, usb, pnp, zorro"
-            self.browser = ids_file_browser(self)
+            self.browser = IdsBrowser(self)
             self.register_browser(self.browser)
 
-    def retrive_version(self):
+    def retrieve_version(self):
         self.version = ("ids_files", (int(time.time()/60/60),), "", -1)
 
 
-class ids_file_browser(lkddb.Browser):
+class IdsBrowser(lkddb.Browser):
 
     def __init__(self, tree):
         super().__init__("ids_file_browser")

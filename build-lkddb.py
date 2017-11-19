@@ -13,7 +13,7 @@ import lkddb.linux
 
 
 def make(options, kerneldir, dirs):
-    tree = lkddb.linux.linux_kernel(lkddb.TASK_BUILD, kerneldir, dirs)
+    tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_BUILD, kerneldir, dirs)
     options.tree = tree
     options.version = tree.get_strversion()
     if options.versioned:
