@@ -50,6 +50,11 @@ class LinuxKernelBrowser(lkddb.Browser):
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
+            lkddb.log.phase("Files")
+            for subdir in self.dirs + ('includes', 'arch'):
+                for dir, d_, files in os.walk(subdir):
+                    lkddb.parser.remember_file(fnmatch.filter(files, "*.h"), dir)
+
             lkddb.log.phase("Headers")
             for dir, d_, files in os.walk("include"):
                 p = dir.split("/")
@@ -64,22 +69,23 @@ class LinuxKernelBrowser(lkddb.Browser):
                         dir_i = "include/asm/" + "/".join(p[2:])
                 else:
                     dir_i = dir
-                self.__read_includes(files, dir, dir_i)
+                read_includes(files, dir, dir_i)
             for arch_incl in glob.glob("arch/*/include"):
                 for dir, d_, files in os.walk(arch_incl):
                     p = dir.split("/")
                     if len(p) < 3 or p[2] != "include":
                         continue
                     dir_i = "include/" + "/".join(p[3:])
-                    self.__read_includes(files, dir, dir_i)
+                    read_includes(files, dir, dir_i)
 
             lkddb.parser.unwind_include_all()
 
             lkddb.log.phase("Sources")
             for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
-                    self.__read_includes(fnmatch.filter(files, "*.h"), dir, dir)
+                    read_includes(fnmatch.filter(files, "*.h"), dir, dir)
 
+            for subdir in self.dirs:
                 for dir, d_, files in os.walk(subdir):
                     for source in fnmatch.filter(files, "*.c"):
                         filename = os.path.join(dir, source)
@@ -103,16 +109,17 @@ class LinuxKernelBrowser(lkddb.Browser):
         for s in self.scanners:
             s.finalize()
 
-    def __read_includes(self, files, dir, dir_i):
-        for source in files:
-            filename_i = os.path.join(dir_i, source)
-            if filename_i in skeleton_files:
-                continue
-            logger.debug("Reading include " + filename_i)
-            f = open(os.path.join(dir, source), encoding='utf8', errors='replace')
-            src = f.read()
-            f.close()
-            lkddb.parser.parse_header(src, filename_i, discard_source=True)
+
+def read_includes(files, dir, dir_i):
+    for source in files:
+        filename_i = os.path.join(dir_i, source)
+        if filename_i in skeleton_files:
+            continue
+        logger.debug("Reading include " + filename_i)
+        f = open(os.path.join(dir, source), encoding='utf8', errors='replace')
+        src = f.read()
+        f.close()
+        lkddb.parser.parse_header(src, filename_i, discard_source=True)
 
 
 post_remove = re.compile(

@@ -31,7 +31,7 @@ def assemble_config_data(storage):
                 for key2, values2 in values1.items():
                     for config in key2[0].split():
                         if not config.startswith("CONFIG_") or config == "CONFIG_":
-                            lkddb.log.log("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
+                            lkddb.logger.warning("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
                                           (config, t.name, key1, key2, values2))
                             continue
                         if config not in configs:

@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 includes_direct = {}
 # filename -> frozenset(filename..) of includes (recursive)
 includes_unwind = {}
+# file name (without path) -> [ filename, .. ]
+includes_file = {}
 # token -> [ filename -> expanded , .. ]
 defines_pln = {}
 # token -> [ filename -> (args, expanded) , .. ]
@@ -64,6 +66,11 @@ include_re = re.compile(r'^\s*#\s*include\s+(.*)$', re.MULTILINE)
 strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]*")\s*;', re.DOTALL)
 
 
+def remember_file(filenames, path):
+    for filename in filenames:
+        includes_file.setdefault(filename, []).append(os.path.normpath(os.path.join(path, filename)))
+
+
 def parse_header(src, filename, discard_source):
     """parse a single header file for #define, without recurse into other includes"""
     src = comment_re.sub(" ", src)
@@ -75,7 +82,7 @@ def parse_header(src, filename, discard_source):
     for incl in include_re.findall(src):
         incl = incl.strip()
         if incl[0] == '"' and incl[-1] == '"':
-            if not incl.endswith('.h"') and not incl.endswith(".agh"):
+            if not incl.endswith('.h"') and not incl.endswith('.agh"'):
                 fn = os.path.join(dir, incl[1:-1])
                 if not os.path.isfile(fn):
                     logger.warning("preprocessor: parse_header(): unknown c-include in %s: %s" % (
@@ -90,7 +97,15 @@ def parse_header(src, filename, discard_source):
                 src2 = src.replace(incl, "$"+incl[1:-1]+"$\n"+src2)
                 return parse_header(src2, filename, discard_source)
             else:
-                includes_direct[filename].add(os.path.normpath(os.path.join(dir, incl[1:-1])))
+                # we try to find the local include without need to handle Makefile and -I flags
+                incl_filename = os.path.normpath(os.path.join(dir, incl[1:-1]))
+                if incl_filename in includes_direct:
+                    includes_direct[filename].add(incl_filename)
+                elif len(includes_file.get(os.path.basename(incl[1:-1]), [])) == 1:
+                    includes_direct[filename].add(includes_file[os.path.basename(incl[1:-1])][0])
+                else:
+                    includes_direct[filename].add(incl_filename)
+                    logger.warning('unknown "include" %s found in %s' % (incl, filename))
         elif incl[0] == '<' and incl[-1] == '>':
             includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
         elif incl[0] == '$' and incl[-1] == '$':
