@@ -1,7 +1,7 @@
 #!/bin/vi
 #: TODO : TO DO list
 #
-#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License 
 
@@ -17,11 +17,9 @@ The result: two lines?
 
 handle if/else construct in makefiles
 
-move to python3
-
 handle old [pre 2.6] kbuild (both make and config]
 
-check the version code: filter unneded series (<0) on consolidating 
+check the version code: filter unneeded series (<0) on consolidating
 
 check header of our files and check license (v2 or later), copyright
 
@@ -30,7 +28,6 @@ check of:
 
 add tests in various modules
 
-create changelog (from old archives)
-
 importing USB interface from usb.ids
 
+remove "unconsolidated" version of tables.

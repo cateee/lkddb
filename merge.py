@@ -15,19 +15,17 @@ def make(options, args):
 
     lkddb.init(options)
 
-    storage = lkddb.Storage()
-    tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
-    storage.register_tree(tree)
-    tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
-    storage.register_tree(tree)
+    linux_tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
+    ids_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
+    storage = lkddb.Storage((linux_tree, ids_tree))
 
-    lkddb.log.phase("read files to consolidate")
+    lkddb.logger.info("=== Read files to consolidate")
 
     for f in args:
-        storage.read_consolidate(f)
+        storage.read_data(f)
 
-    lkddb.log.phase("write consolidate main file")
-    storage.write_consolidate(filename=options.consolidated)
+        lkddb.logger.info("=== Write consolidate main file")
+    storage.write_data(filename=options.consolidated)
 
 
 #

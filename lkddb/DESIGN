@@ -7,8 +7,9 @@
 
 The idea of data flow:
 
-'tree -> browser -> scanner [-> subscanner] -> table'
+'[storage ->] tree -> browser -> scanner [-> subscanner] -> table'
 
+'storage': it contains multiple versioned tree data
 
 'tree': Every project has a 'tree'. Tree as own version.
 	as a main container.

@@ -12,16 +12,15 @@ import lkddb.ids
 
 def make(options, paths):
     tree = lkddb.ids.IdsTree(lkddb.TASK_BUILD, paths)
-    options.tree = tree
     options.version = tree.get_strversion()
     if options.versioned:
         options.dbfile += "-" + options.version
     lkddb.init(options)
-    lkddb.log.phase("scan")
+    lkddb.log.phase("=== Read 'ids' files")
     tree.scan_sources()
-    lkddb.log.phase("finalize")
+    lkddb.log.phase("=== Preparing data")
     tree.finalize_sources()
-    lkddb.log.phase("write")
+    lkddb.log.phase("=== Write data")
     if options.sql:
         sql = options.dbfile + ".db"
     else:

@@ -38,65 +38,79 @@ class DataError(Error):
         self.message = message
 
 
+class InternalError(Error):
+    def __init__(self, message):
+        self.message = message
+
+
 #
 # Generic classes for device_class and source_trees
 #
 
 
 class Storage:
-    """container of trees (for persistent_data)"""
+    """Container of trees, as data file
 
-    def __init__(self):
-        self.available_trees = {}   # treename -> tree
-        self.available_tables = {}  # tablename -> (treename, table)
-        self.readed_trees = {}	    # treename -> tree
+    The data contains:
+        - _trees: list of 'tree' objects
+        - _versions: a set of tree versions
+        - _tables: list of 'table' names
+        - _consolided: 'True'.  Trees are always consolidated
+    """
 
-    def register_tree(self, tree):
-        self.available_trees[tree.name] = tree
-        for tabname, tab in tree.tables.items():
-            self.available_tables[tabname] = (tree.name, tab)
+    def __init__(self, trees):
+        self.available_trees = {}   # tree_name -> tree
+        self.available_tables = {}  # table_name -> (tree_name, table)
+        self.loaded_trees = {}	    # tree_name -> tree
+        for tree in trees:
+            self.available_trees[tree.name] = tree
+            for tab_name, tab in tree.tables.items():
+                self.available_tables[tab_name] = (tree.name, tab)
 
-    def read_consolidate(self, filename):
-        lkddb.log.phase("Reading data-file to consolidate: %s" % filename)
+    def read_data(self, filename):
+        logger.info("=== Reading data-file to consolidate: %s" % filename)
         try:
             with open(filename, 'rb') as f:
-                persistent_data = pickle.load(f)
+                data = pickle.load(f)
         except (EnvironmentError, pickle.PickleError) as e:
             raise DataError("Error reading file '%s': %s" % (filename, e))
         try:
-            trees = persistent_data['_trees']
+            trees = data['_trees']
         except KeyError:
-            raise DataError("Invalid data in file '%s'" % filename)
-        consolidated = persistent_data.get('_consolidated', False)
-        for treename in trees:
-            logger.info("Consolidating tree '%s'" % treename)
-            tree = self.available_trees[treename]
-            tree.read_consolidate(consolidated, persistent_data)
-            self.readed_trees.update(map(lambda name: (name, self.available_trees[name]), trees))
+            raise DataError("Invalid data in file '%s', possibly it is a non aggregated lkddb.data file" % filename)
+        consolidated = data.get('_consolidated', False)
+        for tree_name in trees:
+            logger.info("== Consolidating tree '%s'" % tree_name)
+            try:
+                tree = self.available_trees[tree_name]
+            except KeyError:
+                logger.error("Found an unknown tree '%s' in data '%s'" % (tree_name, filename))
+                continue
+            tree.read_consolidate(consolidated, data)
+            self.loaded_trees[tree_name] = tree
 
-    def write_consolidate(self, filename, new=True):
-        lkddb.log.phase("Writing consolidate data '%s'" % filename)
-        persistent_data = {}
+    def write_data(self, filename):
+        logger.info("=== Writing data '%s'" % filename)
+        data = {}
         trees = []
         tables = []
         versions = set(())
-        for tree in self.readed_trees.values():
-            lkddb.log.phase("Writing consolidated tree '%s'" % tree.name)
-            new_persistent = tree.write_consolidate()
-            new_tables = new_persistent['_tables']
+        for tree in self.loaded_trees.values():
+            new_data = tree.write_consolidate()
+            new_tables = new_data['_tables']
             trees.append(tree.name)
             tables.extend(new_tables)
-            versions.update(new_persistent['_versions'])
+            versions.update(new_data['_versions'])
             for t in new_tables:
-                if t in persistent_data:
+                if t in data:
                     raise DataError("two different trees share the table name '%s'" % t)
-                persistent_data[t] = new_persistent[t]
-        persistent_data['_trees'] = trees
-        persistent_data['_tables'] = tables
-        persistent_data['_versions'] = versions
-        persistent_data['_consolidated'] = True
+                data[t] = new_data[t]
+        data['_trees'] = trees
+        data['_tables'] = tables
+        data['_versions'] = versions
+        data['_consolidated'] = True
         with open(filename, 'wb') as f:
-            pickle.dump(persistent_data, f, protocol=PICKLE_PROTOCOL)
+            pickle.dump(data, f, protocol=PICKLE_PROTOCOL)
 
 
 class Tree:
@@ -256,7 +270,7 @@ class Tree:
         ver = self.version
         db = sqlite3.connect(filename)
         c = db.cursor()
-        lfddb = lkddb.create_generic_tables(c)
+        #lfddb = lkddb.create_generic_tables(c)
         for t in self.tables.values():
             t.prepare_sql(ver)
             t.create_sql(c)
@@ -276,10 +290,10 @@ class Browser():
         self.name = name
 
     def scan(self):
-        lkddb.log.phase("Browse and scan " + self.name)
+        logger.info("=== Browse and scan sourced for %s" % self.name)
 
     def finalize(self):
-        lkddb.log.phase("Finalizing scan " + self.name)
+        logger.info("=== Finalizing scan for %s" % self.name)
 
 
 class Scanner:
@@ -289,6 +303,7 @@ class Scanner:
 
 
 class Table:
+    """The real container of data"""
 
     def __init__(self, name):
         self.name = name
@@ -316,9 +331,9 @@ class Table:
         self.line_fmt = tuple(line_fmt)
         self.line_len = len(line_fmt)
         self.col_len = len(self.cols)
-        self.key1_len = len([v for v in line_indices if v>0])
-        self.key2_len = len([v for v in line_indices if -10<v<0])
-        self.values_len = len([v for v in line_indices if v==0])
+        self.key1_len = len([v for v in line_indices if v > 0])
+        self.key2_len = len([v for v in line_indices if -10 < v < 0])
+        self.values_len = len([v for v in line_indices if v == 0])
         assert self.line_len == (self.key1_len + self.key2_len + self.values_len)
 
         indices = [0] * self.line_len
@@ -337,7 +352,7 @@ class Table:
                 indices_inv[i_val] = i
                 i_val += 1
             else:
-                assert False, "unkown code of index"
+                raise InternalError("unknown code of index")
         self.indices = tuple(indices)
         self.indices_inv = tuple(indices_inv)
         if line_fmt:
@@ -446,7 +461,7 @@ class Table:
                         sql_create_col.append(name + " REFERENCES filename(name)")
                         sql_insert_value.append('?')
         if sql_cols:
-            self.sql_create = ( "CREATE TABLE IF NOT EXISTS " + self.name + " (" +
+            self.sql_create = ("CREATE TABLE IF NOT EXISTS " + self.name + " (" +
                 " id INTEGER PRIMARY KEY,\n" +
                 ",\n ".join(sql_create_col) + " );" )
             self.sql_insert = ("INSERT OR UPDATE INTO " + self.name + " (" +
@@ -458,24 +473,24 @@ class Table:
         sql = "INSERT OR IGNORE INTO `tables` (name) VALUES (" + self.name +");"
         cursor.execute(sql)
 
-    def to_sql(self, db):
-        c = db.cursor(db)
-        for row in self.rows:
-            c.execute(self.sql_insert, row + self.extra_data)
-        db.commit()
-        c.close()
+#    def to_sql(self, db):
+#        c = db.cursor(db)
+#        for row in self.rows:
+#            c.execute(self.sql_insert, row + self.extra_data)
+#        db.commit()
+#        c.close()
 
-
-def create_generic_tables(c):
-    sql = "CREATE TABLE IF NOT EXISTS `tables` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
-    c.execute(sql);
-    sql = "CREATE TABLE IF NOT EXISTS `filename` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
-    c.execute(sql);
-    sql = "CREATE TABLE IF NOT EXISTS `config` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
-    c.execute(sql);
-    sql = """CREATE TABLE IF NOT EXISTS `deps` (
- `config_id` INTEGER REFERENCE `config`,
- `item_id` INTEGER,
- `table_id` INTEGER REFERENCE `tables`
-);"""
-##################
+#
+#def create_generic_tables(c):
+#    sql = "CREATE TABLE IF NOT EXISTS `tables` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
+#    c.execute(sql)
+#    sql = "CREATE TABLE IF NOT EXISTS `filename` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
+#    c.execute(sql)
+#    sql = "CREATE TABLE IF NOT EXISTS `config` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
+#    c.execute(sql)
+#    sql = """CREATE TABLE IF NOT EXISTS `deps` (
+# `config_id` INTEGER REFERENCE `config`,
+# `item_id` INTEGER,
+# `table_id` INTEGER REFERENCE `tables`
+#);"""
+#

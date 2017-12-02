@@ -14,16 +14,15 @@ import lkddb.linux
 
 def make(options, kerneldir, dirs):
     tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_BUILD, kerneldir, dirs)
-    options.tree = tree
     options.version = tree.get_strversion()
     if options.versioned:
         options.dbfile += "-" + options.version
     lkddb.init(options)
-    lkddb.log.phase("scan")
+    lkddb.logger.info("=== Scan Linux kernel sources")
     tree.scan_sources()
-    lkddb.log.phase("finalize")
+    lkddb.logger.info("=== Preparing data")
     tree.finalize_sources()
-    lkddb.log.phase("write")
+    lkddb.logger.info("=== Write data")
     if options.sql:
         sql = options.dbfile + ".db"
     else:

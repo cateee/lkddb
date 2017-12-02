@@ -214,7 +214,7 @@ class makefiles(lkddb.Browser):
         passed = {fn}
         self._list_dep_rec(fn, dep, passed)
         if not dep:
-            return {"CONFIG__UNKNOW__"}
+            return {"CONFIG__UNKNOWN__"}
         return dep
 
 

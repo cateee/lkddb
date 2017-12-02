@@ -22,9 +22,9 @@ config_pages = {}  # 'A' -> [ ('CONFIG_ATM', '2.6.25, 2.6.26'), ('CONFIG_ABC', .
 
 
 def assemble_config_data(storage):
-    for tname, textra in storage.available_tables.items():
-        t = textra[1]
-        tables[tname] = t
+    for tab_name, tab_data in storage.available_tables.items():
+        t = tab_data[1]
+        tables[tab_name] = t
         if t.kind == ("linux-kernel", "device") or (
            t.kind == ("linux-kernel", "special") and t.name == "kconf"):
             for key1, values1 in t.crows.items():
@@ -62,7 +62,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
 
     for config_full, table in configs.items():
         config = config_full[7:]
-        if config == "_UNKNOW__":
+        if config == "_UNKNOWN__":
             continue
         assert config[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789es"
         subindex = config[0].upper()
@@ -606,24 +606,20 @@ assert ver_list_str({("", (0x020605, 0, 0), "2.6.5", 1),
 def make(options, templdir, webdir):
     lkddb.init(options)
 
-    storage = lkddb.Storage()
-    linux_kernel_tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
-    storage.register_tree(linux_kernel_tree)
-    ids_files_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
-    storage.register_tree(ids_files_tree)
+    linux_tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
+    ids_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
+    storage = lkddb.Storage((linux_tree, ids_tree))
 
-    lkddb.log.phase("read consolidated file")
-    storage.read_consolidate(options.consolidated)
-    consolidated_versions = storage.readed_trees['linux-kernel'].consolidated_versions
+    lkddb.logger.info("=== Read consolidated file")
+    storage.read_data(options.consolidated)
+    consolidated_versions = storage.loaded_trees['linux-kernel'].consolidated_versions
 
-    lkddb.log.phase("assemble config page data")
+    lkddb.logger.info("=== Assemble config data")
     assemble_config_data(storage)
 
-    lkddb.log.phase("assemble page data")
+    lkddb.logger.info("=== Assemble page data")
     generate_config_pages(templdir, webdir, consolidated_versions)
     generate_index_pages(templdir, webdir)
-
-    lkddb.log.phase("END [gen-web-lkddb.py]")
 
 
 #
