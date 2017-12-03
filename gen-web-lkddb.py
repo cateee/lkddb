@@ -62,7 +62,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
 
     for config_full, table in configs.items():
         config = config_full[7:]
-        if config == "_UNKNOWN__":
+        if config in ("_UNKNOWN__", "_UNKNOW__"):
             continue
         assert config[0] in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789es"
         subindex = config[0].upper()
