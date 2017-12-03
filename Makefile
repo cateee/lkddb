@@ -24,7 +24,7 @@ all: Manifest lkddb web-out/index.html
 # --- generic definitions ---
 
 datafiles ?= $(shell bash -O nullglob -c "echo lkddb-2.6.?.data lkddb-2.6.??.data lkddb-3.?.data lkddb-3.??.data lkddb-4.?.data lkddb-4.??.data lkddb-5.?.data lkddb-5.??.data")
-my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html utils/*.py utils/*.sh Makefile TODO lkddb/DESIGN .gitignore
+my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html utils/*.py utils/*.sh Makefile tests/*.py TODO lkddb/DESIGN .gitignore
 all_sources = ${my_sources} GPL-2 GPL-3
 
 # --- information and debug targers ---
