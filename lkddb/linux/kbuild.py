@@ -9,6 +9,7 @@ import os.path
 import re
 import fnmatch
 import logging
+import sys
 
 import lkddb
 
@@ -60,6 +61,8 @@ class makefiles(lkddb.Browser):
         self.dep_aliases = {}
         # the inverse; format CONFIG_FOO: name  (used for module, so single name)
         self.modules = {}
+        # parsed subdirs
+        self.parsed_subdirs = set()
 
     def scan(self):
         lkddb.Browser.scan(self)
@@ -82,6 +85,9 @@ class makefiles(lkddb.Browser):
         # main = 0: normal case -> path relatives
         # main = 1: arch/xxx/Makefile -> path from root
         # main = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
+        if subdir in self.parsed_subdirs:
+            return
+        self.parsed_subdirs.add(subdir)
         try:
             files = os.listdir(subdir)
         except OSError:
