@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: build-lkddb.py : hardware database generator from linux kernel sources
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import optparse
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     if kerneldir_[-1] != "/":
         kerneldir_ += "/"
     if len(args_) > 1:
-        dirs_ = args_[1:]
+        dirs_ = tuple(args_[1:])
     else:
         dirs_ = ("arch", "block", "crypto", "drivers", "firmware", "fs", "init",
                  "ipc", "kernel", "lib", "mm", "net", "security",
