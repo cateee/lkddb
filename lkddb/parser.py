@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 # global dictionaries
 
+include_dirs = []
+
 # filename -> set(filename..) of direct includes
 includes_direct = {}
 # filename -> frozenset(filename..) of includes (recursive)
@@ -77,10 +79,11 @@ def parse_header(src, filename, discard_source):
     filename = os.path.normpath(filename)
     dir, ignore = filename.rsplit("/", 1)
     if filename not in includes_direct:
-        includes_direct[filename] = set()
-        includes_unwind[filename] = {filename}
+        includes_direct.setdefault(filename, set())
+        includes_unwind.setdefault(filename, {filename})
     for incl in include_re.findall(src):
         incl = incl.strip()
+        incl_name = incl[1:-1]
         if incl[0] == '"' and incl[-1] == '"':
             if not incl.endswith('.h"') and not incl.endswith('.agh"'):
                 fn = os.path.join(dir, incl[1:-1])
@@ -94,20 +97,36 @@ def parse_header(src, filename, discard_source):
                 f = open(fn, encoding='utf8', errors='replace')
                 src2 = f.read()
                 f.close()
-                src2 = src.replace(incl, "$"+incl[1:-1]+"$\n"+src2)
+                src2 = src.replace(incl, "$" + incl_name + "$\n"+src2)
                 return parse_header(src2, filename, discard_source)
             else:
                 # we try to find the local include without need to handle Makefile and -I flags
-                incl_filename = os.path.normpath(os.path.join(dir, incl[1:-1]))
-                if incl_filename in includes_direct:
-                    includes_direct[filename].add(incl_filename)
-                elif len(includes_file.get(os.path.basename(incl[1:-1]), [])) == 1:
-                    includes_direct[filename].add(includes_file[os.path.basename(incl[1:-1])][0])
+                for i in range(3):
+                     incl_path = os.path.normpath(os.path.join(dir, ('../' * i) + incl_name))
+                     if incl_path in includes_direct:
+                         includes_direct[filename].add(incl_path)
+                         break
                 else:
-                    includes_direct[filename].add(incl_filename)
-                    logger.warning('unknown "include" %s found in %s' % (incl, filename))
+                    incl_filename = os.path.normpath(os.path.join(dir, incl_name))
+                    if len(includes_file.get(os.path.basename(incl_name), [])) == 1:
+                        includes_direct[filename].add(includes_file[os.path.basename(incl[1:-1])][0])
+                    else:
+                        includes_direct[filename].add(incl_filename)
+                        logger.warning('unknown "include" %s found in %s' % (incl, filename))
         elif incl[0] == '<' and incl[-1] == '>':
-            includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
+            done = False
+            for i in range(1):
+                dots = '../' * i
+                for include_dir in include_dirs + [dir]:
+                     incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
+                     if incl_path in includes_direct:
+                         includes_direct[filename].add(incl_path)
+                         done = True
+                         break
+                if done:
+                    break
+            else:
+                includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
         elif incl[0] == '$' and incl[-1] == '$':
             # it is a non .h recursive include (set called, from above)
             continue

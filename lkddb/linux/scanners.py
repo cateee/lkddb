@@ -163,14 +163,14 @@ def extract_value(field, dictionary):
                 logger.warning("Hmmmm, %s in '%s'" % (field, dictionary))
                 return eval(val[val.find("=")+1:])
             else:
-                logger.error("error in extract_value: %s, %s --- '%s'" % (field, dictionary, val))
-                assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, dictionary, val)
+                logger.error("error in extract_value: %s, %s --- '%s'" % (field, sorted(dictionary.items()), val))
+                assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, sorted(dictionary.items()), val)
         except NameError:
             logger.exception("error in extract_value: expected number in field %s from %s" %
                              (field, dictionary))
             return -1
         except:
-            raise lkddb.ParserError("error in extract_value, 2: %s, %s --- '%s'" % (field, dictionary, val))
+            raise lkddb.ParserError("error in extract_value, 2: %s, %s --- '%s'" % (field, sorted(dictionary.items()), val))
         try:
             return int(ret)
         except ValueError:
