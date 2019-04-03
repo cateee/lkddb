@@ -658,3 +658,4 @@ if __name__ == "__main__":
     options_.year = time.strftime("%Y", time.gmtime())
 
     make(options_, templdir_, webdir_)
+

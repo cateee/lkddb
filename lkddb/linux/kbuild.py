@@ -253,15 +253,16 @@ class kconfigs(lkddb.Browser):
         try:
             os.chdir(self.kerneldir)
             for subdir in self.dirs:
-                for dir, d_, files in os.walk(subdir):
+                for root, dirs, files in os.walk(subdir):
+                    dirs.sort()
                     if old_kernel:
                         for kconf in fnmatch.filter(files, "Config.in"):
-                            filename = os.path.join(dir, kconf)
+                            filename = os.path.join(root, kconf)
                             logger.debug("Config.in (<2.5) doing: " + filename)
                             self.__parse_config_in(filename)
                     else:
                         for kconf in fnmatch.filter(files, "Kconfig*"):
-                            filename = os.path.join(dir, kconf)
+                            filename = os.path.join(root, kconf)
                             logger.debug("Kconfig (>=2.6) doing: " + filename)
                             self.__parse_kconfig(filename)
         finally:

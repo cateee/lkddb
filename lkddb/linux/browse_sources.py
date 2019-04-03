@@ -52,12 +52,17 @@ class LinuxKernelBrowser(lkddb.Browser):
             os.chdir(self.kerneldir)
             lkddb.log.phase("Files")
             for subdir in self.dirs + ('includes', 'arch'):
-                for dir, d_, files in os.walk(subdir):
-                    lkddb.parser.remember_file(fnmatch.filter(files, "*.h"), dir)
+                for root, dirs, files in os.walk(subdir):
+                    dirs.sort()
+                    lkddb.parser.remember_file(sorted(fnmatch.filter(files, "*.h")), root)
 
             lkddb.log.phase("Headers")
-            for dir, d_, files in os.walk("include"):
-                p = dir.split("/")
+            for root, dirs, files in os.walk("include"):
+                # os.walk supports in-place substitution
+                # We sort for reproducibility
+                dirs.sort()
+                files.sort()
+                p = root.split("/")
                 if len(p) < 2 or p[1] == "asm" or p[1] == "asm-um" or p[1] == "config":
                     continue
                 if p[1].startswith("asm-") and p[1] != "asm-generic":
@@ -68,27 +73,31 @@ class LinuxKernelBrowser(lkddb.Browser):
                     else:
                         dir_i = "include/asm/" + "/".join(p[2:])
                 else:
-                    dir_i = dir
-                read_includes(files, dir, dir_i)
-            for arch_incl in glob.glob("arch/*/include"):
-                for dir, d_, files in os.walk(arch_incl):
-                    p = dir.split("/")
+                    dir_i = root
+                read_includes(files, root, dir_i)
+            for arch_incl in sorted(glob.glob("arch/*/include")):
+                for root, dirs, files in os.walk(arch_incl):
+                    dirs.sort()
+                    files.sort()
+                    p = root.split("/")
                     if len(p) < 3 or p[2] != "include":
                         continue
                     dir_i = "include/" + "/".join(p[3:])
-                    read_includes(files, dir, dir_i)
+                    read_includes(files, root, dir_i)
 
             lkddb.parser.unwind_include_all()
 
             lkddb.log.phase("Sources")
             for subdir in self.dirs:
-                for dir, d_, files in os.walk(subdir):
-                    read_includes(fnmatch.filter(files, "*.h"), dir, dir)
+                for root, dirs, files in os.walk(subdir):
+                    dirs.sort()
+                    read_includes(sorted(fnmatch.filter(files, "*.h")), root, root)
 
             for subdir in self.dirs:
-                for dir, d_, files in os.walk(subdir):
-                    for source in fnmatch.filter(files, "*.c"):
-                        filename = os.path.join(dir, source)
+                for root, dirs, files in os.walk(subdir):
+                    dirs.sort()
+                    for source in fnmatch.filter(sorted(files), "*.c"):
+                        filename = os.path.join(root, source)
                         if filename in skeleton_files:
                             continue
                         logger.debug("Reading file " + filename)

@@ -113,6 +113,14 @@ do_git_kernel 'v4.11'
 do_git_kernel 'v4.12'
 do_git_kernel 'v4.13'
 do_git_kernel 'v4.14'
+do_git_kernel 'v4.15'
+do_git_kernel 'v4.16'
+do_git_kernel 'v4.17'
+do_git_kernel 'v4.18'
+do_git_kernel 'v4.19'
+do_git_kernel 'v4.20'
+
+do_git_kernel 'v5.0'
 
 #HEAD
 do_git_kernel 'master'
@@ -122,3 +130,4 @@ echo 'merging *.data'
 rm -f lkddb-all.data
 all='lkddb-2.6.?.data lkddb-2.6.??.data lkddb-3.?.data lkddb-3.??.data lkddb-4.?.data lkddb-4.??.data'
 time python3 ./merge.py -l merge.log -o lkddb-all.data $all ids.data
+

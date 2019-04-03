@@ -95,7 +95,9 @@ class Storage:
         trees = []
         tables = []
         versions = set(())
-        for tree in self.loaded_trees.values():
+        trees_keys = sorted(self.loaded_trees.keys())
+        for tree_key in trees_keys:
+            tree = self.loaded_trees[tree_key]
             new_data = tree.write_consolidate()
             new_tables = new_data['_tables']
             trees.append(tree.name)
@@ -182,7 +184,7 @@ class Tree:
         lkddb.log.phase("Writing 'data'")
         persistent_data = {}
         persistent_data['_version'] = self.version
-        persistent_data['_tables'] = tuple(self.tables.keys())
+        persistent_data['_tables'] = tuple(sorted(self.tables.keys()))
         persistent_data['_trees'] = [self.name]
         for t in self.tables.values():
             persistent_data[t.name] = t.rows
@@ -241,7 +243,7 @@ class Tree:
 
     def write_consolidate(self):
         persistent_data = {}
-        persistent_data['_tables'] = tuple(self.tables.keys())
+        persistent_data['_tables'] = tuple(sorted(self.tables.keys()))
         persistent_data['_versions'] = self.consolidated_versions
         for t in self.tables.values():
             persistent_data[t.name] = t.crows
@@ -250,8 +252,9 @@ class Tree:
     def write_list(self, filename):
         lkddb.log.phase("Writing 'list'")
         lines = []
-        for t in self.tables.values():
-            new = t.get_lines()
+        tables_keys = sorted(self.tables.keys())
+        for tk in tables_keys:
+            new = self.tables[tk].get_lines()
             lines.extend(new)
         lines.sort()
         lines2 = []
