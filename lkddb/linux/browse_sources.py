@@ -51,7 +51,7 @@ class LinuxKernelBrowser(lkddb.Browser):
         try:
             os.chdir(self.kerneldir)
             lkddb.log.phase("Files")
-            for subdir in self.dirs + ('includes', 'arch'):
+            for subdir in self.dirs + ('include', 'arch'):
                 for root, dirs, files in os.walk(subdir):
                     dirs.sort()
                     lkddb.parser.remember_file(sorted(fnmatch.filter(files, "*.h")), root)

@@ -17,13 +17,14 @@ import re
 import os.path
 import logging
 
-import lkddb
-
 logger = logging.getLogger(__name__)
 
 # global dictionaries
 
+# -I directories (so used usually to look for <headers.h>
 include_dirs = []
+# {path, ...}
+existing_headers = set()
 
 # filename -> set(filename..) of direct includes
 includes_direct = {}
@@ -70,7 +71,9 @@ strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]
 
 def remember_file(filenames, path):
     for filename in filenames:
-        includes_file.setdefault(filename, []).append(os.path.normpath(os.path.join(path, filename)))
+        full_path = os.path.normpath(os.path.join(path, filename))
+        existing_headers.add(full_path)
+        includes_file.setdefault(filename, []).append(full_path)
 
 
 def parse_header(src, filename, discard_source):
@@ -101,32 +104,40 @@ def parse_header(src, filename, discard_source):
                 return parse_header(src2, filename, discard_source)
             else:
                 # we try to find the local include without need to handle Makefile and -I flags
-                for i in range(3):
-                     incl_path = os.path.normpath(os.path.join(dir, ('../' * i) + incl_name))
-                     if incl_path in includes_direct:
-                         includes_direct[filename].add(incl_path)
-                         break
+                # 1- check if there is only one header with same name
+                base_filename = os.path.basename(incl_name)
+                headers = includes_file.get(base_filename, [])
+                if len(headers) == 1:
+                    includes_direct[filename].add(headers[0])
                 else:
-                    incl_filename = os.path.normpath(os.path.join(dir, incl_name))
-                    if len(includes_file.get(os.path.basename(incl_name), [])) == 1:
-                        includes_direct[filename].add(includes_file[os.path.basename(incl[1:-1])][0])
+                    for i in range(3):
+                        incl_path = os.path.normpath(os.path.join(dir, ('../' * i) + incl_name))
+                        if incl_path in existing_headers:
+                            includes_direct[filename].add(incl_path)
+                            break
                     else:
+                        incl_filename = os.path.normpath(os.path.join(dir, incl_name))
                         includes_direct[filename].add(incl_filename)
                         logger.warning('unknown "include" %s found in %s' % (incl, filename))
         elif incl[0] == '<' and incl[-1] == '>':
-            done = False
-            for i in range(1):
-                dots = '../' * i
-                for include_dir in include_dirs + [dir]:
-                     incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
-                     if incl_path in includes_direct:
-                         includes_direct[filename].add(incl_path)
-                         done = True
-                         break
-                if done:
-                    break
+            base_filename = os.path.basename(incl_name)
+            headers = includes_file.get(base_filename, [])
+            if len(headers) == 1:
+                includes_direct[filename].add(headers[0])
             else:
-                includes_direct[filename].add(os.path.normpath(os.path.join("include", incl[1:-1])))
+                done = False
+                for i in range(1):
+                    dots = '../' * i
+                    for include_dir in include_dirs + [dir]:
+                        incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
+                        if incl_path in existing_headers:
+                            includes_direct[filename].add(incl_path)
+                            done = True
+                            break
+                    if done:
+                        break
+                else:
+                    includes_direct[filename].add(os.path.normpath(os.path.join("include", incl_name)))
         elif incl[0] == '$' and incl[-1] == '$':
             # it is a non .h recursive include (set called, from above)
             continue
@@ -300,12 +311,7 @@ def expand_macro(tok, def_fnc, args, filename):
                 len(def_args), len(args), def_args, args, tok, def_fnc, filename))
     else:
         for i in range(len(args)):
-            # !!!!!! ????????????
-            try:
-                da = def_args[i].strip()
-            except:
-                raise lkddb.ParserError("FATAL ERROR: %s!=%s, %s, %s, %s, %s" % (
-                    len(def_args), len(args), def_args, args, tok, def_fnc))
+            da = def_args[i].strip()
             defs = re.sub(r"[^#]#" + da + r"\b", '"' + args[i] + '"', defs)
             defs = re.sub(r"\b"    + da + r"\b",       args[i],       defs)
     defs = concatenate_re.sub("", defs) + " "
