@@ -61,8 +61,8 @@ class makefiles(lkddb.Browser):
         self.dep_aliases = {}
         # the inverse; format CONFIG_FOO: name  (used for module, so single name)
         self.modules = {}
-        # parsed subdirs
-        self.parsed_subdirs = set()
+        # parsed subdirs, with count
+        self.parsed_subdirs = {}
 
     def scan(self):
         lkddb.Browser.scan(self)
@@ -85,9 +85,9 @@ class makefiles(lkddb.Browser):
         # main = 0: normal case -> path relatives
         # main = 1: arch/xxx/Makefile -> path from root
         # main = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
-        if subdir in self.parsed_subdirs:
+        if self.parsed_subdirs.get(subdir, 0) > 5:
             return
-        self.parsed_subdirs.add(subdir)
+        self.parsed_subdirs[subdir] = self.parsed_subdirs.get(subdir, 0) + 1
         try:
             files = os.listdir(subdir)
         except OSError:
@@ -382,7 +382,8 @@ class kconfigs(lkddb.Browser):
                 if len(d) > 1 and d[0] == "on":
                     depends.append(" ".join(d[1:]))
                 else:
-                    raise lkddb.ParserError("kconfig: Cannot parse 'depends'")
+                    # a missing "on"
+                    depends.append(" ".join(d))
             if not context == C_CONF:
                 # e.g. depents after "menu" or prompt and default after "choice"
                 continue
