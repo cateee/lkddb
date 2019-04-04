@@ -1,7 +1,7 @@
 #!/bin/bash
 #: utils/doall.sh : redo "all" released kernel
 #
-#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License
 
@@ -9,9 +9,16 @@
 set -e
 
 kdir="$HOME/kernel"
+if [ -n "$2" ] ; then
+    data="$2"
+else
+    data='data'
+fi
+
+[ -d "$data" ] || mkdir "$data"
 
 build_lkddb() {
-    time python3 ./build-lkddb.py -b lkddb -l lkddb-%.log -k "$1"
+    time python3 ./build-lkddb.py -b "$data/"lkddb -l "$data/"lkddb-%.log -k "$1"
 }
 
 
@@ -36,9 +43,11 @@ do_tar_kernel() {
 }
 
 
-if [[ "$1" =~ ^v ]] ; then
+if [ -z "$1" ] ;then
+    echo 'utils/do-one v5.0 [datadir]   # for tags in git, from 2.6.12'
+    echo 'utils/do-one 2.6.9 [datadir]  # for sources in tar archives'
+elif [[ "$1" =~ ^v ]] ; then
     do_git_kernel "$1"
-
     if [[ "$2" != '--skip' ]] ; then
         # restore repository to master
         ( cd "$kdir/linux"

@@ -8,7 +8,7 @@
 
 set -e
 
-datadir="$HOME/lkddb"
+datadir="$HOME/lkddb/data"
 DESTDIR="/var/www/cateee.net"
 
 changeddir="$datadir/changes/changed"
@@ -93,23 +93,23 @@ copy_changed "$f" "dist" "$destsrc/lkddb-sources"
 echo
 
 echo "=== distribute lists."
-lastlist="`ls -t lkddb-[34567]*.list | head -1`"
+lastlist="`ls -t data/lkddb-[34567]*.list | head -1`"
 echo "last is $lastlist"
 cat "$lastlist" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > dist/counts
 echo >> dist/counts
 echo "TOTAL: `wc -l < "$lastlist"`" >> dist/counts
 
-copy_zip_changed ids.list dist "$destsrc/lkddb"
-cp "$lastlist" lkddb.list
-copy_zip_changed lkddb.list dist "$destsrc/lkddb"
-copy_zip_changed eisa.list dist "$destsrc/lkddb"
-copy_zip_changed pci.list dist "$destsrc/lkddb"
-copy_zip_changed usb.list dist "$destsrc/lkddb"
-copy_zip_changed zorro.list dist "$destsrc/lkddb"
-copy_zip_changed eisa.ids dist "$destsrc/lkddb"
-copy_zip_changed pci.ids dist "$destsrc/lkddb"
-copy_zip_changed usb.ids dist "$destsrc/lkddb"
-copy_zip_changed zorro.ids dist "$destsrc/lkddb"
+copy_zip_changed data/ids.list dist "$destsrc/lkddb"
+cp "$lastlist" data/lkddb.list
+copy_zip_changed data/lkddb.list dist "$destsrc/lkddb"
+copy_zip_changed data/eisa.list dist "$destsrc/lkddb"
+copy_zip_changed data/pci.list dist "$destsrc/lkddb"
+copy_zip_changed data/usb.list dist "$destsrc/lkddb"
+copy_zip_changed data/zorro.list dist "$destsrc/lkddb"
+copy_zip_changed data/eisa.ids dist "$destsrc/lkddb"
+copy_zip_changed data/pci.ids dist "$destsrc/lkddb"
+copy_zip_changed data/usb.ids dist "$destsrc/lkddb"
+copy_zip_changed data/zorro.ids dist "$destsrc/lkddb"
 
 copy_changed counts dist "$destsrc/lkddb"
 copy_changed "$lastlist" "." "$destsrc/lkddb"

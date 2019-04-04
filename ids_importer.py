@@ -1,10 +1,11 @@
 #!/usr/bin/python
 #: ids_importer.py : import ids
 #
-#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import optparse
+import os.path
 
 import lkddb
 import lkddb.ids
@@ -28,11 +29,11 @@ def make(options, paths):
     tree.write(data_filename=options.dbfile + ".data",
                list_filename=options.dbfile + ".list",
                sql_filename=sql)
+    dest_dir = os.path.dirname(options.dbfile)
+    build_single_ids(options.dbfile + ".list", dest_dir)
 
-    build_single_ids(options.dbfile + ".list")
 
-
-def build_single_ids(filename):
+def build_single_ids(filename, dest_dir):
     f = open(filename)
     lists = {'eisa_ids': [], 'pci_class_ids': [], 'pci_ids': [],
              'usb_class_ids': [], 'usb_ids': [], 'zorro_ids': []}
@@ -41,22 +42,22 @@ def build_single_ids(filename):
         lists[system].append(line)
     f.close()
 
-    out = open('eisa.list', 'w')
+    out = open(os.path.join(dest_dir, 'eisa.list'), 'w')
     out.writelines(lists['eisa_ids'])
     out.flush()
     out.close()
 
-    out = open('pci.list', 'w')
+    out = open(os.path.join(dest_dir, 'pci.list'), 'w')
     out.writelines(lists['pci_ids'] + lists['pci_class_ids'])
     out.flush()
     out.close()
 
-    out = open('usb.list', 'w')
+    out = open(os.path.join(dest_dir, 'usb.list'), 'w')
     out.writelines(lists['usb_ids'] + lists['usb_class_ids'])
     out.flush()
     out.close()
 
-    out = open('zorro.list', 'w')
+    out = open(os.path.join(dest_dir, 'zorro.list'), 'w')
     out.writelines(lists['zorro_ids'])
     out.flush()
     out.close()

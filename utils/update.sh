@@ -39,19 +39,19 @@ changed=""
 
 # --- update data files (when necesary)
 
-new=`python3 utils/check-kernel-version.py "$kdir" . || true`
+new=`python3 utils/check-kernel-version.py "$kdir" data/ || true`
 if [ -n "$new" ] ; then
     echo "=== generating new datafile $new."
-    time python3 ./build-lkddb.py -b lkddb -l lkddb-%.log -k ~/kernel/linux/
+    time python3 ./build-lkddb.py -b data/lkddb -l data/lkddb-%.log -k ~/kernel/linux/
     echo build-lkddb.py: DONE
     changed="$changed $new"
 fi
 
-[ ! -f ids.data ] || cp -p ids.data ids.data.tmp
-make ids.data
-if ! cmp -s ids.data ids.data.tmp ; then
+[ ! -f data/ids.data ] || cp -p data/ids.data data/ids.data.tmp
+make data/ids.data
+if ! cmp -s data/ids.data data/ids.data.tmp ; then
     echo "=== a new ids.data was just generated."
-    changed="$changed ids.data"
+    changed="$changed data/ids.data"
 fi
 
 
@@ -59,14 +59,14 @@ fi
 
 if [[ "$changed" =~ "data" ]] ; then
     echo "=== merging lkddb-all.data with: $changed"
-    if [ ! -f lkddb-all.data ]; then
+    if [ ! -f data/lkddb-all.data ]; then
 	echo "$0 requires an existing lkddb-all.data!" >&2
 	echo "please merge some data files before to call $0."
 	echo $PWD
 	exit 0
     fi
-    mv lkddb-all.data lkddb-all.data.tmp
-    time python3 ./merge.py -v -l merge.log -o lkddb-all.data lkddb-all.data.tmp $changed ids.data
+    mv data/lkddb-all.data data/lkddb-all.data.tmp
+    time python3 ./merge.py -v -l data/merge.log -o data/lkddb-all.data data/lkddb-all.data.tmp $changed data/ids.data
 fi
 
 bash utils/rebuild-web.sh

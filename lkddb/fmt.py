@@ -61,7 +61,9 @@ def mask_24m(v, m):
         elif m[i] == "f" or m[i] == ".":
             ret += v[i]
         else:
-            raise lkddb.DataError("Unknow mask: v:%s, m:%s, len:%s" % (v, m, len))
+            if v != m:
+                logger.warning("Unknow mask: v:%s, m:%s, len:%s" % (v, m, len(v)))
+            ret = v[:]
     return ret
 
 

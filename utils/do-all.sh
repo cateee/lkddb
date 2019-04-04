@@ -1,17 +1,27 @@
 #!/bin/sh
 #: utils/doall.sh : redo "all" released kernel
 #
-#  Copyright (c) 2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License
 
 
 set -e
 
+echo 'utils/do-all [datadir]'
+
 kdir="$HOME/kernel"
 
+if [ -n "$1" ] ; then
+    data="$1"
+else
+    data='data'
+fi
+
+[ -d "$data" ] || mkdir "$data"
+
 build_lkddb() {
-    time python3 ./build-lkddb.py -b lkddb -l lkddb-%.log -k "$1"
+    time python3 ./build-lkddb.py -b "$data/"lkddb -l "$data/"lkddb-%.log -k "$1"
 }
 
 
@@ -29,11 +39,53 @@ do_git_kernel() {
 do_tar_kernel() {
     echo "------ doing $1 --------"
     ( cd "$kdir"
-      [ -d "linux-$1" ] || tar xjf "linux-$1.tar.bz2"
+      [ -d "linux-$1" ] || extract_tar "$1"
     )
     echo "$kdir/linux-$1"
     build_lkddb "$kdir/linux-$1"
 }
+
+extract_tar() {
+    # we use this function, because some old kernels put files in a non version linux/ directory
+    rm -Rf tmp
+    mkdir tmp
+    cd tmp
+    tar xjf "../linux-$1.tar.bz2"
+    cd ..
+    mv tmp/linux* linux-$1
+}
+
+do_tar_kernel '2.5.45'
+do_tar_kernel '2.5.46'
+do_tar_kernel '2.5.47'
+do_tar_kernel '2.5.48'
+do_tar_kernel '2.5.49'
+do_tar_kernel '2.5.50'
+do_tar_kernel '2.5.51'
+do_tar_kernel '2.5.52'
+do_tar_kernel '2.5.53'
+do_tar_kernel '2.5.54'
+do_tar_kernel '2.5.55'
+do_tar_kernel '2.5.56'
+do_tar_kernel '2.5.57'
+do_tar_kernel '2.5.58'
+do_tar_kernel '2.5.59'
+do_tar_kernel '2.5.60'
+do_tar_kernel '2.5.61'
+do_tar_kernel '2.5.62'
+do_tar_kernel '2.5.63'
+do_tar_kernel '2.5.64'
+do_tar_kernel '2.5.65'
+do_tar_kernel '2.5.66'
+do_tar_kernel '2.5.67'
+do_tar_kernel '2.5.68'
+do_tar_kernel '2.5.69'
+do_tar_kernel '2.5.70'
+do_tar_kernel '2.5.71'
+do_tar_kernel '2.5.72'
+do_tar_kernel '2.5.73'
+do_tar_kernel '2.5.74'
+do_tar_kernel '2.5.75'
 
 do_tar_kernel '2.6.0'
 do_tar_kernel '2.6.1'
@@ -127,7 +179,5 @@ do_git_kernel 'master'
 
 # Merging
 echo 'merging *.data'
-rm -f lkddb-all.data
-all='lkddb-2.6.?.data lkddb-2.6.??.data lkddb-3.?.data lkddb-3.??.data lkddb-4.?.data lkddb-4.??.data'
-time python3 ./merge.py -l merge.log -o lkddb-all.data $all ids.data
-
+rm -f "$data/"lkddb-all.data
+time python3 ./merge.py -l "$data/"merge.log -o "$data/"lkddb-all.data "$data/"lkddb-2.6.?.data "$data/"lkddb-2.6.??.data "$data/"lkddb-3.?.data "$data/"lkddb-3.??.data "$data/"lkddb-4.?.data "$data/"lkddb-4.??.data "$data/"lkddb-5.?.data "$data/"ids.data
