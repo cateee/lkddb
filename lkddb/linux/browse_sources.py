@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/linux/browse_sources : sources reader for Linux kernels
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 # generic reader and container for source level scan
@@ -14,9 +14,21 @@ import logging
 
 import lkddb
 import lkddb.parser
-from lkddb.parser import unwind_include
 
 logger = logging.getLogger(__name__)
+
+print("with special includes.  Check them from time to time.")
+
+special_parsed_files = {
+    'include/linux/compiler.h',
+    'include/linux/mutex.h'
+}
+
+special_direct_includes = {
+    'drivers/char/synclink_gt.c': {"include/linux/synclink.h"},
+    'drivers/media/video/gspca/m5602/m5602_core.c': {"include/linux/usb.h"}
+}
+
 
 skeleton_files = frozenset((
     # skeleton and example files are not useful (and not compiled/used)
@@ -48,6 +60,9 @@ class LinuxKernelBrowser(lkddb.Browser):
     def scan(self):
         lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
+        # adding exceptions
+        lkddb.parser.parsed_files.update(special_parsed_files)
+        lkddb.parser.direct_includes.update(special_direct_includes)
         try:
             os.chdir(self.kerneldir)
             lkddb.log.phase("Files")
@@ -101,8 +116,6 @@ class LinuxKernelBrowser(lkddb.Browser):
                         lkddb.parser.include_dirs.append(root)
                     headers_to_read.append((sorted(fnmatch.filter(files, "*.h")), root, root))
 
-            lkddb.parser.unwind_include_all()
-
             for args in headers_to_read:
                 read_includes(*args)
 
@@ -118,6 +131,7 @@ class LinuxKernelBrowser(lkddb.Browser):
                         src = f.read()
                         f.close()
                         src = lkddb.parser.parse_header(src, filename, discard_source=False)
+                        lkddb.parser.unwind_include(filename)
                         for s in self.scanners:
                             try:
                                 s.in_scan(src, filename)
@@ -145,7 +159,7 @@ def read_includes(files, dir, dir_i):
 
 
 post_remove = re.compile(
-    r"(^\s*#\s*define\s+.*?$)|(\{\s+\})", re.MULTILINE)
+    r"(^\s*#\s*define\s+.*?$)|({\s+})", re.MULTILINE)
 ifdef_re = re.compile(
     r"^ifdef\s*(CONFIG_\w+)\s+.*?#endif", re.MULTILINE | re.DOTALL)
 
@@ -169,7 +183,6 @@ class struct_parent_scanner(lkddb.Scanner):
     def in_scan(self, src, filename):
         """parse .c source file"""
         dep = self.makefiles.list_dep(filename)
-        unwind_include(filename)
         for scanner in self.scanners:
             for block in scanner.regex.findall(src):
                 block = lkddb.parser.expand_block(block, filename)

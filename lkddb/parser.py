@@ -25,11 +25,12 @@ logger = logging.getLogger(__name__)
 include_dirs = []
 # {path, ...}
 existing_headers = set()
+parsed_files = set()
 
 # filename -> set(filename..) of direct includes
-includes_direct = {}
-# filename -> frozenset(filename..) of includes (recursive)
-includes_unwind = {}
+direct_includes = {}
+# filename -> set(filename..) of all includes (recursive)
+all_dependencies = {}
 # file name (without path) -> [ filename, .. ]
 includes_file = {}
 # token -> [ filename -> expanded , .. ]
@@ -38,21 +39,6 @@ defines_pln = {}
 defines_fnc = {}
 # string -> [ filename -> string , .. ]
 defines_str = {}
-
-# special cases:
-print("with special includes.  Check them from time to time.")
-includes_direct["drivers/char/synclink_gt.c"] = (
-    {"include/linux/synclink.h"})
-includes_unwind["drivers/char/synclink_gt.c"] = set([])
-
-includes_direct["drivers/media/video/gspca/m5602/m5602_core.c"] = (
-    {"include/linux/usb.h"})
-includes_unwind["drivers/media/video/gspca/m5602/m5602_core.c"] = set([])
-
-# see also lkddb/linux/browse_sources.py
-includes_unwind["include/linux/compiler.h"] = set([])
-includes_unwind["include/linux/mutex.h"] = set([])
-
 
 # Comments and join lines
 comment_re = re.compile(
@@ -81,69 +67,67 @@ def parse_header(src, filename, discard_source):
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
     dir, ignore = filename.rsplit("/", 1)
-    if filename not in includes_direct:
-        includes_direct.setdefault(filename, set())
-        includes_unwind.setdefault(filename, {filename})
-    for incl in include_re.findall(src):
-        incl = incl.strip()
-        incl_name = incl[1:-1]
-        if incl[0] == '"' and incl[-1] == '"':
-            if not incl.endswith('.h"') and not incl.endswith('.agh"'):
-                fn = os.path.join(dir, incl[1:-1])
-                if not os.path.isfile(fn):
-                    logger.warning("preprocessor: parse_header(): unknown c-include in %s: %s" % (
-                        filename, incl))
-                    continue
-                if os.path.samefile(filename, fn):
-                    # kernel/locking/qspinlock.c includes himself
-                    continue
-                f = open(fn, encoding='utf8', errors='replace')
-                src2 = f.read()
-                f.close()
-                src2 = src.replace(incl, "$" + incl_name + "$\n"+src2)
-                return parse_header(src2, filename, discard_source)
-            else:
-                # we try to find the local include without need to handle Makefile and -I flags
-                # 1- check if there is only one header with same name
+    if filename not in parsed_files:
+        parsed_files.add(filename)
+        if filename not in direct_includes:
+            direct_includes.setdefault(filename, set())
+        for incl in include_re.findall(src):
+            incl = incl.strip()
+            incl_name = incl[1:-1]
+            if incl[0] == '"' and incl[-1] == '"':
+                if not incl.endswith('.h"') and not incl.endswith('.agh"'):
+                    fn = os.path.normpath(os.path.join(dir, incl_name))
+                    if not os.path.isfile(fn):
+                        logger.warning("preprocessor: parse_header(): unknown c-include in %s: %s" % (
+                            filename, incl))
+                        continue
+                    if os.path.samefile(filename, fn):
+                        # kernel/locking/qspinlock.c includes himself
+                        continue
+                    direct_includes[filename].add(fn)
+                    f = open(fn, encoding='utf8', errors='replace')
+                    src2 = f.read()
+                    f.close()
+                    src = src.replace(incl, "$" + incl_name + "$\n"+src2)
+                else:
+                    # we try to find the local include without need to handle Makefile and -I flags
+                    # 1- check if there is only one header with same name
+                    base_filename = os.path.basename(incl_name)
+                    headers = includes_file.get(base_filename, [])
+                    if len(headers) == 1:
+                        direct_includes[filename].add(headers[0])
+                    else:
+                        for i in range(3):
+                            incl_path = os.path.normpath(os.path.join(dir, ('../' * i) + incl_name))
+                            if incl_path in existing_headers:
+                                direct_includes[filename].add(incl_path)
+                                break
+                        else:
+                            incl_filename = os.path.normpath(os.path.join(dir, incl_name))
+                            direct_includes[filename].add(incl_filename)
+                            logger.warning('unknown "include" %s found in %s' % (incl, filename))
+            elif incl[0] == '<' and incl[-1] == '>':
                 base_filename = os.path.basename(incl_name)
                 headers = includes_file.get(base_filename, [])
                 if len(headers) == 1:
-                    includes_direct[filename].add(headers[0])
+                    direct_includes[filename].add(headers[0])
                 else:
-                    for i in range(3):
-                        incl_path = os.path.normpath(os.path.join(dir, ('../' * i) + incl_name))
-                        if incl_path in existing_headers:
-                            includes_direct[filename].add(incl_path)
+                    done = False
+                    for i in range(1):
+                        dots = '../' * i
+                        for include_dir in include_dirs + [dir]:
+                            incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
+                            if incl_path in existing_headers:
+                                direct_includes[filename].add(incl_path)
+                                done = True
+                                break
+                        if done:
                             break
                     else:
-                        incl_filename = os.path.normpath(os.path.join(dir, incl_name))
-                        includes_direct[filename].add(incl_filename)
-                        logger.warning('unknown "include" %s found in %s' % (incl, filename))
-        elif incl[0] == '<' and incl[-1] == '>':
-            base_filename = os.path.basename(incl_name)
-            headers = includes_file.get(base_filename, [])
-            if len(headers) == 1:
-                includes_direct[filename].add(headers[0])
+                        direct_includes[filename].add(os.path.normpath(os.path.join("include", incl_name)))
             else:
-                done = False
-                for i in range(1):
-                    dots = '../' * i
-                    for include_dir in include_dirs + [dir]:
-                        incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
-                        if incl_path in existing_headers:
-                            includes_direct[filename].add(incl_path)
-                            done = True
-                            break
-                    if done:
-                        break
-                else:
-                    includes_direct[filename].add(os.path.normpath(os.path.join("include", incl_name)))
-        elif incl[0] == '$' and incl[-1] == '$':
-            # it is a non .h recursive include (set called, from above)
-            continue
-        else:
-            logger.warning("preprocessor: parse_header(): unknow include in %s: '%s'" % (
-                filename, incl))
+                logger.warning("preprocessor: parse_header(): unknow include in %s: '%s'" % (
+                    filename, incl))
     for name, defs in define_re.findall(src):
         defines_pln.setdefault(name, {})
         defines_pln[name][filename] = defs.strip()
@@ -157,26 +141,12 @@ def parse_header(src, filename, discard_source):
         return src
 
 
-def unwind_include_rec(filename, known):
-    incls = {filename}
-    if filename in includes_direct:
-        incls.update(includes_direct[filename])
-        known.update(includes_unwind[filename])
-    for incl in incls.difference(known):
-        known.add(incl)
-        known.update(unwind_include_rec(incl, known))
-    return known
-
-
 def unwind_include(filename):
-    known = set()
-    res = unwind_include_rec(filename, known)
-    includes_unwind[filename].update(res)
-
-
-def unwind_include_all():
-    for header in includes_direct.keys():
-        unwind_include(header)
+    if filename not in all_dependencies:
+        all_dependencies[filename] = {filename}
+        for header in direct_includes.get(filename, set()):
+            all_dependencies[filename].update(unwind_include(header))
+    return all_dependencies[filename]
 
 
 def search_define(token, filename, defines):
@@ -187,7 +157,7 @@ def search_define(token, filename, defines):
     if filename in headers:
         return defs[filename]
     for header in headers:
-        if header in includes_unwind[filename]:
+        if header in all_dependencies[filename]:
             return defs[header]
     return None
 
