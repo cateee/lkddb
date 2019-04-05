@@ -38,7 +38,8 @@ def assemble_config_data(storage):
                             configs[config] = {}
                         if t.name not in configs[config]:
                             configs[config][t.name] = []
-                        configs[config][t.name].append((key1, key2, values2[0], values2[1]))
+                        configs[config][t.name].append((key1, key2, values2[0],
+                            list(sorted(values2[1], key=lambda ver: ver[1]))))
         elif t.kind == ("ids", "ids"):
             ids[t.name] = {}
             for key1, values1 in t.crows.items():
@@ -60,7 +61,8 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
         if ver[1][0] > last_ver[1][0]:
             last_ver = ver
 
-    for config_full, table in configs.items():
+    for config_full in sorted(configs.keys()):
+        table = configs[config_full]
         config = config_full[7:]
         if config in ("_UNKNOWN__", "_UNKNOW__"):
             continue
@@ -78,7 +80,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
         # module
         lines = []
         if 'module' in table:
-            for key1, key2, values, versions in table['module']:
+            for key1, key2, values, versions in sorted(table['module'], key=lambda row: row[3]):
                 lines.append('<code>' + key1[0] + '</code>')
         if lines:
             lines.sort()
@@ -88,9 +90,7 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
 
         # -------
         # kconf
-        saved = {}
-        favorite_prompt = None
-        all_versions = set([])
+        all_versions = set()
         if 'kconf' in table:
             rows = table['kconf']
             text2 = []
@@ -99,7 +99,11 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                         "</code> has multiple definitions:\n")
             else:
                 text = "<p>The Linux kernel configuration item <code>" + config_full + "</code>:</p>\n<ul>"
-            for key1, key2, values, versions in rows:
+            favorite_descr = None
+            # in case of multiple row: the newest win, then the longer description (often it list additional
+            # hardware, last the filename [in reverse order])
+            for key1, key2, values, versions in sorted(rows, reverse=True,
+                    key=lambda row: (row[3][-1][1], len(row[0][1]), row[1][1], row[0], row[1], row[2])):
                 typ, descr = key1
                 c, filename = key2
                 depends, helptext = values
@@ -108,14 +112,10 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                 if len(rows) > 1:
                     txt += ("\n<h2><emph>" + descr + "</emph> found in <code>" + filename + "</code></h2>\n" +
                             "<p>The configuration item " + config_full + ":</p>\n<ul>")
-                    if filename.startswith("arch/x86/"):
-                        favorite_prompt = descr
-                    if descr in saved:
-                        saved[descr] += 1
-                    else:
-                        saved[descr] = 1
+                    if favorite_descr is None:
+                        favorite_descr = descr
                 else:
-                    favorite_prompt = descr
+                    favorite_descr = descr
                 txt += ("<li>prompt: " + descr + "</li>\n" +
                         "<li>type: " + typ + "</li>\n" +
                         "<li>depends on: <code>" + prepare_depends(depends) + "</code></li>\n" +
@@ -131,19 +131,9 @@ def generate_config_pages(templdir, webdir, consolidated_versions):
                     helptext = "(none)"
                 text2.append(txt + prepare_help(helptext) + "</p>\n")
 
-            text2.sort()
+            #text2.sort()
             pageitems['general'] = text + "".join(text2)
-            if favorite_prompt:
-                pageitems['title'] = config_full + ": " + favorite_prompt
-            else:
-                v = 0
-                for descr, vals in saved.items():
-                    if vals > v:
-                        favorite_prompt = descr
-                if favorite_prompt:
-                    pageitems['title'] = config_full + ": " + favorite_prompt
-                else:
-                    pageitems['title'] = config_full
+            pageitems['title'] = config_full + ": " + favorite_descr
         else:
             pageitems['general'] = ("<p>The Linux kernel configuration item <code>" + config_full + "</code>: \n" +
                                     "<br />error: definition not found!</p>\n\n")
