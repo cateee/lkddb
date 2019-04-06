@@ -1,7 +1,7 @@
 #!/bin/bash
 #: utils/utils.sh : few utilities for developers
 #
-#  Copyright (c) 2007-2011  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 # distribution:
@@ -11,11 +11,12 @@
 # - 'print': search for active "print" statements (should be used only for debugging)
 # - 'todo': search for TODOs and incomplete code
 
-
 set -e
 
+: ${DATA:='data'}
+
 function copy_to_dist() {
-    dest="dist/lkddb-sources-$1"
+    dest="$DATA/dist/lkddb-sources-$1"
     mkdir "$dest"
 
     for dir in `sed -ne 's#^\(.*\)/[^/]*$#\1#p' Manifest | sort -u` ; do
@@ -28,9 +29,9 @@ function copy_to_dist() {
 
     mkdir "$dest/web-out"
 
-    find . -name '.git' -prune -o -name 'data*' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -prune -o -name 'tmp' -prune -o -name '__pycache__' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name 'log' \! -name '*.pyc' \! -name '*.tmp' -print \) > dist/ls.orig
-    cd dist/lkddb-sources-20??-??-?? ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log' \! -name 'log' \! -name '*.tmp' -print \) > ../../dist/ls.dist ; cd ../..
-    if diff --unified=0 dist/ls.orig dist/ls.dist ; then
+    find . -name '.git' -prune -o -name 'data*' -prune -o -name 'web-out' -prune -o -name 'dist' -prune -o -name 'dist.old' -prune -o -name 'changes' -o -name '*.swp' -prune -o -name 'tmp' -prune -o -name '__pycache__' -prune -o \( \! -name '*.ids' \! -name '*.ids.bz2' \! -name '*.list' \! -name '*.data' \! -name '*.log' \! -name 'log' \! -name '*.pyc' \! -name '*.tmp' -print \) > "$DATA/"dist/ls.orig
+    ( cd data/dist/lkddb-sources-20??-??-?? ; find . -name '.git' -prune -o -name 'web-out' -prune -o \( \! -name '*.ids' \! -name '*.list'  \! -name '*.data'  \! -name '*.log' \! -name 'log' \! -name '*.tmp' -print \) ) > "$DATA/"dist/ls.dist
+    if diff --unified=0 "$DATA/"dist/ls.orig "$DATA/"dist/ls.dist ; then
         true
     else
         echo 'A file is missing in tar: check Makefile source files'
@@ -40,32 +41,32 @@ function copy_to_dist() {
 
 
 function copy_to_dist-web() {
-    mkdir dist/web
-    cp -p web-out/*.html dist/web/
+    mkdir "$DATA/"dist/web
+    cp -p "$DATA/"web-out/*.html "$DATA/"dist/web/
 }
 
 
 case "$1" in
 
     'tar' )     date="$(date --rfc-3339=date)"
-	    	[ -d dist.old ] && rm -Rf dist.old
-    		[ -d dist ] && mv dist dist.old
-    		mkdir dist
-		copy_to_dist "$date"
-		if [ -d dist.old/lkddb-sources-20??-??-?? ] ; then
-		    cd dist.old ; prev=`echo lkddb-sources-20??-??-??` ; cd ..
+                [ -d "$DATA/"dist.old ] && rm -Rf "$DATA/"dist.old
+                [ -d "$DATA/"dist ] && mv "$DATA/"dist "$DATA/"dist.old
+                mkdir "$DATA"/dist
+                copy_to_dist "$date"
+		if [ -d "$DATA/"dist.old/lkddb-sources-20??-??-?? ] ; then
+                    ( cd "$DATA/"dist.old ; prev=`echo lkddb-sources-20??-??-??` ) ;
 		else
 		    prev="lkddb-sources-0000-00-00"
 		fi
-		if diff -ur "dist.old/$prev" $"dist/lkddb-sources-$date" > "dist/$prev--$date.diff" ; then
+		if diff -ur "$DATA/dist.old/$prev" "$DATA/dist/lkddb-sources-$date" > "$DATA/dist/$prev--$date.diff" ; then
 		    echo "No differences since $prev"
-		    rm -Rf dist
-		    mv dist.old dist
+		    rm -Rf "$DATA/"dist
+		    mv "$DATA/"dist.old "$DATA/"dist
 		else
-		    cd dist
-		    tar cf lkddb-sources-"$date".tar lkddb-sources-"$date"
-		    gzip -9 lkddb-sources-"$date".tar
-		    cd ..
+		    (   cd "$DATA/"dist
+		        tar cf lkddb-sources-"$date".tar lkddb-sources-"$date"
+		        gzip -9 lkddb-sources-"$date".tar
+                    )
 		fi
     ;;
     'web' )	copy_to_dist-web
@@ -78,5 +79,4 @@ case "$1" in
     ;;
 
 esac
-
 

@@ -5,9 +5,9 @@
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License 
 
-
 set -e
 
+: ${DATA:='data'}
 kdir="$HOME/kernel/linux/"
 
 
@@ -39,19 +39,19 @@ changed=""
 
 # --- update data files (when necesary)
 
-new=`python3 utils/check-kernel-version.py "$kdir" data/ || true`
+new=`python3 utils/check-kernel-version.py "$kdir" "$DATA" || true`
 if [ -n "$new" ] ; then
     echo "=== generating new datafile $new."
-    time python3 ./build-lkddb.py -b data/lkddb -l data/lkddb-%.log -k ~/kernel/linux/
+    time python3 ./build-lkddb.py -b "$DATA/"lkddb -l "$DATA/"lkddb-%.log -k ~/kernel/linux/
     echo build-lkddb.py: DONE
-    changed="$changed $new"
+    changed="$changed $DATA/$new"
 fi
 
-[ ! -f data/ids.data ] || cp -p data/ids.data data/ids.data.tmp
-make data/ids.data
-if ! cmp -s data/ids.data data/ids.data.tmp ; then
+[ ! -f "$DATA/"ids.data ] || cp -p "$DATA/"ids.data data/ids.data.tmp
+make "$DATA/"ids.data
+if ! cmp -s "$DATA/"ids.data "$DATA/"ids.data.tmp ; then
     echo "=== a new ids.data was just generated."
-    changed="$changed data/ids.data"
+    changed="$changed "$DATA/"ids.data"
 fi
 
 
@@ -59,14 +59,14 @@ fi
 
 if [[ "$changed" =~ "data" ]] ; then
     echo "=== merging lkddb-all.data with: $changed"
-    if [ ! -f data/lkddb-all.data ]; then
+    if [ ! -f "$DATA/"lkddb-all.data ]; then
 	echo "$0 requires an existing lkddb-all.data!" >&2
 	echo "please merge some data files before to call $0."
 	echo $PWD
 	exit 0
     fi
-    mv data/lkddb-all.data data/lkddb-all.data.tmp
-    time python3 ./merge.py -v -l data/merge.log -o data/lkddb-all.data data/lkddb-all.data.tmp $changed data/ids.data
+    mv "$DATA/"lkddb-all.data "$DATA/"lkddb-all.data.tmp
+    time python3 ./merge.py -v -l "$DATA/"merge.log -o "$DATA/"lkddb-all.data "$DATA/"lkddb-all.data.tmp $changed "$DATA/"ids.data
 fi
 
 bash utils/rebuild-web.sh

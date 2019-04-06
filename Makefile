@@ -13,7 +13,7 @@
 
 # kernel directory
 kdir ?= ~/kernel/linux/
-
+DATA ?= data
 
 # --- generic rules ---
 
@@ -23,7 +23,7 @@ all: Manifest lkddb web-out/index.html
 
 # --- generic definitions ---
 
-datafiles ?= $(shell bash -O nullglob -c "echo data/lkddb-2.5.??.data data/lkddb-2.6.?.data data/lkddb-2.6.??.data data/lkddb-3.?.data data/lkddb-3.??.data data/lkddb-4.?.data data/lkddb-4.??.data data/lkddb-5.?.data data/lkddb-5.??.data")
+datafiles ?= $(shell bash -O nullglob -c "echo ${DATA}/lkddb-2.5.??.data ${DATA}/lkddb-2.6.?.data ${DATA}/lkddb-2.6.??.data ${DATA}/lkddb-3.?.data ${DATA}/lkddb-3.??.data ${DATA}/lkddb-4.?.data ${DATA}/lkddb-4.??.data ${DATA}/lkddb-5.?.data ${DATA}/lkddb-5.??.data")
 my_sources = *.py lkddb/*.py lkddb/*/*.py templates/*.html utils/*.py utils/*.sh Makefile tests/*.py TODO lkddb/DESIGN .gitignore
 all_sources = ${my_sources} GPL-2 GPL-3
 
@@ -46,36 +46,37 @@ mrproper: clean
 # --- building lists ---
 
 lkddb:
-	time python3 ./build-lkddb.py -v -b data/lkddb -l data/lkddb-%.log -k ${kdir}
+	time python3 ./build-lkddb.py -v -b ${DATA}/lkddb -l ${DATA}/lkddb-%.log -k ${kdir}
 
-merge: data/lkddb-all.data
-data/lkddb-all.data: data/ids.data ${datafiles} merge.py
-	[ ! -f data/lkddb-all.data ] || mv data/lkddb-all.data data/lkddb-all.data.tmp
-	time python3 ./merge.py -v -l data/merge.log -o data/lkddb-all.data data/lkddb-all.data.tmp ${datafiles} data/ids.data
+merge: ${DATA}/lkddb-all.data
+${DATA}/lkddb-all.data: ${DATA}/ids.data ${datafiles} merge.py
+	@[ -d ${DATA} ] || mkdir ${DATA}
+	time python3 ./merge.py -v -l ${DATA}/merge.log -o ${DATA}/lkddb-all.data ${datafiles} ${DATA}/ids.data
 
-web: web-out/index.html
-web-out/index.html: data/lkddb-all.data templates/*.html gen-web-lkddb.py
-	time python3 ./gen-web-lkddb.py -v -l data/web.log -f data/lkddb-all.data templates/ web-out/
+web: ${DATA}/web-out/index.html
+${DATA}/web-out/index.html: ${DATA}/lkddb-all.data templates/*.html gen-web-lkddb.py
+	@[ -d ${DATA}/web-out ] || mkdir -p ${DATA}/web-out
+	time python3 ./gen-web-lkddb.py -v -l ${DATA}/web.log -f ${DATA}/lkddb-all.data templates/ ${DATA}/web-out/
 
 
 # These targets require extern files
 # We download files only with explicit user agreement (e.g. "make check-ids")
 
 check-pci.ids:
-	(cd data && wget -N https://pci-ids.ucw.cz/v2.2/pci.ids.bz2 && bzip2 -kfd pci.ids.bz2)
+	(cd ${DATA} && wget -N https://pci-ids.ucw.cz/v2.2/pci.ids.bz2 && bzip2 -kfd pci.ids.bz2)
 check-usb.ids:
-	(cd data && wget -N http://www.linux-usb.org/usb.ids.bz2 && bzip2 -kfd usb.ids.bz2 )
+	(cd ${DATA} && wget -N http://www.linux-usb.org/usb.ids.bz2 && bzip2 -kfd usb.ids.bz2 )
 check-eisa.ids: ${kdir}/drivers/eisa/eisa.ids
-	cp ${kdir}/drivers/eisa/eisa.ids data/
+	cp ${kdir}/drivers/eisa/eisa.ids ${DATA}/
 check-zorro.ids: ${kdir}/drivers/zorro/zorro.ids
-	cp ${kdir}/drivers/zorro/zorro.ids data/
+	cp ${kdir}/drivers/zorro/zorro.ids ${DATA}/
 check-ids: check-pci.ids check-usb.ids check-eisa.ids check-zorro.ids
 
-data/ids.data: data/pci.ids data/usb.ids data/eisa.ids data/zorro.ids
-	@if ! [ -f data/pci.ids -a -f data/usb.ids -a -f data/eisa.ids -a -f data/zorro.ids ] ; then \
+${DATA}/ids.data: ${DATA}/pci.ids ${DATA}/usb.ids ${DATA}/eisa.ids ${DATA}/zorro.ids
+	@if ! [ -f ${DATA}/pci.ids -a -f ${DATA}/usb.ids -a -f ${DATA}/eisa.ids -a -f ${DATA}/zorro.ids ] ; then \
 	    echo "Missing one ids file."; echo "Run 'make check-ids' to download the needed files"; exit 1; \
 	fi
-	time python3 ./ids_importer.py -v -b data/ids -l data/ids.log data/pci.ids data/usb.ids data/eisa.ids data/zorro.ids
+	time python3 ./ids_importer.py -v -b ${DATA}/ids -l ${DATA}/ids.log ${DATA}/pci.ids ${DATA}/usb.ids ${DATA}/eisa.ids ${DATA}/zorro.ids
 
 
 # --- distributing ---

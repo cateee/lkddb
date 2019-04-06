@@ -1,48 +1,42 @@
-#!/bin/sh
+#!/bin/bash
 #: utils/doall.sh : redo "all" released kernel
 #
 #  Copyright (c) 2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 #  or distributable with any GNU Documentation Public License
 
-
 set -e
 
-echo 'utils/do-all [datadir]'
+echo '[DATA="data"] utils/do-all'
 
-kdir="$HOME/kernel"
+: ${DATA:='data'}
+: ${KDIR:="$HOME/kernel"}
 
-if [ -n "$1" ] ; then
-    data="$1"
-else
-    data='data'
-fi
-
-[ -d "$data" ] || mkdir "$data"
+[ -d "$DATA" ] || mkdir "$DATA"
 
 build_lkddb() {
-    time python3 ./build-lkddb.py -b "$data/"lkddb -l "$data/"lkddb-%.log -k "$1"
+    time python3 ./build-lkddb.py -b "$DATA/"lkddb -l "$DATA/"lkddb-%.log -k "$1"
 }
 
 
 do_git_kernel() {
     echo "------ doing $1 --------"
-    ( cd "$kdir/linux"
+    ( cd "$KDIR/linux"
       git checkout "$1"
       git clean -d -f -f
       [ -d include/config/ ] || mkdir include/config/
       [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
     )
-    build_lkddb "$kdir/linux"
+    build_lkddb "$KDIR/linux"
 }
 
 do_tar_kernel() {
     echo "------ doing $1 --------"
-    ( cd "$kdir"
+    ( cd "$KDIR"
       [ -d "linux-$1" ] || extract_tar "$1"
     )
-    echo "$kdir/linux-$1"
-    build_lkddb "$kdir/linux-$1"
+    echo "$KDIR/linux-$1"
+    build_lkddb "$KDIR/linux-$1"
 }
 
 extract_tar() {
@@ -179,5 +173,8 @@ do_git_kernel 'master'
 
 # Merging
 echo 'merging *.data'
-rm -f "$data/"lkddb-all.data
-time python3 ./merge.py -l "$data/"merge.log -o "$data/"lkddb-all.data "$data/"lkddb-2.6.?.data "$data/"lkddb-2.6.??.data "$data/"lkddb-3.?.data "$data/"lkddb-3.??.data "$data/"lkddb-4.?.data "$data/"lkddb-4.??.data "$data/"lkddb-5.?.data "$data/"ids.data
+rm -f "$DATA/"lkddb-all.data
+make check-ids
+make data/ids.data
+make merge
+
