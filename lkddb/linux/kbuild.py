@@ -85,7 +85,10 @@ class makefiles(lkddb.Browser):
         # main = 0: normal case -> path relatives
         # main = 1: arch/xxx/Makefile -> path from root
         # main = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
-        if self.parsed_subdirs.get(subdir, 0) > 5:
+        if self.parsed_subdirs.get(subdir, 0) > 200:
+            if self.parsed_subdirs[subdir] < 900:
+                logger.warning('__parse_kbuild: maximum recursion for {} (main={})'.format(subdir, main))
+                self.parsed_subdirs[subdir] = 999
             return
         self.parsed_subdirs[subdir] = self.parsed_subdirs.get(subdir, 0) + 1
         try:
