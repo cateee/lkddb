@@ -56,17 +56,20 @@ strings_re = re.compile(r'static\s+(?:const\s+)?char\s+(\w+)\s*\[\]\s*=\s*("[^"]
 
 
 def remember_file(filenames, path):
-    for filename in filenames:
+    for filename in sorted(filenames):
         full_path = os.path.normpath(os.path.join(path, filename))
         existing_headers.add(full_path)
         includes_file.setdefault(filename, []).append(full_path)
 
 
-def parse_header(src, filename, discard_source):
+def parse_header(filename, discard_source):
     """parse a single header file for #define, without recurse into other includes"""
+    f = open(filename, encoding='utf8', errors='replace')
+    src = f.read()
+    f.close()
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
-    dir, ignore = filename.rsplit("/", 1)
+    path, ignore = filename.rsplit("/", 1)
     if filename not in parsed_files:
         parsed_files.add(filename)
         if filename not in direct_includes:
@@ -76,7 +79,7 @@ def parse_header(src, filename, discard_source):
             incl_name = incl[1:-1]
             if incl[0] == '"' and incl[-1] == '"':
                 if not incl.endswith('.h"') and not incl.endswith('.agh"'):
-                    fn = os.path.normpath(os.path.join(dir, incl_name))
+                    fn = os.path.normpath(os.path.join(path, incl_name))
                     if not os.path.isfile(fn):
                         logger.warning("preprocessor: parse_header(): unknown c-include in %s: %s" % (
                             filename, incl))
@@ -98,12 +101,12 @@ def parse_header(src, filename, discard_source):
                         direct_includes[filename].add(headers[0])
                     else:
                         for i in range(3):
-                            incl_path = os.path.normpath(os.path.join(dir, ('../' * i) + incl_name))
+                            incl_path = os.path.normpath(os.path.join(path, ('../' * i) + incl_name))
                             if incl_path in existing_headers:
                                 direct_includes[filename].add(incl_path)
                                 break
                         else:
-                            incl_filename = os.path.normpath(os.path.join(dir, incl_name))
+                            incl_filename = os.path.normpath(os.path.join(path, incl_name))
                             direct_includes[filename].add(incl_filename)
                             logger.warning('unknown "include" %s found in %s' % (incl, filename))
             elif incl[0] == '<' and incl[-1] == '>':
@@ -115,7 +118,7 @@ def parse_header(src, filename, discard_source):
                     done = False
                     for i in range(1):
                         dots = '../' * i
-                        for include_dir in include_dirs + [dir]:
+                        for include_dir in include_dirs + [path]:
                             incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
                             if incl_path in existing_headers:
                                 direct_includes[filename].add(incl_path)
@@ -128,12 +131,12 @@ def parse_header(src, filename, discard_source):
             else:
                 logger.warning("preprocessor: parse_header(): unknow include in %s: '%s'" % (
                     filename, incl))
-    for name, defs in define_re.findall(src):
-        defines_pln.setdefault(name, {})
-        defines_pln[name][filename] = defs.strip()
-    for name, args, defs in define_fn_re.findall(src):
-        defines_fnc.setdefault(name, {})
-        defines_fnc[name][filename] = (args, defs.strip())
+        for name, defs in define_re.findall(src):
+            defines_pln.setdefault(name, {})
+            defines_pln[name][filename] = defs.strip()
+        for name, args, defs in define_fn_re.findall(src):
+            defines_fnc.setdefault(name, {})
+            defines_fnc[name][filename] = (args, defs.strip())
     if not discard_source:
         for name, defs in strings_re.findall(src):
             defines_str.setdefault(name, {})
