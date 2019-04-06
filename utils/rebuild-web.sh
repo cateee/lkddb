@@ -22,15 +22,15 @@ destweb="/var/www/cateee.net/lkddb/web-lkddb"
 
 cd "$basedir"
 
-[ -d "$datadir/changes" ] || mkdir "$datadir/changes"
-[ -d "$changeddir" ] || mkdir "$changeddir"
-[ -d "$diffdir" ] || mkdir "$diffdir"
-[ -d "$newdir" ] || mkdir "$newdir"
+[[ -d "$datadir/changes" ]] || mkdir "$datadir/changes"
+[[ -d "$changeddir" ]] || mkdir "$changeddir"
+[[ -d "$diffdir" ]] || mkdir "$diffdir"
+[[ -d "$newdir" ]] || mkdir "$newdir"
 
 
 # copy_changed filename orig dest
 check_copy_changed() {
-    if [ -f "$3/$1" ] ; then
+    if [[ -f "$3/$1" ]] ; then
         if ! cmp -s "$datadir/$2/$1" "$3/$1" ; then
             cp -pf "$3/$1" "$changeddir"
             diff -u "$3/$1" "$datadir/$2/$1" > "$diffdir/$1.diff" || true
@@ -81,11 +81,10 @@ cd "$basedir"
 
 # --- sources
 echo "=== distribute sources."
-make tar "data=$datadir"
+make tar
 cd "$datadir/dist" ;
-f=`echo lkddb-sources-20??-??-??.tar.gz`
-cd "$basedir"
-copy_changed "$f" "$datadir/dist" "$destsrc/lkddb-sources"
+f=$(cd "$datadir/dist" && echo lkddb-sources-20??-??-??.tar.gz)
+copy_changed "$f" dist "$destsrc/lkddb-sources"
 echo
 
 echo "=== distribute lists."
@@ -117,7 +116,7 @@ cd "$basedir"
 
 echo "=== updating web."
 
-[ -f "$DESTDIR/lkddb/Makefile" ] && ( cd "$DESTDIR/lkddb" ; make )
+[[ -f "$DESTDIR/lkddb/Makefile" ]] && ( cd "$DESTDIR/lkddb" ; make )
 
-[ -x "$DESTDIR/"tools/gen-sitemap-0.9/gen-sitemap ] && ( cd "$DESTDIR"; tools/gen-sitemap-0.9/gen-sitemap --notify )
+[[ -x "$DESTDIR/"tools/gen-sitemap-0.9/gen-sitemap ]] && ( cd "$DESTDIR"; tools/gen-sitemap-0.9/gen-sitemap --notify )
 

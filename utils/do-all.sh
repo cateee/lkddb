@@ -12,7 +12,7 @@ echo '[DATA="data"] utils/do-all'
 : ${DATA:='data'}
 : ${KDIR:="$HOME/kernel"}
 
-[ -d "$DATA" ] || mkdir "$DATA"
+[[ -d "$DATA" ]] || mkdir "$DATA"
 
 build_lkddb() {
     time python3 ./build-lkddb.py -b "$DATA/"lkddb -l "$DATA/"lkddb-%.log -k "$1"
@@ -24,8 +24,8 @@ do_git_kernel() {
     ( cd "$KDIR/linux"
       git checkout "$1"
       git clean -d -f -f
-      [ -d include/config/ ] || mkdir include/config/
-      [ -f include/config/auto.conf ] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
+      [[ -d include/config/ ]] || mkdir include/config/
+      [[ -f include/config/auto.conf ]] || echo "CONFIG_LOCALVERSION_AUTO=y" > include/config/auto.conf
     )
     build_lkddb "$KDIR/linux"
 }
@@ -33,7 +33,7 @@ do_git_kernel() {
 do_tar_kernel() {
     echo "------ doing $1 --------"
     ( cd "$KDIR"
-      [ -d "linux-$1" ] || extract_tar "$1"
+      [[ -d "linux-$1" ]] || extract_tar "$1"
     )
     echo "$KDIR/linux-$1"
     build_lkddb "$KDIR/linux-$1"

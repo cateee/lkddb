@@ -48,13 +48,14 @@ function copy_to_dist-web() {
 
 case "$1" in
 
-    'tar' )     date="$(date --rfc-3339=date)"
-                [ -d "$DATA/"dist.old ] && rm -Rf "$DATA/"dist.old
-                [ -d "$DATA/"dist ] && mv "$DATA/"dist "$DATA/"dist.old
-                mkdir "$DATA"/dist
-                copy_to_dist "$date"
-		if [ -d "$DATA/"dist.old/lkddb-sources-20??-??-?? ] ; then
-                    ( cd "$DATA/"dist.old ; prev=`echo lkddb-sources-20??-??-??` ) ;
+    'tar' )
+        date="$(date --rfc-3339=date)"
+        [[ -d "$DATA/"dist.old ]] && rm -Rf "$DATA/"dist.old
+        [[ -d "$DATA/"dist ]] && mv "$DATA/"dist "$DATA/"dist.old
+        mkdir "$DATA"/dist
+        copy_to_dist "$date"
+		if [[ -d "$DATA/"dist.old/lkddb-sources-20??-??-?? ]] ; then
+            ( cd "$DATA/"dist.old ; prev=`echo lkddb-sources-20??-??-??` ) ;
 		else
 		    prev="lkddb-sources-0000-00-00"
 		fi
@@ -66,7 +67,7 @@ case "$1" in
 		    (   cd "$DATA/"dist
 		        tar cf lkddb-sources-"$date".tar lkddb-sources-"$date"
 		        gzip -9 lkddb-sources-"$date".tar
-                    )
+            )
 		fi
     ;;
     'web' )	copy_to_dist-web
