@@ -76,7 +76,7 @@ class LinuxKernelBrowser(lkddb.Browser):
                 p = root.split("/")
                 if p[-1] in ('uapi', 'generated'):
                     lkddb.parser.include_dirs.append(root)
-                if len(p) < 2 or p[1] == "asm" or p[1] == "asm-um" or p[1] == "config":
+                if len(p) < 2 or p[1] in ("asm", "asm-um", "config"):
                     continue
                 headers_to_read.append((files, root))
             for arch_incl in sorted(glob.glob("arch/*/include")):

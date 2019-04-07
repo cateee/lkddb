@@ -108,7 +108,7 @@ def parse_header(filename, discard_source):
                         else:
                             incl_filename = os.path.normpath(os.path.join(path, incl_name))
                             direct_includes[filename].add(incl_filename)
-                            logger.warning('unknown "include" %s found in %s' % (incl, filename))
+                            logger.warning('unknown include %s found in %s' % (incl, filename))
             elif incl[0] == '<' and incl[-1] == '>':
                 base_filename = os.path.basename(incl_name)
                 headers = includes_file.get(base_filename, [])

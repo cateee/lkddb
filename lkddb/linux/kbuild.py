@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/linux/kbuild.py : scanners for kernel build infrastructure
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import os
@@ -9,7 +9,6 @@ import os.path
 import re
 import fnmatch
 import logging
-import sys
 
 import lkddb
 
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # kernel version and name
 
-class kver(lkddb.Browser):
+class Kver(lkddb.Browser):
     def __init__(self, kver_table, tree):
         super().__init__("kver")
         self.table = kver_table
@@ -48,7 +47,7 @@ ignore_rules_set = frozenset(
     ("clean", "ccflags", "cflags", "aflags", "asflags", "mflags", "cpuflags", "subdir-ccflags", "extra"))
 
 
-class makefiles(lkddb.Browser):
+class Makefiles(lkddb.Browser):
     def __init__(self, firmware_table, kerneldir, dirs):
         super().__init__("kmake")
         self.firmware_table = firmware_table
@@ -71,9 +70,10 @@ class makefiles(lkddb.Browser):
             os.chdir(self.kerneldir)
             for subdir in self.dirs:
                 if subdir == "arch":
-                    for arch in os.listdir("arch/"):
+                    for arch in sorted(os.listdir("arch/")):
                         mk2 = os.path.join("arch/", arch)
-                        self.__parse_kbuild(mk2, set(()), 1)
+                        if os.path.isdir(mk2):
+                            self.__parse_kbuild(mk2, set(()), 1)
                 elif subdir.startswith("arch/") and subdir.count("/") == 1:
                     self.__parse_kbuild(subdir, set(()), 1)
                 else:
@@ -81,13 +81,13 @@ class makefiles(lkddb.Browser):
         finally:
             os.chdir(orig_cwd)
 
-    def __parse_kbuild(self, subdir, deps, main):
-        # main = 0: normal case -> path relatives
-        # main = 1: arch/xxx/Makefile -> path from root
-        # main = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
-        if self.parsed_subdirs.get(subdir, 0) > 200:
-            if self.parsed_subdirs[subdir] < 900:
-                logger.warning('__parse_kbuild: maximum recursion for {} (main={})'.format(subdir, main))
+    def __parse_kbuild(self, subdir, deps, mode):
+        # mode = 0: normal case -> path relatives
+        # mode = 1: arch/xxx/Makefile -> path from root
+        # mode = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
+        if self.parsed_subdirs.get(subdir, 0) > 800:
+            if self.parsed_subdirs[subdir] < 990:
+                logger.warning('__parse_kbuild: maximum recursion for {} (mode={})'.format(subdir, mode))
                 self.parsed_subdirs[subdir] = 999
             return
         self.parsed_subdirs[subdir] = self.parsed_subdirs.get(subdir, 0) + 1
@@ -96,18 +96,22 @@ class makefiles(lkddb.Browser):
         except OSError:
             logger.warning("parse_kbuild: not a directory: %s" % subdir)
             return
-        if main != 1 and "Kbuild" in files:
-            f = open(os.path.join(subdir, 'Kbuild'), encoding='utf8', errors='replace')
+        if mode != 1 and "Kbuild" in files:
+            filename = os.path.join(subdir, 'Kbuild')
+            logger.debug("Reading file " + filename)
+            f = open(filename, encoding='utf8', errors='replace')
             src = kbuild_normalize.sub(" ", f.read())
             f.close()
         else:
             src = ""
-        if main != 2 and "Makefile" in files:
-            f = open(os.path.join(subdir, 'Makefile'), encoding='utf8', errors='replace')
+        if mode != 2 and "Makefile" in files:
+            filename = os.path.join(subdir, 'Makefile')
+            logger.debug("Reading file " + filename)
+            f = open(filename, encoding='utf8', errors='replace')
             src += '\n' + kbuild_normalize.sub(" ", f.read())
             f.close()
         if not src:
-            logger.warning("No Makefile/Kbuild in %s" % subdir)
+            logger.warning("No Makefile/Kbuild in %s [mode=%s]" % (subdir, mode))
             return
 
         # includes
@@ -126,14 +130,14 @@ class makefiles(lkddb.Browser):
             f.close()
             src = src[:m.start()] + "\n" + src2 + "\n" + src[m.end():]
 
-        if main == 1:
+        if mode == 1:
             base_subdir = ""
         else:
             base_subdir = subdir
 
         self.__parse_kbuild_lines(base_subdir, deps, src)
 
-        if main == 1:
+        if mode == 1:
             self.__parse_kbuild(subdir, deps, 2)
 
     def __parse_kbuild_alias(self, subdir, rule, dep, files):
@@ -238,7 +242,7 @@ C_CONF = 1
 C_HELP = 2
 
 
-class kconfigs(lkddb.Browser):
+class Kconfigs(lkddb.Browser):
     def __init__(self, kconf_table, module_table, kerneldir, dirs, makefiles, tree):
         super().__init__("kconfigs")
         self.kconf_table = kconf_table
@@ -250,7 +254,7 @@ class kconfigs(lkddb.Browser):
         # two kind of "tables": config and module
 
     def scan(self):
-        old_kernel = (self.tree.version_dict['numeric'] < 0x020600)  # find exact version
+        old_kernel = self.tree.version_dict['numeric'] < (0x020500 + 45)
         lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
         try:
@@ -261,7 +265,7 @@ class kconfigs(lkddb.Browser):
                     if old_kernel:
                         for kconf in fnmatch.filter(files, "Config.in"):
                             filename = os.path.join(root, kconf)
-                            logger.debug("Config.in (<2.5) doing: " + filename)
+                            logger.debug("Config.in (<2.5.45) doing: " + filename)
                             self.__parse_config_in(filename)
                     else:
                         for kconf in fnmatch.filter(files, "Kconfig*"):
@@ -283,6 +287,7 @@ class kconfigs(lkddb.Browser):
         conf_type = None
         descr = ""
         depends = []
+        ident = 0
         for line in f:
             line = line.expandtabs()
             if context == C_HELP:
@@ -302,17 +307,16 @@ class kconfigs(lkddb.Browser):
                 tok, args = line, ""
             if tok in frozenset(("menu", "endmenu", "source", "if", "endif", "endchoice", "mainmenu")):
                 if context == C_CONF:
-                    self.__kconf_save(config, dict, conf_type, descr, depends, help, filename)
+                    self.__kconf_save(config, conf_type, descr, depends, help, filename)
                 context = C_TOP
                 continue
             if tok in frozenset(("config", "menuconfig", "choice")):
                 if context == C_CONF:
-                    self.__kconf_save(config, dict, conf_type, descr, depends, help, filename)
+                    self.__kconf_save(config, conf_type, descr, depends, help, filename)
                 else:
                     context = C_CONF
                 config = args
                 help = ""
-                dict = {}
                 conf_type = None
                 descr = ""
                 depends = []
@@ -390,15 +394,14 @@ class kconfigs(lkddb.Browser):
             if not context == C_CONF:
                 # e.g. depents after "menu" or prompt and default after "choice"
                 continue
-            dict[tok] = args
         if context == C_CONF or context == C_HELP:
-            self.__kconf_save(config, dict, conf_type, descr, depends, help, filename)
+            self.__kconf_save(config, conf_type, descr, depends, help, filename)
 
     def __parse_config_in(self, filename):
         # TODO
         raise NotImplementedError
 
-    def __kconf_save(self, config, dict, conf_type, descr, depends, help, filename):
+    def __kconf_save(self, config, conf_type, descr, depends, help, filename):
         if not conf_type:  # e.g. on 'choice'
             return
         config = "CONFIG_" + config

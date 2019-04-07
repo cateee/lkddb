@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/linux/__init__.py : scanners for Linux kernels
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import os
@@ -13,10 +13,10 @@ import lkddb
 import lkddb.tables
 
 # sources
-from .kbuild import kver, makefiles, kconfigs
+from . import kbuild
 from . import browse_sources
-from .parse_devicetables import *
-from .parse_others import *
+from . import parse_devicetables
+from . import parse_others
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +27,13 @@ def register_linux_browsers(tree):
     dirs = tree.dirs
 
     # sources
-    kver_ = kver(tree.get_table('kver'), tree)
+    kver_ = kbuild.Kver(tree.get_table('kver'), tree)
     tree.register_browser(kver_)
 
-    makefiles_ = makefiles(tree.get_table('firmware'), kerneldir, dirs)
+    makefiles_ = kbuild.Makefiles(tree.get_table('firmware'), kerneldir, dirs)
     tree.register_browser(makefiles_)
 
-    kconfigs_ = kconfigs(tree.get_table('kconf'), tree.get_table('module'), kerneldir, dirs, makefiles_, tree)
+    kconfigs_ = kbuild.Kconfigs(tree.get_table('kconf'), tree.get_table('module'), kerneldir, dirs, makefiles_, tree)
     tree.register_browser(kconfigs_)
 
     sources_ = browse_sources.LinuxKernelBrowser(kerneldir, dirs)
@@ -42,34 +42,34 @@ def register_linux_browsers(tree):
     parent_scanner = browse_sources.struct_parent_scanner(sources_, makefiles_)
 
     # parse_devicetables
-    tree.register_scanner(pci(parent_scanner, tree))
-    tree.register_scanner(usb(parent_scanner, tree))
-    tree.register_scanner(ieee1394(parent_scanner, tree))
-    tree.register_scanner(hid(parent_scanner, tree))
-    tree.register_scanner(ccw(parent_scanner, tree))
-    tree.register_scanner(ap(parent_scanner, tree))
-    tree.register_scanner(acpi(parent_scanner, tree))
-    tree.register_scanner(pnp(parent_scanner, tree))
-    tree.register_scanner(pnp_card(parent_scanner, tree))
-    tree.register_scanner(serio(parent_scanner, tree))
-    tree.register_scanner(of(parent_scanner, tree))
-    tree.register_scanner(vio(parent_scanner, tree))
-    tree.register_scanner(pcmcia(parent_scanner, tree))
-    tree.register_scanner(input(parent_scanner, tree))
-    tree.register_scanner(eisa(parent_scanner, tree))
-    tree.register_scanner(parisc(parent_scanner, tree))
-    tree.register_scanner(sdio(parent_scanner, tree))
-    tree.register_scanner(ssb(parent_scanner, tree))
-    tree.register_scanner(virtio(parent_scanner, tree))
-    tree.register_scanner(i2c(parent_scanner, tree))
-    tree.register_scanner(tc(parent_scanner, tree))
-    tree.register_scanner(zorro(parent_scanner, tree))
-    tree.register_scanner(agp(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.pci(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.usb(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.ieee1394(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.hid(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.ccw(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.ap(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.acpi(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.pnp(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.pnp_card(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.serio(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.of(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.vio(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.pcmcia(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.input(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.eisa(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.parisc(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.sdio(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.ssb(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.virtio(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.i2c(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.tc(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.zorro(parent_scanner, tree))
+    tree.register_scanner(parse_devicetables.agp(parent_scanner, tree))
 
     # parse_others
-    tree.register_scanner(i2c_snd(parent_scanner, tree))
-    tree.register_scanner(platform(parent_scanner, tree))
-    tree.register_scanner(fs(parent_scanner, tree))
+    tree.register_scanner(parse_others.i2c_snd(parent_scanner, tree))
+    tree.register_scanner(parse_others.platform(parent_scanner, tree))
+    tree.register_scanner(parse_others.fs(parent_scanner, tree))
 
 
 ###
