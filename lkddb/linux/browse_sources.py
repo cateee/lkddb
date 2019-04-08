@@ -72,24 +72,24 @@ class LinuxKernelBrowser(lkddb.Browser):
                 # os.walk supports in-place substitution
                 # We sort for reproducibility
                 dirs.sort()
-                lkddb.parser.remember_file(fnmatch.filter(files, '*.h'), root)
+                headers = fnmatch.filter(files, '*.h')
+                lkddb.parser.remember_file(headers, root)
                 p = root.split("/")
                 if p[-1] in ('uapi', 'generated'):
                     lkddb.parser.include_dirs.append(root)
                 if len(p) < 2 or p[1] in ('asm', 'asm-um', 'config'):
                     continue
-                headers_to_read.append((files, root))
+                headers_to_read.append((headers, root))
             for arch_incl in sorted(glob.glob("arch/*/include")):
                 lkddb.parser.include_dirs.append(arch_incl)
                 for root, dirs, files in os.walk(arch_incl):
                     dirs.sort()
-                    lkddb.parser.remember_file(fnmatch.filter(files, "*.h"), root)
+                    headers = fnmatch.filter(files, '*.h')
+                    lkddb.parser.remember_file(headers, root)
                     p = root.split("/")
                     if p[-1] in ('uapi', 'generated'):
                         lkddb.parser.include_dirs.append(root)
-                    if len(p) < 3 or p[2] != 'include':
-                        continue
-                    headers_to_read.append((files, root))
+                    headers_to_read.append((headers, root))
 
             for subdir in self.dirs:
                 for root, dirs, files in os.walk(subdir):
