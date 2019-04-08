@@ -105,7 +105,7 @@ class LinuxKernelBrowser(lkddb.Browser):
                     if filename in skeleton_files:
                         continue
                     logger.debug("Reading include " + filename)
-                    lkddb.parser.parse_header(filename, discard_source=True)
+                    lkddb.parser.parse_header(filename, return_source=False)
 
             lkddb.log.phase("Sources")
             for subdir in self.dirs:
@@ -116,7 +116,7 @@ class LinuxKernelBrowser(lkddb.Browser):
                         if filename in skeleton_files:
                             continue
                         logger.debug("Reading file " + filename)
-                        src = lkddb.parser.parse_header(filename, discard_source=False)
+                        src = lkddb.parser.parse_header(filename, return_source=True)
                         lkddb.parser.unwind_include(filename)
                         for s in self.scanners:
                             try:

@@ -62,15 +62,18 @@ def remember_file(filenames, path):
         includes_file.setdefault(filename, []).append(full_path)
 
 
-def parse_header(filename, discard_source):
+def parse_header(filename, return_source):
     """parse a single header file for #define, without recurse into other includes"""
+    known_file = filename in parsed_files
+    if known_file and not return_source:
+        return
     f = open(filename, encoding='utf8', errors='replace')
     src = f.read()
     f.close()
     src = comment_re.sub(" ", src)
     filename = os.path.normpath(filename)
-    path, ignore = filename.rsplit("/", 1)
-    if filename not in parsed_files:
+    if not known_file:
+        path, ignore = filename.rsplit("/", 1)
         parsed_files.add(filename)
         if filename not in direct_includes:
             direct_includes.setdefault(filename, set())
@@ -91,7 +94,7 @@ def parse_header(filename, discard_source):
                     f = open(fn, encoding='utf8', errors='replace')
                     src2 = f.read()
                     f.close()
-                    src = src.replace(incl, "$" + incl_name + "$\n"+src2)
+                    src = src.replace(incl, "\n" + src2)
                 else:
                     # we try to find the local include without need to handle Makefile and -I flags
                     # 1- check if there is only one header with same name
@@ -137,7 +140,7 @@ def parse_header(filename, discard_source):
         for name, args, defs in define_fn_re.findall(src):
             defines_fnc.setdefault(name, {})
             defines_fnc[name][filename] = (args, defs.strip())
-    if not discard_source:
+    if return_source:
         for name, defs in strings_re.findall(src):
             defines_str.setdefault(name, {})
             defines_str[name][filename] = defs.strip()
@@ -167,8 +170,13 @@ def search_define(token, filename, defines):
 
 # ---------------
 
-
 def expand_block(block, filename):
+    # we remove macro definitions
+    block = define_fn_re.sub(" ", define_re.sub(" ", block))
+    return _expand_block_in(block, filename)
+
+
+def _expand_block_in(block, filename):
     ret = ""
     lbm = len(block)-1
     i = -1
@@ -256,14 +264,14 @@ def expand_token(block, start, end, filename):
             return pend, expand_macro(tok, df, args, filename) + " "
     df = search_define(tok, filename, defines_pln)
     if df:
-        return 0, expand_block(df+" ", filename) + " "
+        return 0, _expand_block_in(df+" ", filename) + " "
     if block[start-1] == "." or block[start-2:start] == "->":
         # not in the right C namespace
         pass
     else:
         df = search_define(tok, filename, defines_str)
         if df:
-            return 0, expand_block(df+" ", filename) + " "
+            return 0, _expand_block_in(df+" ", filename) + " "
     return 0, tok
 
 
@@ -288,4 +296,4 @@ def expand_macro(tok, def_fnc, args, filename):
             defs = re.sub(r"[^#]#" + da + r"\b", '"' + args[i] + '"', defs)
             defs = re.sub(r"\b"    + da + r"\b",       args[i],       defs)
     defs = concatenate_re.sub("", defs) + " "
-    return expand_block(defs, filename)
+    return _expand_block_in(defs, filename)
