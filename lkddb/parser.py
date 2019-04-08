@@ -118,16 +118,10 @@ def parse_header(filename, return_source):
                 if len(headers) == 1:
                     direct_includes[filename].add(headers[0])
                 else:
-                    done = False
-                    for i in range(1):
-                        dots = '../' * i
-                        for include_dir in include_dirs + [path]:
-                            incl_path = os.path.normpath(os.path.join(include_dir, dots + incl_name))
-                            if incl_path in existing_headers:
-                                direct_includes[filename].add(incl_path)
-                                done = True
-                                break
-                        if done:
+                    for include_dir in include_dirs + [path]:
+                        incl_path = os.path.normpath(os.path.join(include_dir, incl_name))
+                        if incl_path in existing_headers:
+                            direct_includes[filename].add(incl_path)
                             break
                     else:
                         direct_includes[filename].add(os.path.normpath(os.path.join("include", incl_name)))
