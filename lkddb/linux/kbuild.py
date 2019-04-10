@@ -193,7 +193,8 @@ class Makefiles(lkddb.Browser):
                 fn = os.path.join(subdir, f)
                 if f[-1] == "/":
                     fn = os.path.join(subdir, f[:-1])
-                    self.__parse_kbuild(fn, d, 0)
+                    if fn != subdir:
+                        self.__parse_kbuild(fn, d, 0)
                 elif f[-2:] == ".o":
                     fc = fn[:-2] + ".c"
                     v = d.copy()
