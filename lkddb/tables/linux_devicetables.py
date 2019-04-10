@@ -154,6 +154,34 @@ class serio_table(lkddb.Table):
         self.init_cols()
 
 
+class hda_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("hda")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'vendor_id', fmt.m32x, "INTEGER"),
+                     (2, 'rev_id', fmt.m32x, "INTEGER"),
+                     (3, 'api_version', fmt.m8x, "INTEGER"),
+                     (4, 'name', fmt.qstr, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+class sdw_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("sdw")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'mfg_id', fmt.m16x, "INTEGER"),
+                     (2, 'part_id', fmt.m16x, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
 class of_table(lkddb.Table):
 
     def __init__(self):
@@ -279,6 +307,20 @@ class ssb_table(lkddb.Table):
                      (-99, 'version', None, "$kver"))
         self.init_cols()
 
+class bcma_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("bcma")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'manuf', fmt.m16x, "INTEGER"),
+                     (2, 'id', fmt.m16x, "INTEGER"),
+                     (3, 'rev', fmt.m8x, "INTEGER"),
+                     (4, 'class', fmt.m8x, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
 
 class virtio_table(lkddb.Table):
 
@@ -287,6 +329,20 @@ class virtio_table(lkddb.Table):
         self.kind = ("linux-kernel", "device")
         self.cols = ((1, 'device', fmt.m32x, "INTEGER"),
                      (2, 'vendor', fmt.m32x, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+# hv_vmbus_device_id
+
+class rpmsg_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("rpmsg")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
                      (-1, 'deps', fmt.deps, "$deps"),
                      (-2, 'filename', fmt.filename, "$filename"),
                      (-99, 'version', None, "$kver"))
@@ -354,6 +410,8 @@ def register(tree):
     tree.register_table('acpi', acpi_table())
     tree.register_table('pnp', pnp_table())
     tree.register_table('serio', serio_table())
+    tree.register_table('hda', hda_table())
+    tree.register_table('sdw', sdw_table())
     tree.register_table('of', of_table())
     tree.register_table('vio', vio_table())
     tree.register_table('pcmcia', pcmcia_table())
@@ -362,7 +420,9 @@ def register(tree):
     tree.register_table('parisc', parisc_table())
     tree.register_table('sdio', sdio_table())
     tree.register_table('ssb', ssb_table())
+    tree.register_table('bcma', bcma_table())
     tree.register_table('virtio', virtio_table())
+    tree.register_table('rpmsg', rpmsg_table())
     tree.register_table('i2c', i2c_table())
     tree.register_table('tc', tc_table())
     tree.register_table('zorro', zorro_table())

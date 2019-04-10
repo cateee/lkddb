@@ -1,15 +1,11 @@
 #!/usr/bin/python
 #: lkddb/linux/parse_devicetables.py : device tables template for source scanning and reporting
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 from lkddb.linux.scanners import *
 from .browse_sources import parse_struct
-
-__all_ = ('intern_scanner', 'pci', 'usb', 'ieee1394', 'hid', 'ccw', 'ap', 'acpi', 'pnp', 'pnp_card',
-          'serio', 'of', 'vio', 'pcmcia', 'input', 'eisa', 'parisc', 'sdio', 'ssb', 'virtio' 'i2c',
-          'tc', 'zorro', 'agp')
 
 # device_driver include/linux/device.h
 device_driver_fields = (
@@ -328,6 +324,56 @@ class serio(list_of_structs_scanner):
         return v0, v1, v2, v3
 
 
+class hda(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='hda',
+            tree=tree,
+            table_name='hda',
+            parent_scanner=parent_scanner,
+            struct_name='hda_device_id',
+            struct_fields=('vendor_id', 'rev_id', 'api_version', 'name', 'driver_data'),
+        )
+
+    def store(self, dict):
+        v0 = extract_value('vendor_id', dict)
+        v1 = extract_value('rev_id', dict)
+        if v0 == 0 and v1 == 0:
+            return None
+        v2 = extract_value('api_version', dict)
+        v3 = extract_string('name', dict)
+        if v0 == 0xffffffff:
+            v0 = -1
+        if v1 == 0xffffffff:
+            v1 = -1
+        return v0, v1, v2, v3
+
+
+class sdw(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='sdw',
+            tree=tree,
+            table_name='sdw',
+            parent_scanner=parent_scanner,
+            struct_name='sdw_device_id',
+            struct_fields=('mfg_id', 'part_id', 'driver_data')
+        )
+
+    def store(self, dict):
+        v0 = extract_value('mfg_id', dict)
+        v1 = extract_value('part_id', dict)
+        if v0 == 0 and v1 == 0:
+            return None
+        if v0 == 0xffff:
+            v0 = -1
+        if v1 == 0xffff:
+            v1 = -1
+        return v0, v1
+
+
 # OF , of_device_id include/linux/mod_devicetable.h
 
 class of(list_of_structs_scanner):
@@ -574,6 +620,28 @@ class sdio(list_of_structs_scanner):
         return v0, v1, v2
 
 
+class bcma(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='bcma',
+            tree=tree,
+            table_name='bcma',
+            parent_scanner=parent_scanner,
+            struct_name='bcma_device_id',
+            struct_fields=('manuf', 'id', 'rev', 'class')
+        )
+
+    def store(self, dict):
+        v0 = extract_value('manuf', dict)
+        v1 = extract_value('id', dict)
+        v2 = extract_value('rev', dict)
+        v3 = extract_value('class', dict)
+        if v0 == 0 and v1 == 0 and v2 == 0 and v3 == 0:
+            return None
+        return v0, v1, v2, v3
+
+
 # SSB, sdio_device_id include/linux/mod_devicetable.h drivers/ssb/main.c
 
 class ssb(list_of_structs_scanner):
@@ -627,9 +695,30 @@ class virtio(list_of_structs_scanner):
         return v0, v1
 
 
-# I2C i2c_device_id include/linux/mod_devicetable.h i2c_driver include/linux/i2c.h
+class rpmsg(list_of_structs_scanner):
 
-i2c_intern_scanner = intern_scanner("i2c_intern_scanner")
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='rpmsg',
+            tree=tree,
+            table_name='rpmsg',
+            parent_scanner=parent_scanner,
+            struct_name='rpmsg_device_id',
+            struct_fields=('name',)
+        )
+
+    def store(self, dict):
+        if 'driver' not in dict:
+            return None
+        v0 = extract_string('name', dict)
+        if not v0:
+            return None
+        return v0,
+
+
+# I2C i2c_device_id include/linux/mod_devicetable.h i2c_driver include/linux/i2c.h
+# i2c_intern_scanner = intern_scanner('i2c_intern_scanner')
+
 
 class i2c(list_of_structs_scanner):
 
@@ -639,17 +728,16 @@ class i2c(list_of_structs_scanner):
             tree=tree,
             table_name='i2c',
             parent_scanner=parent_scanner,
-            struct_name="i2c_device_id",
-            struct_fields=("name", "driver_data")
+            struct_name='i2c_device_id',
+            struct_fields=('name', 'driver_data')
         )
 
     def store(self, dict):
-        if "driver" not in dict:
+        if 'name' not in dict:
             return None
-        block = dict["driver"]
-        line = split_structs(block)[0]
-        driver_dict = parse_struct(i2c_intern_scanner, device_driver_fields, line, None, None, ret=True)
-        v0 = extract_value("name", driver_dict)
+        v0 = extract_string('name', dict)
+        if not v0:
+            return None
         return v0,
 
 
