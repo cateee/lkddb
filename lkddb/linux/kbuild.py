@@ -15,6 +15,15 @@ import lkddb
 logger = logging.getLogger(__name__)
 
 
+# We can get configurations on building tools (what condition make
+# a file to be compiled), and from configuration system (what
+# precondition is needed to be able to see and select an option)
+#
+# But we have two varieties each: old and new:
+# building: new kbuild and old "kmake"
+# configuration: new Kconfig and old config.in
+
+
 # kernel version and name
 
 class Kver(lkddb.Browser):
@@ -35,13 +44,13 @@ class Kver(lkddb.Browser):
 
 # parse kbuild files (Makefiles) and extract the file dependencies
 
-# comment are removed; \ line are merged
+# comment are removed; line ending with `\` are merged
 kbuild_normalize = re.compile(
     r"(#.*$|\\\n)", re.MULTILINE)
 kbuild_includes = re.compile(
-    r"^-?include\s+\$[({]srctree[)}]/(.*)$", re.MULTILINE)
+    r"^-?include\s+\$[({]srctree[)}]/(.*)$", re.MULTILINE|re.ASCII)
 kbuild_rules = re.compile(
-    r"^([-A-Za-z0-9_]+)-([^+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE)
+    r"^([-A-Za-z0-9_]+)-([^-+=: \t\n]+)\s*[:+]?=[ \t]*(.*)$", re.MULTILINE|re.ASCII)
 
 ignore_rules_set = frozenset(
     ("clean", "ccflags", "cflags", "aflags", "asflags", "mflags", "cpuflags", "subdir-ccflags", "extra"))
@@ -53,63 +62,58 @@ class Makefiles(lkddb.Browser):
         self.firmware_table = firmware_table
         self.kerneldir = kerneldir
         self.dirs = dirs
-        # dictionary of CONFIG_ dependencies on files (from Makefile)
-        # format: filename.c: (CONFIG_FOO, CONFIG_BAR)
+        # dictionary of CONFIG_ dependencies for each file
+        # dependencies: filename.c: {CONFIG_FOO, CONFIG_BAR, ...}
         self.dependencies = {}
-        # format: filename.c: (virtual-filename-objs.c, ...)
+        # dir_dep: dir: {CONFIG_FOO, ...}
+        self.dir_dep = {}
+        # dep_aliases: filename.c: (virtual-filename-objs.c, ...)
         self.dep_aliases = {}
-        # the inverse; format CONFIG_FOO: name  (used for module, so single name)
+        # modules: the inverse; format CONFIG_FOO: name  (used for module, so single name)
         self.modules = {}
-        # parsed subdirs, with count
-        self.parsed_subdirs = {}
+        # pre parsed data
+        # rules: filename: [[rule, dep, files] ...]  # rule-$(dep): files
+        self.rules = {}
+        # direct includes: filename -> [included file]
+        self.includes = {}
+        # variables: filename: [[variable_name, expansion],...]
 
     def scan(self):
         lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
+            lkddb.log.phase("Makefiles")
             for subdir in self.dirs:
-                if subdir == "arch":
-                    for arch in sorted(os.listdir("arch/")):
-                        mk2 = os.path.join("arch/", arch)
-                        if os.path.isdir(mk2):
-                            self.__parse_kbuild(mk2, set(()), 1)
-                elif subdir.startswith("arch/") and subdir.count("/") == 1:
-                    self.__parse_kbuild(subdir, set(()), 1)
-                else:
-                    self.__parse_kbuild(subdir, set(()), 0)
+                for root, dirs, files in os.walk(subdir):
+                    dirs.sort()
+                    if root.startswith('arch/') and subdir.count("/") == 1:
+                        self.kbuild_parse_dir(root, 1)
+                    else:
+                        self.kbuild_parse_dir(root, 0)
         finally:
             os.chdir(orig_cwd)
 
-    def __parse_kbuild(self, subdir, deps, mode):
-        # mode = 0: normal case -> path relatives
+    def kbuild_parse_dir(self, subdir, mode):
+        # mode = 0: normal case -> path relatives; merge Kbuild and Makefile
         # mode = 1: arch/xxx/Makefile -> path from root
         # mode = 2: arch/xxx/Kbuild -> path relative, don't parse Makefile
-        if self.parsed_subdirs.get(subdir, 0) > 800:
-            if self.parsed_subdirs[subdir] < 990:
-                logger.warning('__parse_kbuild: maximum recursion for {} (mode={})'.format(subdir, mode))
-                self.parsed_subdirs[subdir] = 999
+        mk1 = os.path.normpath(os.path.join(subdir, "Makefile"))
+        mk2 = os.path.normpath(os.path.join(subdir, "Kbuild"))
+        mk1_exist = os.path.exists(mk1)
+        mk2_exist = os.path.exists(mk2)
+        if not mk1_exist and not mk2_exist:
+            logger.warning("parse_kbuild: Makefile/Kbuild not found for dir %s" % subdir)
             return
-        self.parsed_subdirs[subdir] = self.parsed_subdirs.get(subdir, 0) + 1
-        try:
-            files = os.listdir(subdir)
-        except OSError:
-            logger.warning("parse_kbuild: not a directory: %s" % subdir)
-            return
-        if mode != 1 and "Kbuild" in files:
-            filename = os.path.join(subdir, 'Kbuild')
-            logger.debug("Reading file " + filename)
-            f = open(filename, encoding='utf8', errors='replace')
-            src = kbuild_normalize.sub(" ", f.read())
-            f.close()
+        logger.debug("Reading Makefile/KBuild of " + subdir)
+        if mode != 1 and mk2_exist:
+            with open(mk2, encoding='utf8', errors='replace') as f:
+                src = kbuild_normalize.sub(" ", f.read())
         else:
             src = ""
-        if mode != 2 and "Makefile" in files:
-            filename = os.path.join(subdir, 'Makefile')
-            logger.debug("Reading file " + filename)
-            f = open(filename, encoding='utf8', errors='replace')
-            src += '\n' + kbuild_normalize.sub(" ", f.read())
-            f.close()
+        if mode != 2 and mk1_exist:
+            with open(mk1, encoding='utf8', errors='replace') as f:
+                src += '\n' + kbuild_normalize.sub(" ", f.read())
         if not src:
             logger.warning("No Makefile/Kbuild in %s [mode=%s]" % (subdir, mode))
             return
@@ -128,51 +132,62 @@ class Makefiles(lkddb.Browser):
             f = open(mk2, encoding='utf8', errors='replace')
             src2 = kbuild_normalize.sub(" ", f.read())
             f.close()
+            # TODO: we do no care about order
             src = src[:m.start()] + "\n" + src2 + "\n" + src[m.end():]
 
         if mode == 1:
-            base_subdir = ""
+            # arch/*/Makefile is included from root Makefile
+            # so paths are relative to root
+            self.kbuild_parse_lines('', src)
+            if mk2_exist:
+                # we are in arch/*/Makefile and we should parse Kbuild but with
+                # different context (subdir)
+                self.kbuild_parse_dir(subdir, 2)
         else:
-            base_subdir = subdir
+            self.kbuild_parse_lines(subdir, src)
 
-        self.__parse_kbuild_lines(base_subdir, deps, src)
+    def kbuild_parse_alias(self, subdir, rule, prerequisites):
+        if rule in {'obj', 'libs', 'init', 'drivers', 'net', 'core', 'virt', 'usr'}:
+            return
+        target = os.path.normpath(os.path.join(subdir, rule + ".c"))
+        for this_pre_f in prerequisites.split():
+            if this_pre_f[-2:] == ".o":
+                this_pre_fn = os.path.normpath(os.path.join(subdir, this_pre_f))
+                this_pre_fc = this_pre_fn[:-2] + ".c"
+                self.dep_aliases.setdefault(this_pre_fc, []).append(target)
 
-        if mode == 1:
-            self.__parse_kbuild(subdir, deps, 2)
-
-    def __parse_kbuild_alias(self, subdir, rule, dep, files):
-        for f in files.split():
-            fn = os.path.normpath(os.path.join(subdir, f))
-            if f[-2:] == ".o":
-                fc = fn[:-2] + ".c"
-                virt = [os.path.join(subdir, rule + ".c")]
-                if fc in self.dep_aliases:
-                    virt.extend(self.dep_aliases[fc])
-                self.dep_aliases[fc] = virt
-            elif f[-1] == "/":
-                self.__parse_kbuild(fn, dep, 0)
-
-    def __parse_kbuild_lines(self, subdir, deps, src):
-        # rule-$(dep): files
+    def kbuild_parse_lines(self, subdir, src):
+        subdir = os.path.normpath(subdir)
+        path_comp = os.path.normpath(subdir).split('/')
+        dir_deps = set()
+        for i in range(len(path_comp)):
+            parent_dir = '/'.join(path_comp[:i+1])
+            dir_deps.update(self.dir_dep.get(parent_dir, set()))
         for (rule, dep, files) in kbuild_rules.findall(src):
-            d = deps.copy()
+            # rule-$(dep): file1 file2 dir1/ ...
             if not files or files.startswith('-'):  # compiler options
                 continue
             if rule in ignore_rules_set:
                 continue
+            new_deps = dir_deps.copy()
             if dep in ("y", "m"):
                 pass
             elif (dep[:9] == '$(CONFIG_' and dep[-1] == ')') or (
-                            dep[:9] == '${CONFIG_' and dep[-1] == '}'):
-                i = dep[:-1].find(')', 2)
-                if i > 0 and dep[i + 1:i + 10] == "$(CONFIG_":
-                    d.add(dep[2:i])
-                    self.modules[dep[2:i]] = files
-                    d.add(dep[i + 3:-1])
-                    self.modules[dep[i + 3:-1]] = files
+                  dep[:9] == '${CONFIG_' and dep[-1] == '}'):
+                # obj-$(CONFIG_FOO_BAR) += file1.o file2.o subdir1/ ...
+                i = dep.find(')', 10, -1)
+                if i > 0:
+                    if dep[i + 1:i + 10] == "$(CONFIG_":
+                        # few cases with modname-$(CONFIG_A)$(CONFIG_B) += abc.o
+                        new_deps.add(dep[2:i])
+                        self.modules[dep[2:i]] = files
+                        new_deps.add(dep[i + 3:-1])
+                        self.modules[dep[i + 3:-1]] = files
                 else:
-                    d.add(dep[2:-1])
+                    new_deps.add(dep[2:-1])
                     if rule == "fw-shipped":
+                        # obsolete rule, not used since 4.14
+                        # should we handle also dep=y case?
                         for f in files.split():
                             if f.find("$") > -1:
                                 logger.warning("this firmware include indirect firmwares '%s': '%s'" %
@@ -183,31 +198,30 @@ class Makefiles(lkddb.Browser):
                     else:
                         self.modules[dep[2:-1]] = files
             elif dep == "objs":
-                self.__parse_kbuild_alias(subdir, rule, dep, files)
+                # this merge several files into a module, named {rule}
+                self.kbuild_parse_alias(subdir, rule, files)
                 continue
             else:
                 logger.warning("parse_kbuild: unknown dep in %s: '%s'" % (subdir, dep))
                 continue
 
             for f in files.split():
-                fn = os.path.join(subdir, f)
-                if f[-1] == "/":
-                    fn = os.path.join(subdir, f[:-1])
-                    if fn != subdir:
-                        self.__parse_kbuild(fn, d, 0)
-                elif f[-2:] == ".o":
+                if f[-2:] == ".o":
+                    fn = os.path.normpath(os.path.join(subdir, f))
                     fc = fn[:-2] + ".c"
-                    v = d.copy()
-                    if fc in self.dependencies:
-                        v.update(self.dependencies[fc])
-                    self.dependencies[fc] = v
+                    self.dependencies.setdefault(fc, set()).update(new_deps)
+                elif f[-1] == "/":
+                    new_dir = os.path.normpath(os.path.join(subdir, f))
+                    if subdir:
+                        self.dir_dep.setdefault(new_dir, set()).update(new_deps)
+                    pass
                 else:
                     logger.info("parse_kbuild: unknown target in '%s': '%s, was %s'" %
                                 (subdir, f, (rule, dep, files)))
 
-            self.__parse_kbuild_alias(subdir, rule, d, files)
+            self.kbuild_parse_alias(subdir, rule, files)
 
-            # -----
+    # -----
 
     def _list_dep_rec(self, fn, dep, passed):
         deps = self.dependencies.get(fn, None)
