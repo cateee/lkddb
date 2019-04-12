@@ -77,15 +77,6 @@ for f in *.html ; do
     copy_changed "$f" web-out "$destweb"
 done
 echo
-cd "$basedir"
-
-# --- sources
-echo "=== distribute sources."
-make tar
-cd "$datadir/dist" ;
-f=$(cd "$datadir/dist" && echo lkddb-sources-20??-??-??.tar.gz)
-copy_changed "$f" dist "$destsrc/lkddb-sources"
-echo
 
 echo "=== distribute lists."
 cd "$datadir"

@@ -46,6 +46,12 @@ function copy_to_dist-web() {
 }
 
 
+function counts() {
+    cat "$1" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > "$1.counts"
+    echo "TOTAL: `wc -l < $1`" >> "$1.counts"
+}
+
+
 case "$1" in
 
     'tar' )
@@ -70,6 +76,21 @@ case "$1" in
             )
 		fi
     ;;
+    'count' )
+        if [[ -n "$2" ]] ; then
+            counts "$2"
+        else
+            counts "$DATA/"lkddb.list
+        fi
+    ;;
+
+    'count-all' )
+        for f in $DATA/*.list ; do
+            counts "$f"
+        done
+    ;;
+
+
     'web' )	copy_to_dist-web
     ;;
 
