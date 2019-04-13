@@ -708,7 +708,7 @@ class rpmsg(list_of_structs_scanner):
         )
 
     def store(self, dict):
-        if 'driver' not in dict:
+        if 'name' not in dict:
             return None
         v0 = extract_string('name', dict)
         if not v0:
@@ -729,6 +729,167 @@ class i2c(list_of_structs_scanner):
             table_name='i2c',
             parent_scanner=parent_scanner,
             struct_name='i2c_device_id',
+            struct_fields=('name', 'driver_data')
+        )
+
+    def store(self, dict):
+        if 'name' not in dict:
+            return None
+        v0 = extract_string('name', dict)
+        if not v0:
+            return None
+        return v0,
+
+
+#  pci_epf
+
+class pci_epf(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='pci_epf',
+            tree=tree,
+            table_name='pci_epf',
+            parent_scanner=parent_scanner,
+            struct_name='pci_epf_device_id',
+            struct_fields=('name', 'driver_data')
+        )
+
+    def store(self, dict):
+        if 'name' not in dict:
+            return None
+        v0 = extract_string('name', dict)
+        if not v0:
+            return None
+        return v0,
+
+
+# i3c
+
+class i3c(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='i3c',
+            tree=tree,
+            table_name='i3c',
+            parent_scanner=parent_scanner,
+            struct_name='i3c_device_id',
+            struct_fields=('match_flags', 'dcr', 'manuf_id', 'part_id', 'extra_info', 'data')
+        )
+
+    def store(self, dict):
+        v0 = extract_value('manuf_id', dict)
+        v1 = extract_value('part_id', dict)
+        v2 = extract_value('dcr', dict)
+        v3 = extract_value('match_flags', dict)
+        if v0 == 0 and v1 == 0 and v2 == 0 and v3 == 0:
+            return None
+        if v0 == 0xffff:
+            v0 = -1
+        if v1 == 0xffff:
+            v1 = -1
+        if v2 == 0xff:
+            v2 = -1
+        if v3 == 0xff:
+            v3 = -1
+        return v0, v1, v2, v3
+
+
+#  spi
+
+class spi(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='spi',
+            tree=tree,
+            table_name='spi',
+            parent_scanner=parent_scanner,
+            struct_name='spi_device_id',
+            struct_fields=('name', 'driver_data')
+        )
+
+    def store(self, dict):
+        if 'name' not in dict:
+            return None
+        v0 = extract_string('name', dict)
+        if not v0:
+            return None
+        return v0,
+
+
+# SLIMbus
+
+class slim(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='slim',
+            tree=tree,
+            table_name='slim',
+            parent_scanner=parent_scanner,
+            struct_name='slim_device_id',
+            struct_fields=('manf_id', 'prod_code', 'dev_index', 'instance', 'driver_data')
+        )
+
+    def store(self, dict):
+        v0 = extract_value('manf_id', dict)
+        v1 = extract_value('prod_code', dict)
+        v2 = extract_value('dev_index', dict)
+        v3 = extract_value('instance', dict)
+        if v0 == 0 and v1 == 0 and v2 == 0 and v3 == 0:
+            return None
+        if v0 == 0xffff:
+            v0 = -1
+        if v1 == 0xffff:
+            v1 = -1
+        if v2 == 0xffff:
+            v2 = -1
+        if v3 == 0xffff:
+            v3 = -1
+        return v0, v1, v2, v3
+
+
+# apr
+
+class apr(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='apr',
+            tree=tree,
+            table_name='apr',
+            parent_scanner=parent_scanner,
+            struct_name='apr_device_id',
+            struct_fields=('name', 'domain_id', 'svc_id', 'svc_version', 'driver_data')
+        )
+
+    def store(self, dict):
+        v0 = extract_string('name', dict)
+        v1 = extract_value('domain_id', dict)
+        v2 = extract_value('svc_id', dict)
+        v3 = extract_value('svc_version', dict)
+        if not v0 and v1 == 0 and v2 == 0 and v3 == 0:
+            return None
+        if v1 == 0xffff:
+            v1 = -1
+        if v2 == 0xffff:
+            v2 = -1
+        if v3 == 0xffff:
+            v3 = -1
+        return v0, v1, v2, v3
+
+
+class spmi(list_of_structs_scanner):
+
+    def __init__(self, parent_scanner, tree):
+        super().__init__(
+            name='spmi',
+            tree=tree,
+            table_name='spmi',
+            parent_scanner=parent_scanner,
+            struct_name='spmi_device_id',
             struct_fields=('name', 'driver_data')
         )
 

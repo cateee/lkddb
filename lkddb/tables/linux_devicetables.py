@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/tables/linux_devicetables.py : device tables for Linux kernel
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import lkddb
@@ -361,6 +361,92 @@ class i2c_table(lkddb.Table):
         self.init_cols()
 
 
+class pci_epf_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("pci_epf")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+class i3c_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("i3c")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'match_flags', fmt.m8x, "INTEGER"),
+                     (2, 'dcr', fmt.m8x, "INTEGER"),
+                     (3, 'manuf_id', fmt.m16x, "INTEGER"),
+                     (4, 'part_id', fmt.m16x, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+class spi_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("spi")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+class slim_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("slim")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'manf_id', fmt.m16x, "INTEGER"),
+                     (2, 'prod_code', fmt.m16x, "INTEGER"),
+                     (3, 'dev_index', fmt.m16x, "INTEGER"),
+                     (4, 'instance', fmt.m16x, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+class apr_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("apr")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (2, 'domain_id', fmt.m32x, "INTEGER"),
+                     (3, 'svc_id', fmt.m32x, "INTEGER"),
+                     (4, 'svc_version', fmt.m32x, "INTEGER"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+class spmi_table(lkddb.Table):
+
+    def __init__(self):
+        super().__init__("spmi")
+        self.kind = ("linux-kernel", "device")
+        self.cols = ((1, 'name', fmt.qstr, "TEXT"),
+                     (-1, 'deps', fmt.deps, "$deps"),
+                     (-2, 'filename', fmt.filename, "$filename"),
+                     (-99, 'version', None, "$kver"))
+        self.init_cols()
+
+
+# platform_device_id
+
+# mdio_device_id
+
+
 class tc_table(lkddb.Table):
 
     def __init__(self):
@@ -424,6 +510,12 @@ def register(tree):
     tree.register_table('virtio', virtio_table())
     tree.register_table('rpmsg', rpmsg_table())
     tree.register_table('i2c', i2c_table())
+    tree.register_table('pci_epf', pci_epf_table())
+    tree.register_table('i3c', i3c_table())
+    tree.register_table('spi', spi_table())
+    tree.register_table('slim', slim_table())
+    tree.register_table('apr', apr_table())
+    tree.register_table('spmi', spmi_table())
     tree.register_table('tc', tc_table())
     tree.register_table('zorro', zorro_table())
     tree.register_table('agp', agp_table())
