@@ -6,18 +6,17 @@
 
 # generic reader and container for source level scan
 
+import fnmatch
+import glob
+import logging
 import os
 import re
-import glob
-import fnmatch
-import logging
 
 import lkddb
 import lkddb.parser
 
 logger = logging.getLogger(__name__)
 
-print("with special includes.  Check them from time to time.")
 
 special_parsed_files = {
     'include/linux/compiler.h',
@@ -61,11 +60,12 @@ class LinuxKernelBrowser(lkddb.Browser):
         lkddb.Browser.scan(self)
         orig_cwd = os.getcwd()
         # adding exceptions
+        print("with special includes.  Check them from time to time.")
         lkddb.parser.parsed_files.update(special_parsed_files)
         lkddb.parser.direct_includes.update(special_direct_includes)
         try:
             os.chdir(self.kerneldir)
-            lkddb.log.phase("Headers")
+            logger.info("=== Headers")
             headers_to_read = []
             lkddb.parser.include_dirs.append('include')
             for root, dirs, files in os.walk("include"):
@@ -110,7 +110,7 @@ class LinuxKernelBrowser(lkddb.Browser):
                     logger.debug("Reading include " + filename)
                     lkddb.parser.parse_header(filename, return_source=False)
 
-            lkddb.log.phase("Sources")
+            logger.info("Sources")
             for subdir in self.dirs:
                 for root, dirs, files in os.walk(subdir):
                     dirs.sort()

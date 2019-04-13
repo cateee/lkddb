@@ -4,11 +4,11 @@
 #  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
+import fnmatch
+import logging
 import os
 import os.path
 import re
-import fnmatch
-import logging
 
 import lkddb
 
@@ -83,7 +83,7 @@ class Makefiles(lkddb.Browser):
         orig_cwd = os.getcwd()
         try:
             os.chdir(self.kerneldir)
-            lkddb.log.phase("Makefiles")
+            logger.info("=== Makefiles")
             for subdir in self.dirs:
                 for root, dirs, files in os.walk(subdir):
                     dirs.sort()

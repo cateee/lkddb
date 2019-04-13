@@ -1,12 +1,11 @@
 #!/usr/bin/python
 #: lkddb/__init__.py : generic definitions (and classes) for lkddb
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import pickle
-import sqlite3
 import logging
+import pickle
 
 import lkddb.log
 
@@ -167,32 +166,30 @@ class Tree:
     # persistent data:
     #   - data:  in python pickle format  [rows (raw)]
     #   - lines: in text (line based) format [fullrows (sort+uniq)]
-    #   - sql:   in SQL database
     #   - consolidate: in python pickle format [crows (with all versions)]
     #
 
-    def write(self, data_filename=None, list_filename=None, sql_filename=None):
+    def write(self, data_filename=None, list_filename=None):
         if data_filename:
             self.write_data(data_filename)
         if list_filename:
             self.format_tables()
             self.write_list(list_filename)
-        if sql_filename:
-            self.write_sql(sql_filename)
 
     def write_data(self, filename, new=True):
-        lkddb.log.phase("Writing 'data'")
-        persistent_data = {}
-        persistent_data['_version'] = self.version
-        persistent_data['_tables'] = tuple(sorted(self.tables.keys()))
-        persistent_data['_trees'] = [self.name]
+        logger.info("=== Writing 'data'")
+        persistent_data = {
+            '_version': self.version,
+            '_tables': tuple(sorted(self.tables.keys())),
+            '_trees': [self.name],
+        }
         for t in self.tables.values():
             persistent_data[t.name] = t.rows
         with open(filename, 'wb') as f:
             pickle.dump(persistent_data, f, protocol=PICKLE_PROTOCOL)
 
     def read_data(self, filename):
-        lkddb.log.phase("Reading data-file: '%s'" % filename)
+        logger.info("=== Reading data-file: '%s'" % filename)
         try:
             with open(filename, 'rb') as f:
                 persistent_data = pickle.load(f)
@@ -250,7 +247,7 @@ class Tree:
         return persistent_data
 
     def write_list(self, filename):
-        lkddb.log.phase("Writing 'list'")
+        logger.info("=== Writing 'list'")
         lines = []
         tables_keys = sorted(self.tables.keys())
         for tk in tables_keys:
@@ -267,22 +264,6 @@ class Tree:
         f.writelines(lines2)
         f.flush()
         f.close()
-
-    def write_sql(self, filename):
-        lkddb.log.phase("Writing 'sql'")
-        ver = self.version
-        db = sqlite3.connect(filename)
-        c = db.cursor()
-        #lfddb = lkddb.create_generic_tables(c)
-        for t in self.tables.values():
-            t.prepare_sql(ver)
-            t.create_sql(c)
-        db.commit()
-        c.close()
-        for t in self.tables.values():
-            t.to_sql(db)
-        db.commit()
-        db.close()
 
 
 class Browser():
@@ -388,13 +369,13 @@ class Table:
     def fmt(self):
         if not self.line_fmt:
             return
-        lkddb.log.phase("Formatting " + self.name)
+        logger.info("=== Formatting " + self.name)
         for row in self.rows:
             self.add_fullrow(row)
 
     def get_lines(self):
         # TODO: change to an iterator ########################
-        lkddb.log.phase("Printing lines in " + self.name)
+        logger.info("=== Printing lines in " + self.name)
         lines = []
         fullrow = None
         try:
@@ -405,7 +386,7 @@ class Table:
         return lines
 
     def consolidate_table(self, consolidated, ver):
-        lkddb.log.phase("Consolidating lines in " + self.name)
+        logger.info("=== Consolidating lines in " + self.name)
         if not hasattr(self, 'crows'):
             self.crows = {}
 
@@ -439,61 +420,3 @@ class Table:
                     else:
                         self.crows[key1][key2][0] = values
                         self.crows[key1][key2][1].add(ver)
-
-    def prepare_sql(self, ver):
-        sql_cols = []
-        sql_create_col = []
-        sql_insert_value = []
-        for name, line, sql in self.cols:
-            if sql:
-                sql_cols.append(name)
-                if sql[0] != '$':
-                    sql_create_col.append(name + " " + sql)
-                    sql_insert_value.append('?')
-                else:
-                    if sql.startswith("$kver"):
-                        sql_create_col.append(name + "INTEGER")
-                        sql_insert_value.append(str(ver))
-                    elif sql == "$deps":
-                        sql_create_col.append(name + " FOREIGN KEY (") ###################
-                        sql_insert_value.append('?')
-                    elif sql == "$config":
-                        sql_create_col.append(name + " REFERENCES config(name)")
-                        sql_insert_value.append('?')
-                    elif sql == "$filename":
-                        sql_create_col.append(name + " REFERENCES filename(name)")
-                        sql_insert_value.append('?')
-        if sql_cols:
-            self.sql_create = ("CREATE TABLE IF NOT EXISTS " + self.name + " (" +
-                " id INTEGER PRIMARY KEY,\n" +
-                ",\n ".join(sql_create_col) + " );" )
-            self.sql_insert = ("INSERT OR UPDATE INTO " + self.name + " (" +
-                ", ".join(sql_cols) + ") VALUES ("+
-                ", ".join(("?",)*len(sql_cols)) + ");")
-
-    def create_sql(self, cursor):
-        cursor.execute(self.sql_create)
-        sql = "INSERT OR IGNORE INTO `tables` (name) VALUES (" + self.name +");"
-        cursor.execute(sql)
-
-#    def to_sql(self, db):
-#        c = db.cursor(db)
-#        for row in self.rows:
-#            c.execute(self.sql_insert, row + self.extra_data)
-#        db.commit()
-#        c.close()
-
-#
-#def create_generic_tables(c):
-#    sql = "CREATE TABLE IF NOT EXISTS `tables` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
-#    c.execute(sql)
-#    sql = "CREATE TABLE IF NOT EXISTS `filename` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
-#    c.execute(sql)
-#    sql = "CREATE TABLE IF NOT EXISTS `config` (id INTEGER PRIMARY KEY, name TEXT UNIQUE);"
-#    c.execute(sql)
-#    sql = """CREATE TABLE IF NOT EXISTS `deps` (
-# `config_id` INTEGER REFERENCE `config`,
-# `item_id` INTEGER,
-# `table_id` INTEGER REFERENCE `tables`
-#);"""
-#

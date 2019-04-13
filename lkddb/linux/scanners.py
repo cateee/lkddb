@@ -1,17 +1,13 @@
 #!/usr/bin/python
 #: lkddb/linux/scanners.py : scanners for Linux kernel
 #
-# Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+# Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 # This is free software, see GNU General Public License v2 (or later) for details
 
-import re
 import logging
+import re
 
 import lkddb
-
-__all__ = ("list_of_structs_scanner", "struct_scanner", "function_scanner",
-           "split_funct", "split_structs",
-           "extract_value", "extract_string", "extract_struct")
 
 logger = logging.getLogger(__name__)
 

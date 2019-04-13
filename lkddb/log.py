@@ -6,10 +6,6 @@
 
 import logging
 
-logger = logging.getLogger(__name__)
-
-_phase = "(init)"
-
 
 def _get_versioned_name(log_filename, version):
     i = log_filename.find("%")
@@ -47,12 +43,6 @@ def init(options):
         if options.versioned:
             log_filename = _get_versioned_name(log_filename, options.version)
         logging.basicConfig(filename=log_filename, filemode='w', level=level)
-
-
-def phase(program_phase):
-    global _phase
-    _phase = program_phase
-    logging.info("PHASE:" + program_phase)
 
 
 if __name__ == "__main__":

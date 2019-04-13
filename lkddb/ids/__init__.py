@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #: lkddb/ids/__init__.py : scanners for ids files
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import time
@@ -15,12 +15,14 @@ logger = logging.getLogger(__name__)
 
 class IdsTree(lkddb.Tree):
 
-    def __init__(self, task, paths):
+    def __init__(self, task, pci_ids, usb_ids, eisa_ids, zorro_ids):
         super().__init__("ids_files")
-        self.paths = paths
+        self.pci_ids_filename = pci_ids
+        self.usb_ids_filename = usb_ids
+        self.eisa_ids_filename = eisa_ids
+        self.zorro_ids_filename = zorro_ids
         lkddb.tables.register_ids_tables(self)
         if task == lkddb.TASK_BUILD:
-            assert len(paths) >= 4, "needs 4 ids files: pci, usb, pnp, zorro"
             self.browser = IdsBrowser(self)
             self.register_browser(self.browser)
 
@@ -34,10 +36,10 @@ class IdsBrowser(lkddb.Browser):
         super().__init__("ids_file_browser")
         self.tree = tree
         self.scanners = []
-        self.pci_ids_filename = tree.paths[0]
-        self.usb_ids_filename = tree.paths[1]
-        self.eisa_ids_filename = tree.paths[2]
-        self.zorro_ids_filename = tree.paths[3]
+        self.pci_ids_filename = tree.pci_ids_filename
+        self.usb_ids_filename = tree.usb_ids_filename
+        self.eisa_ids_filename = tree.eisa_ids_filename
+        self.zorro_ids_filename = tree.zorro_ids_filename
         self.pci_ids_table = tree.get_table('pci_ids')
         self.pci_class_ids_table = tree.get_table('pci_class_ids')
         self.usb_ids_table = tree.get_table('usb_ids')
@@ -52,7 +54,7 @@ class IdsBrowser(lkddb.Browser):
         lkddb.Browser.scan(self)
 
         # pci.ids
-        lkddb.log.phase("pci.ids'")
+        logger.info("=== pci.ids")
         f = open(self.pci_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"		# H : header
         v0, v1, v2 = -1, -1, -1
@@ -101,7 +103,7 @@ class IdsBrowser(lkddb.Browser):
         f.close()
 
         # usb.ids
-        lkddb.log.phase("usb.ids'")
+        logger.info("=== usb.ids")
         f = open(self.usb_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"
         v0, v1, v2 = -1, -1, -1
@@ -151,7 +153,7 @@ class IdsBrowser(lkddb.Browser):
                 pass
 
         # eisa.ids
-        lkddb.log.phase("eisa.ids'")
+        logger.info("=== eisa.ids'")
         f = open(self.eisa_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"
         for line in f:
@@ -168,7 +170,7 @@ class IdsBrowser(lkddb.Browser):
             self.eisa_ids_table.add_row((id_str, name))
 
         # zorro.ids
-        lkddb.log.phase("zorro.ids'")
+        logger.info("=== zorro.ids'")
         f = open(self.zorro_ids_filename, 'r', encoding='utf8', errors='replace')
         part = "H"
         v0, v1 = -1, -1

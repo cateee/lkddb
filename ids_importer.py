@@ -4,33 +4,33 @@
 #  Copyright (c) 2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import optparse
+import argparse
+import logging
 import os.path
 
 import lkddb
 import lkddb.ids
 
+logger = logging.getLogger(__name__)
 
-def make(options, paths):
-    tree = lkddb.ids.IdsTree(lkddb.TASK_BUILD, paths)
+
+def make(options):
+    tree = lkddb.ids.IdsTree(lkddb.TASK_BUILD,
+                             args.pci_ids, args.usb_ids,
+                             args.eisa_ids, args.zorro_ids)
     options.version = tree.get_strversion()
     if options.versioned:
-        options.dbfile += "-" + options.version
+        options.datafile += "-" + options.version
     lkddb.init(options)
-    lkddb.log.phase("=== Read 'ids' files")
+    logger.info("=== Read 'ids' files")
     tree.scan_sources()
-    lkddb.log.phase("=== Preparing data")
+    logger.info("=== Preparing data")
     tree.finalize_sources()
-    lkddb.log.phase("=== Write data")
-    if options.sql:
-        sql = options.dbfile + ".db"
-    else:
-        sql = None
-    tree.write(data_filename=options.dbfile + ".data",
-               list_filename=options.dbfile + ".list",
-               sql_filename=sql)
-    dest_dir = os.path.dirname(options.dbfile)
-    build_single_ids(options.dbfile + ".list", dest_dir)
+    logger.info("=== Write data")
+    tree.write(data_filename=options.datafile + ".data",
+               list_filename=options.datafile + ".list")
+    dest_dir = os.path.dirname(options.datafile)
+    build_single_ids(options.datafile + ".list", dest_dir)
 
 
 def build_single_ids(filename, dest_dir):
@@ -68,32 +68,30 @@ def build_single_ids(filename, dest_dir):
 #
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Transform files from `ids` format to `list` format"
+    )
+    verbose_group = parser.add_mutually_exclusive_group()
+    verbose_group.add_argument("-v", "--verbose",
+                               action="count", default=1,
+                               help="increase output verbosity")
+    verbose_group.add_argument("-q", "--quiet",
+                               action="store_const", const=0,
+                               help="inhibit messages")
+    parser.add_argument("-b", "--base", dest="datafile",
+                        action="store", type=str,
+                        help="base FILE name to read and write data", metavar="FILE")
+    parser.add_argument("-l", "--log", dest="log_filename",
+                        action="store", type=str,
+                        help="FILE to put log messages (default to stderr)", metavar="FILE")
+    parser.add_argument('pci.ids', dest='pci_ids',
+                        help="path of the pci.ids data")
+    parser.add_argument('usb.ids', dest='usb_ids',
+                        help="path of the usb.ids data")
+    parser.add_argument('eisa.ids', dest='eisa_ids',
+                        help="path of the eisa.ids data")
+    parser.add_argument('zorro.ids', dest='zorro_ids',
+                        help="path of the zorro.ids data")
+    args = parser.parse_args()
 
-    usage = "Usage: %prog [options] pci.ids usb.ids eisa.ids zorro.ids"
-    parser = optparse.OptionParser(usage=usage)
-    parser.set_defaults(verbose=1, dbfile="ids", sql=False, versioned=False, timed_logs=False)
-    parser.add_option("-q", "--quiet",  dest="verbose",
-                      action="store_const", const=0,
-                      help="inhibit messages")
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      action="count",
-                      help="increments verbosity")
-    parser.add_option("-b", "--base",   dest="dbfile",
-                      action="store",   type="string",
-                      help="base FILE name to read and write data", metavar="FILE")
-    parser.add_option("-d", "--database",   dest="sql",
-                      action="store_const", const=True,
-                      help="save data in sqlite database")
-    parser.add_option("-l", "--log",    dest="log_filename",
-                      action="store",   type="string",
-                      help="FILE to put log messages (default to stderr)", metavar="FILE")
-    parser.add_option("-k", "--versioned",   dest="versioned",
-                      action="store_const", const=True,
-                      help="ignored (for compatibility)")
-    options_, args_ = parser.parse_args()
-
-    if len(args_) != 4:
-        parser.error("needed exactly 4 files: pci.ids usb.ids eisa.ids zorro.ids")
-
-    options_.versioned = False
-    make(options_, args_)
+    make(args)

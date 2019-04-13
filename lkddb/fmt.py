@@ -1,12 +1,10 @@
 #!/usr/bin/python
 #: fmt.py : utilities to format string and masks
 #
-#  Copyright (c) 2009-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2009-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import logging
-
-import lkddb
 
 logger = logging.getLogger(__name__)
 

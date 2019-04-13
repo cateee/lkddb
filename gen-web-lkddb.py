@@ -1,19 +1,22 @@
 #!/usr/bin/python
 #: gen-web-lkddb.py : generate the static html pages for web-lkddb
 #
-#  Copyright (c) 2007,2008,2010-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2007,2008,2010-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
-import optparse
+import argparse
+import logging
 import os.path
 import re
 import string
 import time
 
 import lkddb
-import lkddb.linux
 import lkddb.ids
+import lkddb.linux
 import lkddb.tables
+
+logger = logging.getLogger(__name__)
 
 tables = {}
 configs = {}
@@ -31,8 +34,8 @@ def assemble_config_data(storage):
                 for key2, values2 in values1.items():
                     for config in key2[0].split():
                         if not config.startswith("CONFIG_") or config == "CONFIG_":
-                            lkddb.logger.warning("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
-                                          (config, t.name, key1, key2, values2))
+                            logger.warning("assemble_config_data: invalid CONFIG: %s in %s :: %s :: %s :: %s" %
+                                           (config, t.name, key1, key2, values2))
                             continue
                         if config not in configs:
                             configs[config] = {}
@@ -600,14 +603,14 @@ def make(options, templdir, webdir):
     ids_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
     storage = lkddb.Storage((linux_tree, ids_tree))
 
-    lkddb.logger.info("=== Read consolidated file")
+    logger.info("=== Read consolidated file")
     storage.read_data(options.consolidated)
     consolidated_versions = storage.loaded_trees['linux-kernel'].consolidated_versions
 
-    lkddb.logger.info("=== Assemble config data")
+    logger.info("=== Assemble config data")
     assemble_config_data(storage)
 
-    lkddb.logger.info("=== Assemble page data")
+    logger.info("=== Assemble page data")
     generate_config_pages(templdir, webdir, consolidated_versions)
     generate_index_pages(templdir, webdir)
 
@@ -619,33 +622,36 @@ def make(options, templdir, webdir):
 if __name__ == "__main__":
 
     usage = "Usage: %prog [options] template-dir output-dir"
-    parser = optparse.OptionParser(usage=usage)
+    parser = argparse.ArgumentParser(
+       description="Create static configuration web pages from template and lkddb.data" )
     parser.set_defaults(verbose=1, consolidated="lkddb-all.data", timed_logs=False)
-    parser.add_option("-q", "--quiet", dest="verbose",
-                      action="store_const", const=0,
-                      help="inhibit messages")
-    parser.add_option("-v", "--verbose", dest="verbose",
-                      action="count",
-                      help="increments verbosity")
-    parser.add_option("-f", "--input", dest="consolidated",
-                      action="store", type="string",
-                      help="consolidated lkddb database FILE", metavar="FILE")
-    parser.add_option("-l", "--log", dest="log_filename",
-                      action="store", type="string",
-                      help="FILE to put log messages (default to stderr)", metavar="FILE")
-    options_, args_ = parser.parse_args()
+    verbose_group = parser.add_mutually_exclusive_group()
+    verbose_group.add_argument('-v', '--verbose',
+                               action='count', default=1,
+                               help="increase output verbosity")
+    verbose_group.add_argument('-q', '--quiet',
+                               action='store_const', const=0,
+                               help="inhibit messages")
+    parser.add_argument('-f', '--input', dest='consolidated',
+                        action='store', type=str,
+                        help="consolidated lkddb database FILE", metavar="FILE")
+    parser.add_argument('-l', '--log', dest='log_filename',
+                        action='store', type=str,
+                        help="FILE to put log messages (default to stderr)", metavar="FILE")
+    parser.add_argument('template_dir',
+                        help="directory of templates of web pages")
+    parser.add_argument('output_dir',
+                        help="the destination of generated web pages")
 
-    if len(args_) < 2:
-        parser.error("missing mandatory arguments: template directory and output directory")
-    templdir_ = os.path.normpath(args_[0])
-    webdir_ = os.path.normpath(args_[1])
-    if not os.path.isdir(templdir_):
+    args = parser.parse_args()
+
+    templdir = os.path.normpath(args.template_dir)
+    webdir = os.path.normpath(args.output_dir)
+    if not os.path.isdir(templdir):
         parser.error("first argument should be a directory (containing templates)")
-    if not os.path.isdir(webdir_):
+    if not os.path.isdir(webdir):
         parser.error("second argument should be a directory (to put generated files)")
 
-    options_.versioned = False
-    options_.year = time.strftime("%Y", time.gmtime())
+    args.year = time.strftime('%Y', time.gmtime())
 
-    make(options_, templdir_, webdir_)
-
+    make(args, templdir, webdir)

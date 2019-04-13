@@ -4,13 +4,19 @@
 #  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
+import logging
 import os
 import os.path
 import subprocess
-import logging
 
 import lkddb
-import lkddb.tables
+
+logger = logging.getLogger(__name__)
+
+tables = {}
+
+scanners = {}
+
 
 # sources
 from . import kbuild

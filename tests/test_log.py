@@ -31,5 +31,6 @@ class TestVersionedNameForLog(unittest.TestCase):
         for input, output in versioned_cases:
             self.assertEqual(lkddb.log._get_versioned_name(input, v), output)
 
+
 if __name__ == '__main__':
         unittest.main()
