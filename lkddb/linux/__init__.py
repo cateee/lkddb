@@ -28,10 +28,6 @@ def register_linux_browsers(tree):
     from . import parse_devicetables
     from . import parse_others
 
-    import lkddb.tables.linux_devicetables
-    import lkddb.tables.linux_kbuild
-    import lkddb.tables.linux_others
-
     kerneldir = tree.kerneldir
     dirs = tree.dirs
 
@@ -103,6 +99,9 @@ class LinuxKernelTree(lkddb.Tree):
         super().__init__("linux-kernel", tables)
         self.kerneldir = kerneldir
         self.dirs = dirs
+        import lkddb.tables.linux_devicetables
+        import lkddb.tables.linux_kbuild
+        import lkddb.tables.linux_others
         if task == lkddb.TASK_BUILD:
             self.retrieve_version()
         if task == lkddb.TASK_BUILD:

@@ -40,8 +40,11 @@ def init(options):
     if log_filename is None or log_filename == "-":
         logging.basicConfig(level=level)
     else:
-        if options.versioned:
-            log_filename = _get_versioned_name(log_filename, options.version)
+        try:
+            if options.versioned:
+                log_filename = _get_versioned_name(log_filename, options.version)
+        except AttributeError:
+            pass
         logging.basicConfig(filename=log_filename, filemode='w', level=level)
 
 

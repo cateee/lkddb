@@ -8,7 +8,6 @@ import time
 import logging
 
 import lkddb
-import lkddb.tables
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +22,7 @@ class IdsTree(lkddb.Tree):
         self.usb_ids_filename = usb_ids
         self.eisa_ids_filename = eisa_ids
         self.zorro_ids_filename = zorro_ids
+        import lkddb.tables.ids_tables
         if task == lkddb.TASK_BUILD:
             self.browser = IdsBrowser(self)
             self.register_browser(self.browser)
@@ -35,6 +35,7 @@ class IdsBrowser(lkddb.Browser):
 
     def __init__(self, tree):
         super().__init__("ids_file_browser")
+
         self.tree = tree
         self.scanners = []
         self.pci_ids_filename = tree.pci_ids_filename

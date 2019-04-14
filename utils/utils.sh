@@ -47,8 +47,9 @@ function copy_to_dist-web() {
 
 
 function counts() {
-    cat "$1" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c | sort -n > "$1.counts"
-    echo "TOTAL: `wc -l < $1`" >> "$1.counts"
+    echo "$1 __file" > "$1.counts"
+    cat "$1" | grep -v '^#' | cut -d ' ' -f 1 | sort | uniq -c >> "$1.counts"
+    echo "`wc -l < $1` TOTAL" >> "$1.counts"
 }
 
 

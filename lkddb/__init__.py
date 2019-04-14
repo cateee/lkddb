@@ -224,22 +224,27 @@ class Tree:
                     t.rows = rows
                     t.restore()
                     t.fmt()
+                    t.consolidate_table(consolidated, ver)
                 else:
                     t.crows_tmp = rows
-                t.consolidate_table(consolidated, ver)
-                if consolidated:
+                    t.consolidate_table(consolidated, ver)
                     del t.crows_tmp
             else:
                 logger.info("Table '%s' is empty" % t.name)
                 if not hasattr(self, 'crows'):
                     self.crows = {}
+                    if not hasattr(t, 'crows'):
+                        t.crows = {}
 
     def write_consolidate(self):
         persistent_data = {}
         persistent_data['_tables'] = tuple(sorted(self.tables.keys()))
         persistent_data['_versions'] = self.consolidated_versions
         for t in self.tables.values():
-            persistent_data[t.name] = t.crows
+            try:
+                persistent_data[t.name] = t.crows
+            except AttributeError:
+                persistent_data[t.name] = {}
         return persistent_data
 
     def write_list(self, filename):

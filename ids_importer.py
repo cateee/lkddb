@@ -19,8 +19,6 @@ def make(options):
                              args.pci_ids, args.usb_ids,
                              args.eisa_ids, args.zorro_ids)
     options.version = tree.get_strversion()
-    if options.versioned:
-        options.datafile += "-" + options.version
     lkddb.init(options)
     logger.info("=== Read 'ids' files")
     tree.scan_sources()
@@ -84,13 +82,13 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--log", dest="log_filename",
                         action="store", type=str,
                         help="FILE to put log messages (default to stderr)", metavar="FILE")
-    parser.add_argument('pci.ids', dest='pci_ids',
+    parser.add_argument('pci_ids',  # dest='pci_ids',
                         help="path of the pci.ids data")
-    parser.add_argument('usb.ids', dest='usb_ids',
+    parser.add_argument('usb_ids',  # dest='usb_ids',
                         help="path of the usb.ids data")
-    parser.add_argument('eisa.ids', dest='eisa_ids',
+    parser.add_argument('eisa_ids',  # dest='eisa_ids',
                         help="path of the eisa.ids data")
-    parser.add_argument('zorro.ids', dest='zorro_ids',
+    parser.add_argument('zorro_ids',  # dest='zorro_ids',
                         help="path of the zorro.ids data")
     args = parser.parse_args()
 
