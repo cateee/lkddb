@@ -9,6 +9,7 @@ import logging
 import os.path
 import sys
 
+import lkddb
 import lkddb.linux
 
 logger = logging.getLogger(__name__)

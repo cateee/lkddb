@@ -19,15 +19,18 @@ scanners = {}
 
 
 # sources
-from . import kbuild
-from . import browse_sources
-from . import parse_devicetables
-from . import parse_others
-
-logger = logging.getLogger(__name__)
-
 
 def register_linux_browsers(tree):
+    # TODO: later we should put the import again on top level
+    # for now we keep there to avoid loop on import (refactoring)
+    from . import kbuild
+    from . import browse_sources
+    from . import parse_devicetables
+    from . import parse_others
+
+    import lkddb.tables.linux_devicetables
+    import lkddb.tables.linux_kbuild
+    import lkddb.tables.linux_others
 
     kerneldir = tree.kerneldir
     dirs = tree.dirs
@@ -90,15 +93,18 @@ def register_linux_browsers(tree):
 
 ###
 
+def numeric_kernel_version(version, patchlevel, sublevel):
+    return version << 16 + patchlevel << 8 + sublevel
+
+
 class LinuxKernelTree(lkddb.Tree):
 
     def __init__(self, task, kerneldir, dirs):
-        super().__init__("linux-kernel")
+        super().__init__("linux-kernel", tables)
         self.kerneldir = kerneldir
         self.dirs = dirs
         if task == lkddb.TASK_BUILD:
             self.retrieve_version()
-        lkddb.tables.register_linux_tables(self)
         if task == lkddb.TASK_BUILD:
             register_linux_browsers(self)
 
@@ -129,7 +135,8 @@ class LinuxKernelTree(lkddb.Tree):
                                    version_dict["patchlevel"] * 0x100 +
                                    version_dict["sublevel"])
         version_dict['extra'] = version_dict["EXTRAVERSION"]
-        if version_dict['numeric'] == 0x02040f and version_dict['extra'] == "-greased-turkey":
+        if version_dict['numeric'] == (numeric_kernel_version(2, 4, 15) and
+                                       version_dict['extra'] == "-greased-turkey"):
             version_dict["name"] = "greased-turkey"
             version_dict['extra'] = ""
         else:
@@ -140,19 +147,19 @@ class LinuxKernelTree(lkddb.Tree):
         else:
             version_dict['str'] = (version_dict["VERSION"] + "." + version_dict["PATCHLEVEL"] +
                                    "." + version_dict["SUBLEVEL"] + version_dict['extra'])
-
-        if not version_dict['extra']:
+        extra = version_dict['extra']
+        if not extra:
             version_dict['numeric2'] = 0
-        elif version_dict['extra'].isdigit():
-            version_dict['numeric2'] = int(version_dict['extra'])
-        elif version_dict['extra'].startswith("-rc") and version_dict['extra'][3:].isdigit():
-            version_dict['numeric2'] = -0x100 + int(version_dict['extra'][3:])
-        elif version_dict['extra'].startswith("-pre") and version_dict['extra'][4:].isdigit():
-            version_dict['numeric2'] = -0x200 + int(version_dict['extra'][4:])
-        elif version_dict['extra'].startswith("pre") and version_dict['extra'][3:].isdigit():
-            version_dict['numeric2'] = -0x200 + int(version_dict['extra'][3:])
+        elif extra.isdigit():
+            version_dict['numeric2'] = int(extra)
+        elif version_dict['extra'].startswith("-rc") and extra[3:].isdigit():
+            version_dict['numeric2'] = -0x100 + int(extra[3:])
+        elif extra.startswith("-pre") and extra[4:].isdigit():
+            version_dict['numeric2'] = -0x200 + int(extra[4:])
+        elif extra.startswith("pre") and extra[3:].isdigit():
+            version_dict['numeric2'] = -0x200 + int(extra[3:])
         else:
-            assert False, "Unknown structure of EXTRAVERSION (%s) in kernel version" % version_dict["extra"]
+            assert False, "Unknown structure of EXTRAVERSION (%s) in kernel version" % extra
 
         if os.path.exists(os.path.join(self.kerneldir, "scripts/setlocalversion")):
             f = open(os.path.join(self.kerneldir, "scripts/setlocalversion"))
@@ -172,7 +179,7 @@ class LinuxKernelTree(lkddb.Tree):
         elif (version_dict['local_ver'][0] == '-' and version_dict['local_ver'][6] == '-' and
               version_dict['local_ver'][1:6].isdigit()):
             version_dict['numeric3'] = int(version_dict['local_ver'][1:6])
-        elif version_dict['numeric'] <= (0x020600 + 15):
+        elif version_dict['numeric'] <= numeric_kernel_version(2, 6, 15):
             version_dict['numeric3'] = 0
         else:
             assert False, ("Unknown structure of scripts/setlocalversion (%s) in kernel version" %

@@ -6,8 +6,9 @@
 
 import lkddb
 from lkddb import fmt
+import lkddb.linux
 
-
+@lkddb.register_to_group(lkddb.linux.tables)
 class i2c_snd_table(lkddb.Table):
 
     def __init__(self):
@@ -20,6 +21,7 @@ class i2c_snd_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class platform_table(lkddb.Table):
 
     def __init__(self):
@@ -32,6 +34,7 @@ class platform_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class fs_table(lkddb.Table):
 
     def __init__(self):
@@ -42,9 +45,3 @@ class fs_table(lkddb.Table):
                      (-2, 'filename', fmt.filename, "$filename"),
                      (-99, 'version', None, "$kver"))
         self.init_cols()
-
-
-def register(tree):
-    tree.register_table('i2c-snd', i2c_snd_table())
-    tree.register_table('platform', platform_table())
-    tree.register_table('fs', fs_table())

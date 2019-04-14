@@ -118,12 +118,12 @@ class Tree:
     """defines sources of a project with task, a base path, a version and some related browsers"""
     # e.g. kernel sources
 
-    def __init__(self, name):
+    def __init__(self, name, tables):
         self.name = name
 
         self.browsers = []
         self.scanners = []
-        self.tables = {}
+        self.tables = tables
         self.views = []
         self.version = None
         self.version_dict = {}
@@ -142,10 +142,6 @@ class Tree:
 
     def register_scanner(self, scanner):
         self.scanners.append(scanner)
-
-    def register_table(self, name, table):
-        assert name not in self.tables, "table '%s' already registered'" % name
-        self.tables[name] = table
 
     def get_table(self, name):
         return self.tables[name]
@@ -420,3 +416,21 @@ class Table:
                     else:
                         self.crows[key1][key2][0] = values
                         self.crows[key1][key2][1].add(ver)
+
+
+# We use decorators to registers tables and scanners
+#
+# Rationale: it is like a plug-in, so we let the new classes
+# to register and add themselves to the list of class to use,
+# without changing the main code
+#
+# For the same reason, we will use such *groups* as
+# **global** dictionaries
+
+
+def register_to_group(group):
+    def decorator(cls):
+        this_instance = cls()
+        group[this_instance.name] = this_instance
+        return cls
+    return decorator

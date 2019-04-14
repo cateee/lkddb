@@ -6,8 +6,10 @@
 
 import lkddb
 from lkddb import fmt
+import lkddb.linux
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class pci_table(lkddb.Table):
 
     def __init__(self):
@@ -29,6 +31,7 @@ class pci_table(lkddb.Table):
         return lkddb.Table.pre_row_fmt(self, row[:4] + (m,) + row[6:])
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class usb_table(lkddb.Table):
 
     def __init__(self):
@@ -50,6 +53,7 @@ class usb_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class ieee1394_table(lkddb.Table):
 
     def __init__(self):
@@ -65,6 +69,7 @@ class ieee1394_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class hid_table(lkddb.Table):
 
     def __init__(self):
@@ -79,6 +84,7 @@ class hid_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class ccw_table(lkddb.Table):
 
     def __init__(self):
@@ -95,6 +101,7 @@ class ccw_table(lkddb.Table):
 
 
 # s390 AP bus
+@lkddb.register_to_group(lkddb.linux.tables)
 class ap_table(lkddb.Table):
 
     def __init__(self):
@@ -107,6 +114,7 @@ class ap_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class acpi_table(lkddb.Table):
 
     def __init__(self):
@@ -119,6 +127,7 @@ class acpi_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class pnp_table(lkddb.Table):
 
     def __init__(self):
@@ -139,6 +148,7 @@ class pnp_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class serio_table(lkddb.Table):
 
     def __init__(self):
@@ -154,6 +164,7 @@ class serio_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class hda_table(lkddb.Table):
 
     def __init__(self):
@@ -169,6 +180,7 @@ class hda_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class sdw_table(lkddb.Table):
 
     def __init__(self):
@@ -182,6 +194,7 @@ class sdw_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class of_table(lkddb.Table):
 
     def __init__(self):
@@ -196,6 +209,7 @@ class of_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class vio_table(lkddb.Table):
 
     def __init__(self):
@@ -209,6 +223,7 @@ class vio_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class pcmcia_table(lkddb.Table):
 
     def __init__(self):
@@ -229,6 +244,7 @@ class pcmcia_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class input_table(lkddb.Table):
 
     def __init__(self):
@@ -253,6 +269,7 @@ class input_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class eisa_table(lkddb.Table):
 
     def __init__(self):
@@ -265,6 +282,7 @@ class eisa_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class parisc_table(lkddb.Table):
 
     def __init__(self):
@@ -280,6 +298,7 @@ class parisc_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class sdio_table(lkddb.Table):
 
     def __init__(self):
@@ -294,6 +313,7 @@ class sdio_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class ssb_table(lkddb.Table):
 
     def __init__(self):
@@ -307,6 +327,8 @@ class ssb_table(lkddb.Table):
                      (-99, 'version', None, "$kver"))
         self.init_cols()
 
+
+@lkddb.register_to_group(lkddb.linux.tables)
 class bcma_table(lkddb.Table):
 
     def __init__(self):
@@ -322,6 +344,7 @@ class bcma_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class virtio_table(lkddb.Table):
 
     def __init__(self):
@@ -336,7 +359,7 @@ class virtio_table(lkddb.Table):
 
 
 # hv_vmbus_device_id
-
+@lkddb.register_to_group(lkddb.linux.tables)
 class rpmsg_table(lkddb.Table):
 
     def __init__(self):
@@ -349,6 +372,7 @@ class rpmsg_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class i2c_table(lkddb.Table):
 
     def __init__(self):
@@ -361,6 +385,7 @@ class i2c_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class pci_epf_table(lkddb.Table):
 
     def __init__(self):
@@ -373,6 +398,7 @@ class pci_epf_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class i3c_table(lkddb.Table):
 
     def __init__(self):
@@ -388,6 +414,7 @@ class i3c_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class spi_table(lkddb.Table):
 
     def __init__(self):
@@ -400,6 +427,7 @@ class spi_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class slim_table(lkddb.Table):
 
     def __init__(self):
@@ -415,6 +443,7 @@ class slim_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class apr_table(lkddb.Table):
 
     def __init__(self):
@@ -430,6 +459,7 @@ class apr_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class spmi_table(lkddb.Table):
 
     def __init__(self):
@@ -447,6 +477,7 @@ class spmi_table(lkddb.Table):
 # mdio_device_id
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class tc_table(lkddb.Table):
 
     def __init__(self):
@@ -460,6 +491,7 @@ class tc_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class zorro_table(lkddb.Table):
 
     def __init__(self):
@@ -472,7 +504,18 @@ class zorro_table(lkddb.Table):
                      (-99, 'version', None, "$kver"))
         self.init_cols()
 
+# isapnp_device_id
 
+# amba_id
+
+# mips_cdmm_device_id
+
+# x86_cpu_id
+
+# mei_cl_device_id
+
+
+@lkddb.register_to_group(lkddb.linux.tables)
 class agp_table(lkddb.Table):
 
     def __init__(self):
@@ -484,38 +527,3 @@ class agp_table(lkddb.Table):
                      (-2, 'filename', fmt.filename, "$filename"),
                      (-99, 'version', None, "$kver"))
         self.init_cols()
-
-
-def register(tree):
-    tree.register_table('pci', pci_table())
-    tree.register_table('usb', usb_table())
-    tree.register_table('ieee1394', ieee1394_table())
-    tree.register_table('hid', hid_table())
-    tree.register_table('ccw', ccw_table())
-    tree.register_table('ap', ap_table())
-    tree.register_table('acpi', acpi_table())
-    tree.register_table('pnp', pnp_table())
-    tree.register_table('serio', serio_table())
-    tree.register_table('hda', hda_table())
-    tree.register_table('sdw', sdw_table())
-    tree.register_table('of', of_table())
-    tree.register_table('vio', vio_table())
-    tree.register_table('pcmcia', pcmcia_table())
-    tree.register_table('input', input_table())
-    tree.register_table('eisa', eisa_table())
-    tree.register_table('parisc', parisc_table())
-    tree.register_table('sdio', sdio_table())
-    tree.register_table('ssb', ssb_table())
-    tree.register_table('bcma', bcma_table())
-    tree.register_table('virtio', virtio_table())
-    tree.register_table('rpmsg', rpmsg_table())
-    tree.register_table('i2c', i2c_table())
-    tree.register_table('pci_epf', pci_epf_table())
-    tree.register_table('i3c', i3c_table())
-    tree.register_table('spi', spi_table())
-    tree.register_table('slim', slim_table())
-    tree.register_table('apr', apr_table())
-    tree.register_table('spmi', spmi_table())
-    tree.register_table('tc', tc_table())
-    tree.register_table('zorro', zorro_table())
-    tree.register_table('agp', agp_table())

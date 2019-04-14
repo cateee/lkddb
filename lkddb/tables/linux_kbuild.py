@@ -1,13 +1,15 @@
 #!/usr/bin/python
 #: lkddb/linux/linux_kbuild.py : tables for Linux kernel build infrastructure
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import lkddb
 from lkddb import fmt
+import lkddb.linux
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class kver_table(lkddb.Table):
 
     def __init__(self):
@@ -24,6 +26,7 @@ class kver_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class kconf_table(lkddb.Table):
 
     def __init__(self):
@@ -43,6 +46,7 @@ class kconf_table(lkddb.Table):
         return []
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class module_table(lkddb.Table):
 
     def __init__(self):
@@ -56,6 +60,7 @@ class module_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.linux.tables)
 class firmware_table(lkddb.Table):
 
     def __init__(self):

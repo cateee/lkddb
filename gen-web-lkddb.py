@@ -600,7 +600,7 @@ def make(options, templdir, webdir):
     lkddb.init(options)
 
     linux_tree = lkddb.linux.LinuxKernelTree(lkddb.TASK_CONSOLIDATE, None, [])
-    ids_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None)
+    ids_tree = lkddb.ids.IdsTree(lkddb.TASK_CONSOLIDATE, None, None, None, None)
     storage = lkddb.Storage((linux_tree, ids_tree))
 
     logger.info("=== Read consolidated file")
@@ -620,8 +620,6 @@ def make(options, templdir, webdir):
 #
 
 if __name__ == "__main__":
-
-    usage = "Usage: %prog [options] template-dir output-dir"
     parser = argparse.ArgumentParser(
        description="Create static configuration web pages from template and lkddb.data" )
     parser.set_defaults(verbose=1, consolidated="lkddb-all.data", timed_logs=False)

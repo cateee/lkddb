@@ -12,16 +12,17 @@ import lkddb.tables
 
 logger = logging.getLogger(__name__)
 
+tables = {}
+
 
 class IdsTree(lkddb.Tree):
 
     def __init__(self, task, pci_ids, usb_ids, eisa_ids, zorro_ids):
-        super().__init__("ids_files")
+        super().__init__("ids_files", tables)
         self.pci_ids_filename = pci_ids
         self.usb_ids_filename = usb_ids
         self.eisa_ids_filename = eisa_ids
         self.zorro_ids_filename = zorro_ids
-        lkddb.tables.register_ids_tables(self)
         if task == lkddb.TASK_BUILD:
             self.browser = IdsBrowser(self)
             self.register_browser(self.browser)

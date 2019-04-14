@@ -1,13 +1,15 @@
 #!/usr/bin/python
 #: lkddb/tables/ids_tables.py : tables for ids files
 #
-#  Copyright (c) 2000,2001,2007-2017  Giacomo A. Catenazzi <cate@cateee.net>
+#  Copyright (c) 2000,2001,2007-2019  Giacomo A. Catenazzi <cate@cateee.net>
 #  This is free software, see GNU General Public License v2 (or later) for details
 
 import lkddb
 from lkddb import fmt
+import lkddb.ids
 
 
+@lkddb.register_to_group(lkddb.ids.tables)
 class pci_ids_table(lkddb.Table):
 
     def __init__(self):
@@ -22,6 +24,7 @@ class pci_ids_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.ids.tables)
 class pci_class_ids_table(lkddb.Table):
 
     def __init__(self):
@@ -35,6 +38,7 @@ class pci_class_ids_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.ids.tables)
 class usb_ids_table(lkddb.Table):
 
     def __init__(self):
@@ -47,6 +51,7 @@ class usb_ids_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.ids.tables)
 class usb_class_ids_table(lkddb.Table):
 
     def __init__(self):
@@ -60,6 +65,7 @@ class usb_class_ids_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.ids.tables)
 class eisa_ids_table(lkddb.Table):
 
     def __init__(self):
@@ -71,6 +77,7 @@ class eisa_ids_table(lkddb.Table):
         self.init_cols()
 
 
+@lkddb.register_to_group(lkddb.ids.tables)
 class zorro_ids_table(lkddb.Table):
 
     def __init__(self):
