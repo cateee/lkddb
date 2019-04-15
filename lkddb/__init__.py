@@ -172,8 +172,8 @@ class Tree:
             self.format_tables()
             self.write_list(list_filename)
 
-    def write_data(self, filename, new=True):
-        logger.info("=== Writing 'data'")
+    def write_data(self, filename):
+        logger.info("=== Writing data")
         persistent_data = {
             '_version': self.version,
             '_tables': tuple(sorted(self.tables.keys())),

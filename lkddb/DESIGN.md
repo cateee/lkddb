@@ -1,21 +1,26 @@
-#!/bin/vi
-#: DESIGN : Documentation of internal data structure and flow
-#
-#  Copyright (c) 2010-2011  Giacomo A. Catenazzi <cate@cateee.net>
-#  This is free software, see GNU General Public License v2 (or later) for details
-#  or distributable with any GNU Documentation Public License 
+# DESIGN : Documentation of internal data structure and flow
+
+We have few tasks to do, depending on the program which call lkddb library:
+
+- `lkddb.TASK_BUILD`: generate data of one tree (one version of one project)
+- `lkddb.TASK_TABLE`: read the data
+- `lkddb.TASK_CONSOLIDATE`: merge multiple data (versions, trees)
 
 The idea of data flow:
 
 '[storage ->] tree -> browser -> scanner [-> subscanner] -> table'
 
-'storage': it contains multiple versioned tree data
+'storage': It aggregate data of multiple trees: different projects and different
+    versions
 
-'tree': Every project has a 'tree'. Tree as own version.
-	as a main container.
+'tree': This is the main entity.  One tree for one project (e.g. Linux kernel) and
+    for one version.
 
 'browser': selects the different file types, handling them differently
-	thus we open a file only once
+	thus we open a file only once.
+	E.g. we have one for C files (`*.c` and `*.h`), one for building files
+	(`Makefile` and `Kbuild`), and one for configuration files (`Kconfig`)
+	.
 	Because of this, we do parsing in two stages: one reading the files
 	and the second stage we do the rest of the job (but this time we could
 	use info from other files (e.g. *.h)
