@@ -182,7 +182,8 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
     nparam = 0
     for param in line:
         param = param.replace("\n", " ").strip()
-        if not param:
+        param = param.replace("\t", " ").strip()
+        if param == '':
             continue
         elif param[0] == ".":
             m = field_init_re.match(param)
@@ -197,11 +198,13 @@ def parse_struct(scanner, fields, line, dep, filename, ret=False):
                     raise lkddb.ParserError("in parse_line(): %s, %s, %s" % (filename, line, param))
             res[field] = value
         else:
+            if nparam >= len(fields):
+                break
             try:
                 res[fields[nparam]] = param
             except IndexError:
-                logger.exception("Index error: %s, %s, %s, %s" %
-                                 (scanner.name, fields, line, filename))
+                logger.exception("Index error: %s, %s, %s, %s, %s" %
+                                 (scanner.name, nparam, fields, line, filename))
                 return {}
         nparam += 1
     if res:
