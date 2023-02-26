@@ -160,7 +160,7 @@ def extract_value(field, dictionary):
                 return eval(val[val.find("=")+1:])
             else:
                 logger.error("error in extract_value: %s, %s --- '%s'" % (field, sorted(dictionary.items()), val))
-                assert False, "error in extract_value, 1: %s, %s --- '%s'" % (field, sorted(dictionary.items()), val)
+                return 0
         except NameError:
             logger.exception("error in extract_value: expected number in field %s from %s" %
                              (field, dictionary))
